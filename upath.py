@@ -208,13 +208,7 @@ class UPath():
 			-------
 			  `List[str]`
 			   list of components of the path
-
-			Raises
-			------
-				`ValueError`
-				if `self` is in an invalid state
 		"""
-		self._validate()
 		base_parts = []
 		if self._root:
 			base_parts = ['' if self._device is None else self._device]
@@ -238,13 +232,7 @@ class UPath():
 			-------
 			  `List[str]`
 			   list of relative components of the path
-
-			Raises
-			------
-				`ValueError`
-				if `self` is in an invalid state
 		"""
-		self._validate()
 		base_parts = []
 		if self._dotdot > 0:
 			base_parts = [UPath.parent for i in range(self._dotdot)]
@@ -311,11 +299,9 @@ class UPath():
 			Check if two abstract file paths are completely identical. Always return False if `other` is not a UPath object.
 
 			Evoke as `upath1 == upath2`
-
-			Raises `ValueError` if either UPath is invalid
 		"""
 		if type(other) is UPath:
-			return self.__dict__ == other.__dict__
+			return ((self._root, self._device, self._dotdot) + self._parts) == ((other._root, other._device, other._dotdot) + other._parts)
 		else:
 			return False
 
@@ -324,13 +310,8 @@ class UPath():
 			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Root-relative paths are greater than ancestor-relative paths, which are greater than all other paths. Between two ancestor-relative paths, the path with more ancestor components is considered greater.
 
 			Evoke as `upath1 < upath2`
-
-			Raises `ValueError` if either UPath is invalid
 		"""
-		self._validate()
-		if isinstance(other, UPath):
-			other._validate
-		else:
+		if not isinstance(other, UPath):
 			other = UPath(other)
 		return ((self._root, self._device, self._dotdot) + self._parts) > ((other._root, other._device, other._dotdot) + other._parts)
 
@@ -372,10 +353,7 @@ class UPath():
 			Return True if `self` is relative to root or an ancestor directory, or if `self` has at least one named component; return False otherwise.
 
 			Evoke as `bool(myupath)`
-
-			Raises `ValueError` if `self` is an invalid UPath
 		"""
-		self._validate()
 		return self._root or self._dotdot != 0 or len(self._parts) > 0
 
 	def __str__(self) -> str:
@@ -383,8 +361,6 @@ class UPath():
 			Return a string representation of the abstract file path that is meaningful to the local operating system.
 
 			Evoke as `str(myrange)`
-
-			Raises `ValueError` if `self` is an invalid UPath
 		"""
 		return UPath.separator.join(self.get_parts())
 
@@ -393,8 +369,6 @@ class UPath():
 			Return a string that can be printed as a source code representation of the abstract file path.
 
 			Evoke as `repr(myrange)`
-
-			Raises `ValueError` if `self` is an invalid UPath
 		"""
 		return f"UPath({repr(str(self))})"
 
