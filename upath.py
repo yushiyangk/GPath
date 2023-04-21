@@ -254,7 +254,7 @@ class UPath():
 
 	def subpath(self, base: UPathLike) -> UPath | None:
 		"""
-			Find the relative subpath path from `base` to `self` if `base` is an ancestor of `self.
+			Find the relative subpath path from `base` to `self` if `base` contains `self`.
 
 			Parameters
 			----------
@@ -276,11 +276,10 @@ class UPath():
 		if not isinstance(base, UPath):
 			base = UPath(base)
 
-		common_path = UPath.find_common(self, base)
-		if common_path is not None and common_path == base:
+		if self in base:
 			base_length = len(base._parts)
 			new_path = UPath()
-			new_path._parts = self._parts[base_length:]  # [] when self == base
+			new_path._parts = self._parts[base_length:]  # () when self == base
 			return new_path
 		else:
 			return None
@@ -289,7 +288,7 @@ class UPath():
 		"""
 			Calculate hash of the path.
 
-			Evoke as `hash(myupath)`
+			Evoked by `hash(myupath)`
 		"""
 		return hash((tuple(self._parts), self._device, self._root, self._dotdot))
 
@@ -297,7 +296,7 @@ class UPath():
 		"""
 			Check if two abstract file paths are completely identical. Always return False if `other` is not a UPath object.
 
-			Evoke as `upath1 == upath2`
+			Evoked by `upath1 == upath2`
 		"""
 		if type(other) is UPath:
 			return ((self._root, self._device, self._dotdot) + self._parts) == ((other._root, other._device, other._dotdot) + other._parts)
@@ -308,7 +307,7 @@ class UPath():
 		"""
 			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Root-relative paths are greater than ancestor-relative paths, which are greater than all other paths. Between two ancestor-relative paths, the path with more ancestor components is considered greater.
 
-			Evoke as `upath1 < upath2`
+			Evoked by `upath1 < upath2`
 		"""
 		if not isinstance(other, UPath):
 			other = UPath(other)
@@ -318,7 +317,7 @@ class UPath():
 		"""
 			Return True if `self` is relative to root or an ancestor directory, or if `self` has at least one named component; return False otherwise.
 
-			Evoke as `bool(myupath)`
+			Evoked by `bool(myupath)`
 		"""
 		return self._root or self._dotdot != 0 or len(self._parts) > 0
 
@@ -326,7 +325,7 @@ class UPath():
 		"""
 			Return a string representation of the abstract file path that is meaningful to the local operating system.
 
-			Evoke as `str(myupath)`
+			Evoked by `str(myupath)`
 		"""
 		return UPath.separator.join(self.get_parts())
 
@@ -334,13 +333,15 @@ class UPath():
 		"""
 			Return a string that can be printed as a source code representation of the abstract file path.
 
-			Evoke as `repr(myupath)`
+			Evoked by `repr(myupath)`
 		"""
 		return f"UPath({repr(str(self))})"
 
 	def __len__(self) -> int:
 		"""
 			Get the number of relative path components, excluding any device name or parent directories.
+
+			Evoked by `len(myupath)`
 		"""
 		return len(self._parts)
 
@@ -348,15 +349,32 @@ class UPath():
 		"""
 			Get the 0-indexed relative path component, excluding any device name or parent directories.
 
-			Evoke as `myupath[n]`
+			Evoked by `myupath[n]`
 		"""
 		return self._parts[n]
 
 	def __iter__(self) -> Iterator[str]:
 		"""
 			Get an iterator through the relative path components, excluding any device name or parent directories.
+
+			Evoked by `iter(myupath)`
 		"""
 		return iter(self._parts)
+
+	def __contains__(self, other: UPathLike) -> bool:
+		"""
+			Check if the path represented by `self` contains that represented by `other`; i.e. check if `self` is an ancestor path of `other`.
+
+			Evoked by `other in myupath`
+
+			Raises `ValueError` if either `self` or `other` is an invalid UPath
+		"""
+		if not isinstance(other, UPath):
+			other = UPath(other)
+
+		common_path = UPath.find_common(self, other)
+		return common_path is not None and common_path == self
+
 
 	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
