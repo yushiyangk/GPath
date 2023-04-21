@@ -186,12 +186,6 @@ class UPath():
 		"""
 		return delim.join(str(path) for path in paths)
 
-	def get_device(self) -> str | None:
-		"""
-			Get the device name of the path.
-		"""
-		return self._device
-
 	def get_parts(self) -> list[str]:
 		"""
 			Get a list of strings representing each component of the abstract file path.
@@ -203,11 +197,6 @@ class UPath():
 			If the path is relative to an ancestor directory (e.g. '../..'), each parent level will be given as a separate item in the returned list.
 
 			To get a list without information about any ancestor directory or filesystem root, use `get_name_parts()` instead.
-
-			Returns
-			-------
-			  `List[str]`
-			   list of components of the path
 		"""
 		base_parts = []
 		if self._root:
@@ -227,11 +216,6 @@ class UPath():
 			If the path is relative to an ancestor directory (e.g. '../..'), each parent level will be given as a separate item in the returned list.
 
 			To get a list without information about any ancestor directory as well, use `get_name_parts()` instead.
-
-			Returns
-			-------
-			  `List[str]`
-			   list of relative components of the path
 		"""
 		base_parts = []
 		if self._dotdot > 0:
@@ -245,13 +229,28 @@ class UPath():
 			The returned list will always represent a descendent relative path, with no information about whether the path was relative to any filesystem root or to any ancestor directories.
 
 			To get a list of parts with more information, use `get_parts()` or `get_relative_parts()` instead.
-
-			Returns
-			-------
-			  `List[str]`
-			   list of named components of the path
 		"""
 		return list(self._parts)
+
+	def get_parent_parts(self) -> list[str]:
+		"""
+			Get a list of strings representing the ancestor directory that the path is relative to.
+
+			The returned list will one copy of `UPath.parent` for each parent level. If the path is not relative to an ancestor directory, the returned list will be empty.
+		"""
+		return [UPath.parent for i in range(self._dotdot)]
+
+	def get_device(self) -> str | None:
+		"""
+			Get the device name of the path.
+		"""
+		return self._device
+
+	def is_root(self) -> bool:
+		"""
+			Check if the path is relative to filesystem root
+		"""
+		return self._root
 
 	def subpath(self, base: UPathLike) -> UPath | None:
 		"""
@@ -315,6 +314,38 @@ class UPath():
 			other = UPath(other)
 		return ((self._root, self._device, self._dotdot) + self._parts) > ((other._root, other._device, other._dotdot) + other._parts)
 
+	def __bool__(self) -> bool:
+		"""
+			Return True if `self` is relative to root or an ancestor directory, or if `self` has at least one named component; return False otherwise.
+
+			Evoke as `bool(myupath)`
+		"""
+		return self._root or self._dotdot != 0 or len(self._parts) > 0
+
+	def __str__(self) -> str:
+		"""
+			Return a string representation of the abstract file path that is meaningful to the local operating system.
+
+			Evoke as `str(myupath)`
+		"""
+		return UPath.separator.join(self.get_parts())
+
+	def __repr__(self) -> str:
+		"""
+			Return a string that can be printed as a source code representation of the abstract file path.
+
+			Evoke as `repr(myupath)`
+		"""
+		return f"UPath({repr(str(self))})"
+
+	def __getitem__(self, n: int) -> str:
+		"""
+			Get the 0-indexed path component, excluding any device name or any parent directories.
+
+			Evoke as `myupath[n]`
+		"""
+		return self._parts[n]
+
 	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
 			Add a relative UPath to `self` and return the new UPath. Return an unchagned copy of `self` if `other` is not a relative path, or if `other` and `self` have different `device`.
@@ -347,30 +378,6 @@ class UPath():
 			new_parts.extend(other._parts)
 			new_path._parts = tuple(new_parts)
 			return new_path
-
-	def __bool__(self) -> bool:
-		"""
-			Return True if `self` is relative to root or an ancestor directory, or if `self` has at least one named component; return False otherwise.
-
-			Evoke as `bool(myupath)`
-		"""
-		return self._root or self._dotdot != 0 or len(self._parts) > 0
-
-	def __str__(self) -> str:
-		"""
-			Return a string representation of the abstract file path that is meaningful to the local operating system.
-
-			Evoke as `str(myrange)`
-		"""
-		return UPath.separator.join(self.get_parts())
-
-	def __repr__(self) -> str:
-		"""
-			Return a string that can be printed as a source code representation of the abstract file path.
-
-			Evoke as `repr(myrange)`
-		"""
-		return f"UPath({repr(str(self))})"
 
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
