@@ -1,30 +1,21 @@
 from __future__ import annotations
 
+import functools
 import os
 from collections.abc import Collection, Sequence
-from typing import Final, ClassVar
+from typing import Any, Final, ClassVar
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
 PATH_PARENT: Final = os.pardir
 
 PathLike = str | os.PathLike
 
+@functools.total_ordering
 class UPath():
 	"""
 		A normalised abstract file path with no dependency on the layout of the local filesystem or, if different, the source filesystem that generated the path representation.
 
 		The path can be manipulated before being rendered in a format that is meaningful to the local operating system.
-
-		Instance attributes
-		-------------------
-		- `parts: list[str]`
-		   decomposed parts of a path relative to either an anonymous parent directory (e.g. '../..', represented by `dotdot`) or to a filesystem root (represented by `root`), without separats in each part
-		- `device: str`
-		   device name of the path (e.g. drive letter on Windows), or an empty string if no device is associated with the path (e.g. Linux file paths); usually empty when `root` is False
-		- `root: bool`
-		   whether the path is relative to the filesystem root; should only be True when `dotdot` is 0
-		- `dotdot: int`
-		   number of levels of parent directories that the path is relative to (i.e. number of '..'s in the path); should only be non-zero when `root` is False; may be 0 even if `root` is False, indicating a path relative to an abstract current directory
 
 		Class attributes
 		----------------
@@ -34,7 +25,7 @@ class UPath():
 		   path component indicating a parent directory that is meaningful to the local operating system; usually ".."
 	"""
 
-	__slots__ = ('parts', 'device', 'root', 'dotdot')
+	__slots__ = ('_parts', '_device', '_root', '_dotdot')
 
 	separator: ClassVar = PATH_SEPARATOR
 	parent: ClassVar = PATH_PARENT
@@ -55,25 +46,25 @@ class UPath():
 				`ValueError`
 				if `other` is an invalid UPath
 		"""
-		self.parts: list[str] = []  # root- or dotdot- relative path
-		self.device: str = ''
-		self.root: bool = False
-		self.dotdot: int = 0
+		self._parts: list[str] = []  # root- or dotdot- relative path
+		self._device: str = ''
+		self._root: bool = False
+		self._dotdot: int = 0
 		if path is not None and path != '':
 			if isinstance(path, UPath):
 				path._validate()
-				self.parts = path.parts
-				self.device = path.device
-				self.root = path.root
-				self.dotdot = path.dotdot
+				self._parts = path._parts
+				self._device = path._device
+				self._root = path._root
+				self._dotdot = path._dotdot
 			else:
 				# Remove redundant '.'s and '..'s and use OS-default path separators
 				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
 
 				if path == '.':
 					path = ''
-				(self.device, path) = os.path.splitdrive(path)
-				self.root = os.path.isabs(path)
+				(self._device, path) = os.path.splitdrive(path)
+				self._root = os.path.isabs(path)
 
 				parts = path.split(os.sep)  # os.path.normpath previously rewrote the path to use os.sep
 				if parts[0] == '':  # First element is '' if root
@@ -84,8 +75,8 @@ class UPath():
 				dotdot = 0
 				while parts[dotdot] == UPath.parent:  # UPath.parent == '..' usually
 					dotdot += 1
-				self.parts = parts[dotdot:]
-				self.dotdot = dotdot
+				self._parts = parts[dotdot:]
+				self._dotdot = dotdot
 
 	@staticmethod
 	def common(path1: UPathLike, path2: UPathLike) -> UPath | None:
@@ -118,27 +109,27 @@ class UPath():
 		else:
 			path2 = UPath(path2)
 
-		if path1.device != path2.device:
+		if path1._device != path2._device:
 			return None
-		if path1.root != path2.root:
+		if path1._root != path2._root:
 			return None
 
-		if path1.root:
+		if path1._root:
 			common_path = UPath()
-			for part1, part2 in zip(path1.parts, path2.parts):
+			for part1, part2 in zip(path1._parts, path2._parts):
 				if part1 == part2:
-					common_path.parts.append(part1)
-			common_path.root = True
-			common_path.device = path1.device
+					common_path._parts.append(part1)
+			common_path._root = True
+			common_path._device = path1._device
 			# dotdot must be 0
 		else:
-			if path1.dotdot != path2.dotdot:
+			if path1._dotdot != path2._dotdot:
 				return None
 			common_path = UPath()
-			for part1, part2 in zip(path1.parts, path2.parts):
+			for part1, part2 in zip(path1._parts, path2._parts):
 				if part1 == part2:
-					common_path.parts.append(part1)
-			common_path.dotdot = path1.dotdot
+					common_path._parts.append(part1)
+			common_path._dotdot = path1._dotdot
 
 		return common_path
 
@@ -193,6 +184,12 @@ class UPath():
 		"""
 		return delim.join(str(path) for path in paths)
 
+	def get_device(self) -> str:
+		"""
+			Get the device name of the path.
+		"""
+		return self._device
+
 	def get_parts(self) -> list[str]:
 		"""
 			Get a list of strings representing each component of the abstract file path.
@@ -217,11 +214,11 @@ class UPath():
 		"""
 		self._validate()
 		base_parts = []
-		if self.root:
-			base_parts = [self.device]
-		elif self.dotdot > 0:
-			base_parts = [UPath.parent for i in range(self.dotdot)]
-		return base_parts + self.parts
+		if self._root:
+			base_parts = [self._device]
+		elif self._dotdot > 0:
+			base_parts = [UPath.parent for i in range(self._dotdot)]
+		return base_parts + self._parts
 
 	def get_relative_parts(self) -> list[str]:
 		"""
@@ -247,9 +244,9 @@ class UPath():
 		"""
 		self._validate()
 		base_parts = []
-		if self.dotdot > 0:
-			base_parts = [UPath.parent for i in range(self.dotdot)]
-		return base_parts + self.parts
+		if self._dotdot > 0:
+			base_parts = [UPath.parent for i in range(self._dotdot)]
+		return base_parts + self._parts
 
 	def get_named_parts(self) -> list[str]:
 		"""
@@ -264,7 +261,7 @@ class UPath():
 			  `List[str]`
 			   list of named components of the path
 		"""
-		return self.parts
+		return self._parts
 
 	def subpath(self, base: UPathLike) -> UPath | None:
 		"""
@@ -292,9 +289,9 @@ class UPath():
 
 		common_path = UPath.common(self, base)
 		if common_path is not None and common_path == base:
-			base_length = len(base.parts)
+			base_length = len(base._parts)
 			new_path = UPath()
-			new_path.parts = self.parts[base_length:]  # [] when self == base
+			new_path._parts = self._parts[base_length:]  # [] when self == base
 			return new_path
 		else:
 			return None
@@ -307,25 +304,28 @@ class UPath():
 
 			Raises `ValueError` if `other` is an invalid UPath
 		"""
-		other = UPath(other)
+		if isinstance(other, UPath):
+			other._validate
+		else:
+			other = UPath(other)
 
-		if other.root:
+		if other._root:
 			return UPath(self)
-		elif other.device != '' and self.device != other.device:
+		elif other._device != '' and self._device != other._device:
 			return UPath(self)
 		else:
 			new_path = UPath(self)
-			new_parts = [part for part in self.parts]
-			for i in range(other.dotdot):
+			new_parts = [part for part in self._parts]
+			for i in range(other._dotdot):
 				if len(new_parts) > 0:
 					new_parts.pop()
-				elif not new_path.root:
-					new_path.dotdot += 1
+				elif not new_path._root:
+					new_path._dotdot += 1
 				else:
 					pass  # parent of directory of root is still root
 
-			new_parts.extend(other.parts)
-			new_path.parts = new_parts
+			new_parts.extend(other._parts)
+			new_path._parts = new_parts
 			return new_path
 
 	def __bool__(self) -> bool:
@@ -337,7 +337,7 @@ class UPath():
 			Raises `ValueError` if `self` is an invalid UPath
 		"""
 		self._validate()
-		return self.root or self.dotdot != 0 or len(self.parts) > 0
+		return self._root or self._dotdot != 0 or len(self._parts) > 0
 
 	def __str__(self) -> str:
 		"""
@@ -374,10 +374,10 @@ class UPath():
 
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
-		if self.dotdot < 0:
+		if self._dotdot < 0:
 			raise ValueError(f"invalid UPath, dotdot cannot be negative: {repr(self)}")
-		if self.root:
-			if self.dotdot != 0:
+		if self._root:
+			if self._dotdot != 0:
 				raise ValueError(f"invalid UPath, dotdot must be 0 when root is True: {repr(self)}")
 		return True
 
