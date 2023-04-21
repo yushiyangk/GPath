@@ -296,14 +296,43 @@ class UPath():
 		else:
 			return None
 
+	def __eq__(self, other: Any) -> bool:
+		"""
+			Check if two abstract file paths are completely identical. Always return False if `other` is not a UPath object.
+
+			Evoke as `myrange == other`
+
+			Raises `ValueError` if either UPath is invalid
+		"""
+		if type(other) is UPath:
+			return self.__dict__ == other.__dict__
+		else:
+			return False
+
+	def __gt__(self, other: UPathLike) -> bool:
+		"""
+			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Root-relative paths are greater than ancestor-relative paths, which are greater than all other paths. Between two ancestor-relative paths, the path with more ancestor components is considered greater.
+
+			Evoke as `myrange < other`
+
+			Raises `ValueError` if either UPath is invalid
+		"""
+		self._validate()
+		if isinstance(other, UPath):
+			other._validate
+		else:
+			other = UPath(other)
+		return ([self._root, self._device, self._dotdot] + self._parts) > ([other._root, other._device, other._dotdot] + other._parts)
+
 	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
 			Add a relative UPath to `self` and return the new UPath. Return an unchagned copy of `self` if `other` is not a relative path, or if `other` and `self` have different `device`.
 
 			Evoked by `upath1 + upath2`
 
-			Raises `ValueError` if `other` is an invalid UPath
+			Raises `ValueError` if either UPath is invalid
 		"""
+		self._validate()
 		if isinstance(other, UPath):
 			other._validate
 		else:
@@ -358,19 +387,6 @@ class UPath():
 			Raises `ValueError` if `self` is an invalid UPath
 		"""
 		return f"UPath({repr(str(self))})"
-
-	def __eq__(self, other: Any) -> bool:
-		"""
-			Check if two abstract file paths are completely identical. Always return False if `other` is not a UPath object.
-
-			Evoke as `myrange == other`
-
-			Raises `ValueError` if either UPath is invalid
-		"""
-		if type(other) is UPath:
-			return self.__dict__ == other.__dict__
-		else:
-			return False
 
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
