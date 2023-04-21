@@ -79,7 +79,7 @@ class UPath():
 				self._dotdot = dotdot
 
 	@staticmethod
-	def common(path1: UPathLike, path2: UPathLike) -> UPath | None:
+	def find_common(path1: UPathLike, path2: UPathLike) -> UPath | None:
 		"""
 			Static method. Find the longest common base path shared by two abstract file paths.
 
@@ -134,7 +134,7 @@ class UPath():
 		return common_path
 
 	@staticmethod
-	def partitions(paths: Collection[UPathLike]) -> dict[UPath, set[UPath]]:
+	def partition(paths: Collection[UPathLike]) -> dict[UPath, set[UPath]]:
 		"""
 			Static method. Partition a collection of abstract file paths based on the common base paths shared between members of the collection, such that each abstract file path can only belong to one partition.
 
@@ -164,7 +164,7 @@ class UPath():
 		for path in paths[1:]:
 			partition_found = False
 			for partition in partition_map:
-				candidate_common = UPath.common(partition, path)
+				candidate_common = UPath.find_common(partition, path)
 				if candidate_common is not None and bool(candidate_common):
 					partition_found = True
 					if candidate_common != partition:
@@ -178,7 +178,7 @@ class UPath():
 		return partition_map
 
 	@staticmethod
-	def joinstr(paths: Sequence[UPathLike], delim: str="") -> str:
+	def join_str(paths: Sequence[UPathLike], delim: str="") -> str:
 		"""
 			Static method. Convenience method for joining a list of abstract file paths using the delimeter, if given, and return it as a string.
 		"""
@@ -287,7 +287,7 @@ class UPath():
 		if not isinstance(base, UPath):
 			base = UPath(base)
 
-		common_path = UPath.common(self, base)
+		common_path = UPath.find_common(self, base)
 		if common_path is not None and common_path == base:
 			base_length = len(base._parts)
 			new_path = UPath()
