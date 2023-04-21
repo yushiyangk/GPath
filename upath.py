@@ -301,7 +301,7 @@ class UPath():
 
 	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
-			Add a relative UPath to `self` and return the new UPath. Return `None` if `other` is not a relative path, or if `other` and `self` have different `device`.
+			Add a relative UPath to `self` and return the new UPath. Return an unchagned copy of `self` if `other` is not a relative path, or if `other` and `self` have different `device`.
 
 			Evoked by `upath1 + upath2`
 
@@ -310,9 +310,9 @@ class UPath():
 		other = UPath(other)
 
 		if other.root:
-			return None
+			return UPath(self)
 		elif other.device != '' and self.device != other.device:
-			return None
+			return UPath(self)
 		else:
 			new_path = UPath(self)
 			new_parts = [part for part in self.parts]
