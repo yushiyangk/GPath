@@ -215,7 +215,7 @@ class UPath():
 		self._validate()
 		base_parts = []
 		if self._root:
-			base_parts = [self._device]
+			base_parts = ['' if self._device is None else self._device]
 		elif self._dotdot > 0:
 			base_parts = [UPath.parent for i in range(self._dotdot)]
 		return base_parts + self._parts
