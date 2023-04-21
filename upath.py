@@ -1,7 +1,12 @@
-import os
-from typing import Final, Optional, Union, ClassVar
+from __future__ import annotations
 
-FOLDER_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
+import os
+from collections.abc import Sequence
+from typing import Final, ClassVar
+
+PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
+
+PathLike = str | os.PathLike
 
 class UPath():
 	"""
@@ -12,9 +17,9 @@ class UPath():
 		Instance attributes
 		-------------------
 		- `path: str`
-		   path relative to either an anonymous parent directory (e.g. '../..', represented by `dotdot`) or to a filesystem root (represented by `root`), without any trailing folder separator
-		- `drive: str`
-		   drive name of the path, or an empty string if no drive name is associated with the path (e.g. Linux file paths); usually empty when `root` is False
+		   path relative to either an anonymous parent directory (e.g. '../..', represented by `dotdot`) or to a filesystem root (represented by `root`), without any trailing separator for folders
+		- `device: str`
+		   device name of the path (e.g. drive letter on Windows), or an empty string if no device is associated with the path (e.g. Linux file paths); usually empty when `root` is False
 		- `root: bool`
 		   whether the path is relative to the filesystem root; should only be True when `dotdot` is 0
 		- `dotdot: int`
@@ -23,30 +28,31 @@ class UPath():
 		Class attributes
 		----------------
 		- `separator: str`
-		   folder separator string used in the `path` attribute of UPath instances, meaningful to the local operating system
+		   path separator string used in the `path` attribute of UPath instances, meaningful to the local operating system
 	"""
-	__slots__ = ('path', 'drive', 'root', 'dotdot')
 
-	separator: ClassVar = FOLDER_SEPARATOR
+	__slots__ = ('path', 'device', 'root', 'dotdot')
 
-	def __init__(self, path: Optional[Union[str, os.PathLike, UPath]]='') -> None:
+	separator: ClassVar = PATH_SEPARATOR
+
+	def __init__(self, path: PathLike | UPath | None='') -> None:
 		"""
-			Initialise the normalised abstract file path, possibly by copying an existing UPath object.
+			Initialise a normalised abstract file path, possibly by copying an existing UPath object.
 
 			Evoked by `UPath(path)` and mutates `self`
 
 			Parameters:
-			- `path: Optional[Union[str, os.PathLike, UPath]]`
-			   string or path-like object representing a (unnormalised) file path, or a UPath object to be copied
+			- `path: PathLike | UPath | None`
+			   path-like object representing a (unnormalised) file path, or a UPath object to be copied
 		"""
 		self.path: str = ''  # root- or dotdot- relative path
-		self.drive: str = ''
+		self.device: str = ''
 		self.root: bool = False
 		self.dotdot: int = 0
 		if path is not None and path != '':
 			if isinstance(path, UPath):
 				self.path = path.path
-				self.drive = path.drive
+				self.device = path.device
 				self.root = path.root
 				self.dotdot = path.dotdot
 			else:
@@ -55,7 +61,7 @@ class UPath():
 
 				if path == '.':
 					path = ''
-				(self.drive, path) = os.path.splitdrive(path)
+				(self.device, path) = os.path.splitdrive(path)
 				self.root = os.path.isabs(path)
 				parts = path.split(os.sep)
 				if parts[0] == '':  # First element is '' if root
@@ -67,9 +73,9 @@ class UPath():
 				self.path = (UPath.separator).join(parts)
 				self.dotdot = dotdot
 
-	def __add__(self, other: UPathLike) -> Union[UPath, None]:
+	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
-			Add a relative UPath to `self` and return the new UPath. Return None if `other` is not a relative path, or if `other` and `self` have different `drive`.
+			Add a relative UPath to `self` and return the new UPath. Return `None` if `other` is not a relative path, or if `other` and `self` have different `device`.
 
 			Evoked by `upath1 + upath2`
 		"""
@@ -77,7 +83,7 @@ class UPath():
 
 		if other.root:
 			return None
-		elif other.drive != '' and self.drive != other.drive:
+		elif other.device != '' and self.device != other.device:
 			return None
 		else:
 			newpath = UPath(self)
@@ -94,11 +100,11 @@ class UPath():
 			newpath.path = (UPath.separator).join(parts)
 			return newpath
 
-	def split(self) -> List[str]:
+	def split(self) -> list[str]:
 		"""
 			Split the UPath into a list of strings representing each part of the abstract file path.
 
-			If the path is relative to a filesystem root, the first item in the returned list will contain the drive name if it exists, or an empty string otherwise. This allows the full absolute path to be reconsistuted using `(UPath.separator).join(myupath.split())`.
+			If the path is relative to a filesystem root, the first item in the returned list will contain the device name if it exists, or an empty string otherwise. This allows the full absolute path to be reconstructed using `UPath.separator.join(myupath.split())`.
 
 			If the path is relative to an anonymous ancestor directory (e.g. '../..'), the first item in the returned list will consist of the entire relative parent path (i.e. may consist of more than one '..' part) pointing to the highest-known-level ancestor directory.
 
@@ -114,7 +120,7 @@ class UPath():
 		"""
 		baseparts = []
 		if self.root:
-			baseparts = [self.drive]
+			baseparts = [self.device]
 		elif self.dotdot != 0:
 			if self.dotdot < 0:
 				raise ValueError
@@ -150,7 +156,7 @@ class UPath():
 			return None
 
 	@staticmethod
-	def common(path1: UPathLike, path2: UPathLike) -> Optional[UPath]:
+	def common(path1: UPathLike, path2: UPathLike) -> UPath | None:
 		"""
 			Static method. Find the longest common base path shared by two abstract file paths.
 
@@ -162,7 +168,7 @@ class UPath():
 			Returns
 			-------
 			- `UPath`
-			   longest common base path, which may be empty, if `path1` and `path2` are relative to the same filesystem root or to the same level of parent directories
+			   longest common base path, which may be empty if `path1` and `path2` are relative to the same filesystem root or to the same level of parent directories
 			- `None`
 			   otherwise
 		"""
@@ -171,12 +177,12 @@ class UPath():
 		if not isinstance(path2, UPath):
 			path2 = UPath(path2)
 
-		if path1.drive == path2.drive:
+		if path1.device == path2.device:
 			if path1.root and path2.root:
 				cpath = UPath()
 				cpath.path = os.path.commonpath([path1.path, path2.path])
 				cpath.root = True
-				cpath.drive = path1.drive
+				cpath.device = path1.device
 				return cpath
 			elif not path1.root and not path2.root and path1.dotdot == path2.dotdot:
 				cpath = UPath()
@@ -189,7 +195,7 @@ class UPath():
 			return None
 
 	@staticmethod
-	def partitions(paths: Sequence[UPathLike]) -> List[UPath]:
+	def partitions(paths: Sequence[UPathLike]) -> list[UPath]:
 		"""
 			Static method. Partition a list of abstract file paths based on the common base paths between members of the list, such that each abstract file path can only belong to one partition. Return a list of common base paths corresponding to these partitions.
 
@@ -245,9 +251,9 @@ class UPath():
 			Evoke as `str(myrange)`
 		"""
 		if self.root:
-			return os.path.join(self.drive, os.sep, self.path).replace(os.sep, UPath.separator)
+			return os.path.join(self.device, os.sep, self.path).replace(os.sep, UPath.separator)
 		else:
-			return os.path.join(self.drive, *([os.pardir] * self.dotdot), self.path).replace(os.sep, UPath.separator)
+			return os.path.join(self.device, *([os.pardir] * self.dotdot), self.path).replace(os.sep, UPath.separator)
 
 	def __repr__(self) -> str:
 		"""
@@ -268,4 +274,4 @@ class UPath():
 		else:
 			return False
 
-UPathLike = Union[UPath, str, os.PathLike]
+UPathLike = UPath | PathLike
