@@ -47,7 +47,7 @@ class UPath():
 				if `other` is an invalid UPath
 		"""
 		self._parts: list[str] = []  # root- or dotdot- relative path
-		self._device: str = ''
+		self._device: str | None = None
 		self._root: bool = False
 		self._dotdot: int = 0
 		if path is not None and path != '':
@@ -184,7 +184,7 @@ class UPath():
 		"""
 		return delim.join(str(path) for path in paths)
 
-	def get_device(self) -> str:
+	def get_device(self) -> str | None:
 		"""
 			Get the device name of the path.
 		"""
@@ -311,7 +311,7 @@ class UPath():
 
 		if other._root:
 			return UPath(self)
-		elif other._device != '' and self._device != other._device:
+		elif other._device != None and self._device != other._device:
 			return UPath(self)
 		else:
 			new_path = UPath(self)
