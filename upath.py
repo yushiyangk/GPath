@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import os
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterator, Sequence
 from typing import Any, Final, ClassVar
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
@@ -338,13 +338,25 @@ class UPath():
 		"""
 		return f"UPath({repr(str(self))})"
 
+	def __len__(self) -> int:
+		"""
+			Get the number of relative path components, excluding any device name or parent directories.
+		"""
+		return len(self._parts)
+
 	def __getitem__(self, n: int) -> str:
 		"""
-			Get the 0-indexed path component, excluding any device name or any parent directories.
+			Get the 0-indexed relative path component, excluding any device name or parent directories.
 
 			Evoke as `myupath[n]`
 		"""
 		return self._parts[n]
+
+	def __iter__(self) -> Iterator[str]:
+		"""
+			Get an iterator through the relative path components, excluding any device name or parent directories.
+		"""
+		return iter(self._parts)
 
 	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
