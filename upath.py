@@ -46,7 +46,7 @@ class UPath():
 				`ValueError`
 				if `other` is an invalid UPath
 		"""
-		self._parts: list[str] = []  # root- or dotdot- relative path
+		self._parts: tuple[str, ...] = ()  # root- or dotdot- relative path
 		self._device: str | None = None
 		self._root: bool = False
 		self._dotdot: int = 0
@@ -75,7 +75,7 @@ class UPath():
 				dotdot = 0
 				while parts[dotdot] == UPath.parent:  # UPath.parent == '..' usually
 					dotdot += 1
-				self._parts = parts[dotdot:]
+				self._parts = tuple(parts[dotdot:])
 				self._dotdot = dotdot
 
 	@staticmethod
@@ -114,11 +114,12 @@ class UPath():
 		if path1._root != path2._root:
 			return None
 
+		parts = []
 		if path1._root:
 			common_path = UPath()
 			for part1, part2 in zip(path1._parts, path2._parts):
 				if part1 == part2:
-					common_path._parts.append(part1)
+					parts.append(part1)
 			common_path._root = True
 			common_path._device = path1._device
 			# dotdot must be 0
@@ -128,8 +129,9 @@ class UPath():
 			common_path = UPath()
 			for part1, part2 in zip(path1._parts, path2._parts):
 				if part1 == part2:
-					common_path._parts.append(part1)
+					parts.append(part1)
 			common_path._dotdot = path1._dotdot
+		common_path._parts = tuple(parts)
 
 		return common_path
 
@@ -218,7 +220,7 @@ class UPath():
 			base_parts = ['' if self._device is None else self._device]
 		elif self._dotdot > 0:
 			base_parts = [UPath.parent for i in range(self._dotdot)]
-		return base_parts + self._parts
+		return base_parts + list(self._parts)
 
 	def get_relative_parts(self) -> list[str]:
 		"""
@@ -246,7 +248,7 @@ class UPath():
 		base_parts = []
 		if self._dotdot > 0:
 			base_parts = [UPath.parent for i in range(self._dotdot)]
-		return base_parts + self._parts
+		return base_parts + list(self._parts)
 
 	def get_named_parts(self) -> list[str]:
 		"""
@@ -261,7 +263,7 @@ class UPath():
 			  `List[str]`
 			   list of named components of the path
 		"""
-		return self._parts
+		return list(self._parts)
 
 	def subpath(self, base: UPathLike) -> UPath | None:
 		"""
@@ -296,11 +298,19 @@ class UPath():
 		else:
 			return None
 
+	def __hash__(self) -> int:
+		"""
+			Calculate hash of the path.
+
+			Evoke as `hash(myupath)`
+		"""
+		return hash((tuple(self._parts), self._device, self._root, self._dotdot))
+
 	def __eq__(self, other: Any) -> bool:
 		"""
 			Check if two abstract file paths are completely identical. Always return False if `other` is not a UPath object.
 
-			Evoke as `myrange == other`
+			Evoke as `upath1 == upath2`
 
 			Raises `ValueError` if either UPath is invalid
 		"""
@@ -313,7 +323,7 @@ class UPath():
 		"""
 			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Root-relative paths are greater than ancestor-relative paths, which are greater than all other paths. Between two ancestor-relative paths, the path with more ancestor components is considered greater.
 
-			Evoke as `myrange < other`
+			Evoke as `upath1 < upath2`
 
 			Raises `ValueError` if either UPath is invalid
 		"""
@@ -322,7 +332,7 @@ class UPath():
 			other._validate
 		else:
 			other = UPath(other)
-		return ([self._root, self._device, self._dotdot] + self._parts) > ([other._root, other._device, other._dotdot] + other._parts)
+		return ((self._root, self._device, self._dotdot) + self._parts) > ((other._root, other._device, other._dotdot) + other._parts)
 
 	def __add__(self, other: UPathLike) -> UPath | None:
 		"""
@@ -354,7 +364,7 @@ class UPath():
 					pass  # parent of directory of root is still root
 
 			new_parts.extend(other._parts)
-			new_path._parts = new_parts
+			new_path._parts = tuple(new_parts)
 			return new_path
 
 	def __bool__(self) -> bool:
