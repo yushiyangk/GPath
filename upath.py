@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import os
+from collections import deque
 from collections.abc import Collection, Iterator, Sequence
 from typing import Any, Final, ClassVar
 
@@ -254,11 +255,11 @@ class UPath():
 
 	def subpath(self, base: UPathLike) -> UPath | None:
 		"""
-			Find the relative subpath path from `base` to `self` if `base` contains `self`.
+			Find the relative subpath from `base` to `self` if `base` contains `self`.
 
 			Parameters
 			----------
-			- `base: UPathLike`
+			- `base: UPath | str | os.PathLike`
 			   the base path against which `self` is compared
 
 			Returns
@@ -367,7 +368,7 @@ class UPath():
 
 			Evoked by `other in myupath`
 
-			Raises `ValueError` if either `self` or `other` is an invalid UPath
+			Raises `ValueError` if either UPath is invalid
 		"""
 		if not isinstance(other, UPath):
 			other = UPath(other)
@@ -375,16 +376,14 @@ class UPath():
 		common_path = UPath.find_common(self, other)
 		return common_path is not None and common_path == self
 
-
-	def __add__(self, other: UPathLike) -> UPath | None:
+	def __add__(self, other: UPathLike) -> UPath:
 		"""
-			Add a relative UPath to `self` and return the new UPath. Return an unchagned copy of `self` if `other` is not a relative path, or if `other` and `self` have different `device`.
+			Add (append) `other` to the end of `self` if `other` is a relative path, and return a new copy. If `other` is relative to the filesystem root, or if `other` has a different device name, add nothing and return a copy of `self`.
 
 			Evoked by `upath1 + upath2`
 
 			Raises `ValueError` if either UPath is invalid
 		"""
-		self._validate()
 		if isinstance(other, UPath):
 			other._validate
 		else:
@@ -408,6 +407,64 @@ class UPath():
 			new_parts.extend(other._parts)
 			new_path._parts = tuple(new_parts)
 			return new_path
+
+	def __sub__(self, n: int) -> UPath:
+		"""
+			Remove `n` components from the end of the path and return a new copy.
+
+			Evoked by `myupath - n`
+
+			Raises `ValueError` if `self` is an invalid UPath
+		"""
+		new_path = UPath(self)
+		new_parts = [part for part in self._parts]
+		for i in range(n):
+			if len(new_parts) > 0:
+				new_parts.pop()
+			elif not new_path._root:
+				new_path._dotdot += 1
+			else:
+				pass  # removing components from root should still give root
+		new_path._parts = tuple(new_parts)
+		return new_path
+
+	def __mul__(self, n: int) -> UPath:
+		"""
+			Duplicate the relative path in `self` `n` times and append them to `self`. If the path is relative to filesystem root, only the relative component of the path will be duplicated.
+
+			Evoked by `mupath * n`
+
+			Raises `ValueError` if `self` is an invalid UPath
+		"""
+		new_path = UPath(self)
+		new_path._parts = self._parts * n
+		return new_path
+
+	def __lshift__(self, n: int) -> UPath:
+		"""
+			Imagine moving the current directory `n` steps up the filesystem tree. If the path is relative to an ancestor directory, remove up to `n` levels of parent directories from the start of the path and return a copy. If the path is not relative to an ancestor directory, return a copy of `self` unchanged.
+
+			Evoked by `myupath << n`
+
+			Raises `ValueError` if `self` is an invalid UPath
+		"""
+		new_path = UPath(self)
+		if not new_path._root:
+			new_path._dotdot = max(new_path._dotdot - n, 0)
+		return new_path
+
+	def __rshift__(self, n: int) -> UPath:
+		"""
+			Imagine moving the current directory `n` steps down the filesystem tree. If the path is not relative to filesystem root, add `n` levels of parent directoreis to the start of the path and return a copy. If the path is relative to filesystem root, return a copy of `self` unchanged.
+
+			Evoked by `myupath >> n`
+
+			Raises `ValueError` if `self` is an invalid UPath
+		"""
+		new_path = UPath(self)
+		if not new_path._root:
+			new_path._dotdot += n
+		return new_path
 
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
