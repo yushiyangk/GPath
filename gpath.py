@@ -31,7 +31,7 @@ class GPath():
 	separator: ClassVar = PATH_SEPARATOR
 	parent: ClassVar = PATH_PARENT
 
-	def __init__(self, path: PathLike | GPath | None='') -> None:
+	def __init__(self, path: PathLike | GPath | None='', device: str | None=None) -> None:
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -41,6 +41,8 @@ class GPath():
 			----------
 			- `path: PathLike | GPath | None`
 			   path-like object representing a (unnormalised) file path, or a GPath object to be copied
+			- `device: str | None=None`
+			   device name to be used instead of what is parsed from `path`
 
 			Raises
 			------
@@ -78,6 +80,9 @@ class GPath():
 					dotdot += 1
 				self._parts = tuple(parts[dotdot:])
 				self._dotdot = dotdot
+
+		if device is not None:
+			self._device = device
 
 	@staticmethod
 	def from_parts(parts: Sequence[str]) -> GPath:
@@ -406,7 +411,10 @@ class GPath():
 
 			Evoked by `repr(mygpath)`
 		"""
-		return f"GPath({repr(str(self))})"
+		if not self._root and self._device != "":
+			return f"GPath({repr(str(self))}, device={repr(self._device)})"
+		else:
+			return f"GPath({repr(str(self))})"
 
 	def __len__(self) -> int:
 		"""
