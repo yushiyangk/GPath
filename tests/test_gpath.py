@@ -24,6 +24,7 @@ class TestGPath:
 	@pytest.mark.parametrize(
 		('path', 'expected_parts', 'expected_device', 'expected_root', 'expected_dotdot'),
 		[
+			(None, tuple(), "", False, 0),
 			("", tuple(), "", False, 0),
 			(".", tuple(), "", False, 0),
 			("./", tuple(), "", False, 0),
@@ -42,7 +43,7 @@ class TestGPath:
 		]
 	)
 	def test_constructor_root(self,
-		path: str,
+		path: str | None,
 		expected_parts: tuple[str, ...],
 		expected_device: str,
 		expected_root: bool,
@@ -51,7 +52,11 @@ class TestGPath:
 		"""
 			Test constructor `__init__()` as well as getters `is_root()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`, for paths requiring special treatment.
 		"""
-		gpath = GPath(path)
+		if path is None:
+			gpath = GPath()
+		else:
+			gpath = GPath(path)
+
 		if expected_root and expected_dotdot > 0:
 			expected_dotdot = 0
 
@@ -171,7 +176,7 @@ class TestGPath:
 			("/", ["", ""]),
 			("/a", ["", "a"]),
 			("/a/b", ["", "a", "b"]),
-			("", []),
+			("", ["."]),
 			("a", ["a"]),
 			("a/b", ["a", "b"]),
 			("..", [".."]),
@@ -378,7 +383,7 @@ class TestGPath:
 		('path'),
 		[
 			("/"),
-			(""),
+			("."),
 			(".."),
 			("../.."),
 			("C:/"),

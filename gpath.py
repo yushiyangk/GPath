@@ -6,6 +6,7 @@ from collections.abc import Collection, Iterator, Sequence
 from typing import Any, Final, ClassVar
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
+PATH_CURRENT: Final = os.curdir
 PATH_PARENT: Final = os.pardir
 
 PathLike = str | os.PathLike
@@ -28,9 +29,10 @@ class GPath():
 	__slots__ = ('_parts', '_device', '_root', '_dotdot')
 
 	separator: ClassVar = PATH_SEPARATOR
+	current: ClassVar = PATH_CURRENT
 	parent: ClassVar = PATH_PARENT
 
-	def __init__(self, path: PathLike | GPath | None='') -> None:
+	def __init__(self, path: PathLike | GPath | None="") -> None:
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -50,7 +52,7 @@ class GPath():
 		self._device: str = ""
 		self._root: bool = False
 		self._dotdot: int = 0
-		if path is not None and path != '':
+		if path is not None and path != "":
 			if isinstance(path, GPath):
 				path._validate()
 				self._parts = path._parts
@@ -61,15 +63,15 @@ class GPath():
 				# Remove redundant '.'s and '..'s and use OS-default path separators
 				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
 
-				if path == '.':
-					path = ''
+				if path == os.curdir:
+					path = ""
 				(self._device, path) = os.path.splitdrive(path)
 				self._root = os.path.isabs(path)
 
 				parts = path.split(os.sep)  # os.path.normpath previously rewrote the path to use os.sep
-				if len(parts) > 0 and parts[0] == '':  # First element is '' if root
+				if len(parts) > 0 and parts[0] == "":  # First element is '' if root
 					parts = parts[1:]
-				if len(parts) > 0 and parts[-1] == '':  # Last element is '' if there is a trailing slash, which should only happen when the path is exactly root ('/')
+				if len(parts) > 0 and parts[-1] == "":  # Last element is '' if there is a trailing slash, which should only happen when the path is exactly root ('/')
 					parts = parts[:-1]
 
 				dotdot = 0
@@ -225,6 +227,8 @@ class GPath():
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
+			Evoked by either `GPath.join([gpath1, gpath2, ...])` or `GPath.join(gpath1, gpath2, ...)`
+
 			Parameters
 			----------
 			   `paths: Collection[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
@@ -282,17 +286,21 @@ class GPath():
 			  `list[str]`
 			   list of path components
 		"""
-		base_parts = []
-		if self._root:
-			if root:
-				if len(self._parts) == 0:
-					return [self._device, ""]
+		if root and self._root:
+			if len(self._parts) == 0:
+				return [self._device, ""]
 
-				base_parts = [self._device]
+			base_parts = [self._device]
 
-		elif self._dotdot > 0:
-			if parent:
-				base_parts = self.get_parent_parts()
+		elif parent and self._dotdot > 0:
+			base_parts = self.get_parent_parts()
+
+		else:
+			if len(self._parts) == 0:
+				# bool(self) == False
+				return [GPath.current]
+
+			base_parts = []
 
 		return base_parts + list(self._parts)
 
@@ -468,7 +476,10 @@ class GPath():
 
 			Evoked by `repr(mygpath)`
 		"""
-		return f"GPath({repr(str(self))})"
+		if bool(self):
+			return f"GPath({repr(str(self))})"
+		else:
+			return f"GPath({repr('')})"
 
 	def __len__(self) -> int:
 		"""
