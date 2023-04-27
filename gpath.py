@@ -328,9 +328,11 @@ class GPath():
 		"""
 		return self._root
 
-	def subpath(self, base: GPathLike) -> GPath | None:
+	def subpath_from(self, base: GPathLike) -> GPath | None:
 		"""
-			Find the relative subpath from `base` to `self` if `base` contains `self`, or return None otherwise.
+			Find the relative subpath from `base` to `self` if possible and if `base` contains `self`, or return None otherwise.
+
+			None will be returned if there are components with names that cannot be known in the subpath, for instance when `self` and `base` base are relative paths with `base` being relative to a parent directory of a higher level than `self`.
 
 			Parameters
 			----------
@@ -347,18 +349,79 @@ class GPath():
 			Raises
 			------
 				`ValueError`
-				if either `self` or `other` is an invalid GPath
+				if either `self` or `base` is an invalid GPath
 		"""
 		if not isinstance(base, GPath):
 			base = GPath(base)
 
-		if self in base:
+		if GPath.find_common(self, base, common_current=True, common_parent=False) is not None and self in base:
+			# If self._dotdot > base._dotdot, self is not in base, whereas if self._dotdot < base._dotdot, path from base to self's parent cannot be known
 			base_length = len(base._parts)
 			new_path = GPath()
 			new_path._parts = self._parts[base_length:]  # () when self == base
 			return new_path
 		else:
 			return None
+
+	def relpath_from(self, origin: GPathLike) -> GPath | None:
+		"""
+			Find the relative path from `origin` to `self` if possible, or return None otherwise.
+
+			None will be returned if there are components with names that cannot be known in the relative path, for instance when `self` is a relative path while `origin` is an absolute path or a path that is relative to a parent directory of a higher level than `self`.
+
+			Parameters
+			----------
+			- `origin: GPath | str | os.PathLike`
+			   the origin path against which `self` is compared
+
+			Returns
+			-------
+			- `GPath`
+			   relative path from `origin` to `self`, which may be empty, if possible
+			- `None`
+			   otherwise
+
+			Raises
+			------
+				`ValueError`
+				if either `self` or `origin` is an invalid GPath
+		"""
+		self._validate()
+		if not isinstance(origin, GPath):
+			origin = GPath(origin)
+
+		if origin._root:
+			common = GPath.find_common(self, origin)
+			if common is None:
+				return None
+
+			new_path = GPath()
+			new_path._dotdot = len(origin) - len(common)
+			new_path._parts = self._parts[len(common):]
+			return new_path
+
+		else:
+			common = GPath.find_common(self, origin, common_current=True, common_parent=True)
+			if common is None:
+				return None
+			if common._dotdot > self._dotdot:
+				return None  # Path from common to self's parent cannot be known
+
+			# common._dotdot == self._dotdot
+			# origin._dotdot <= self._dotdot
+
+			new_path = GPath()
+			if len(common) == 0:
+				if origin._dotdot == self._dotdot:
+					new_path._dotdot = len(origin)
+				else:
+					new_path._dotdot = (common._dotdot - origin._dotdot) + len(origin)
+				new_path._parts = self._parts
+			else:
+				new_path._dotdot = len(origin) - len(common)
+				new_path._parts = self._parts[len(common):]
+
+			return new_path
 
 	def __hash__(self) -> int:
 		"""
