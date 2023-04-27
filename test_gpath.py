@@ -1,4 +1,3 @@
-from os import truncate
 import pytest
 
 from gpath import GPath
@@ -43,7 +42,6 @@ class TestGPath:
 		]
 	)
 	@pytest.mark.parametrize('device', [None, "dev"])
-	@pytest.mark.dependency(name='test_constructor_root')
 	def test_constructor_root(self,
 		path: str,
 		device: str | None,
@@ -132,7 +130,6 @@ class TestGPath:
 		]
 	)
 	@pytest.mark.parametrize('device', [None, "dev"])
-	@pytest.mark.dependency(name='test_constructor', depends=['test_constructor_root'])
 	def test_constructor(self,
 		path: str,
 		path_prefix: str,
@@ -203,7 +200,6 @@ class TestGPath:
 		],
 		indirect=['gpath1']
 	)
-	@pytest.mark.dependency(depends=['test_constructor'])
 	def test_get_parts_from_parts(self, gpath1: GPath, parts: list[str]):
 		"""
 			Test `get_parts()` and `from_parts()`.
@@ -252,7 +248,6 @@ class TestGPath:
 			("C:/Windows", "C:/Windows/System32", False),
 		]
 	)
-	@pytest.mark.dependency(name='test_eq_hash', depends=['test_constructor'])
 	def test_eq_hash(self, path1: str, path2: str, expected: bool):
 		"""
 			Test `__eq__()` and `__hash__()`.
@@ -335,7 +330,6 @@ class TestGPath:
 		],
 		indirect=['gpath1', 'gpath2']
 	)
-	@pytest.mark.dependency(depends=['test_constructor'])
 	def test_gt_lt_gte_lte(self, gpath1: GPath, gpath2: GPath, gt_expected: bool, eq_expected: bool):
 		"""
 			Test `__gt__()`, `__lt__()`, `__gte__()` and `__lte__()`, which are automatically generated based on the definition of `__gt__()` (and `__eq__()`).
@@ -384,7 +378,6 @@ class TestGPath:
 		],
 		indirect=['gpath1']
 	)
-	@pytest.mark.dependency(depends=['test_constructor'])
 	def test_bool(self, gpath1: GPath, expected: bool):
 		"""
 			Test `__bool__()`.
@@ -413,7 +406,6 @@ class TestGPath:
 			("C:/a/b"),
 		]
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_str_repr(self, path: str):
 		"""
 			Test `__str__()` and `__repre__()`.
@@ -446,7 +438,6 @@ class TestGPath:
 		],
 		indirect=['gpath1']
 	)
-	@pytest.mark.dependency(depends=['test_constructor'])
 	def test_len(self, gpath1: GPath, expected: int):
 		"""
 			Test `__len__()`.
@@ -485,7 +476,6 @@ class TestGPath:
 			slice(0, 1, 2), slice(0, 2, 2), slice(0, -1, 2),
 		]
 	)
-	@pytest.mark.dependency(depends=['test_constructor'])
 	def test_getitem_iter(self, gpath1: GPath, index: int | slice, expected_list: list[str]):
 		"""
 			Test `__getitem__()`, for both indexing and slicing, and `__iter__()`.
@@ -554,7 +544,6 @@ class TestGPath:
 		],
 		indirect=['gpath1', 'gpath2']
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_contains(self, gpath1: GPath, gpath2: GPath, expected: bool):
 		"""
 			Test `__contains__()`.
@@ -636,7 +625,6 @@ class TestGPath:
 		],
 		indirect=['gpath1', 'gpath2']
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_subpath_relpath(self, gpath1: GPath, gpath2: GPath, subpath_expected: str, relpath_expected: str | GPath):
 		"""
 			Test `subpath_from()` and `relpath_from()`.
@@ -726,7 +714,6 @@ class TestGPath:
 		],
 		indirect=True
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_add(self, gpath1: GPath, gpath2: GPath, expected_gpath: GPath):
 		"""
 			Test `__add__()`.
@@ -768,7 +755,6 @@ class TestGPath:
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_sub(self, gpath1: GPath, sub_value: int, expected_gpath: GPath):
 		"""
 			Test `__sub__()`.
@@ -783,7 +769,6 @@ class TestGPath:
 		indirect=['gpath1']
 	)
 	@pytest.mark.parametrize(('sub_value'), [-1])
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_sub_negative(self, gpath1: GPath, sub_value: int):
 		"""
 			Test `__sub__()` with negative inputs which should give errors.
@@ -832,7 +817,6 @@ class TestGPath:
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_mul(self, gpath1: GPath, mul_value: int, expected_gpath: GPath):
 		"""
 			Test `__mul__()`.
@@ -847,7 +831,6 @@ class TestGPath:
 		indirect=['gpath1']
 	)
 	@pytest.mark.parametrize(('mul_value'), [-1, -2])
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_mul_negative(self, gpath1: GPath, mul_value: int):
 		"""
 			Test `__mul__()` with negative inputs which should give errors.
@@ -890,7 +873,6 @@ class TestGPath:
 		],
 		indirect=['gpath1']
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash'])
 	def test_lshift_rshift(self, gpath1: GPath, shift_value: int, lshift_expected: str, rshift_expected: str):
 		"""
 			Test `__lshift__()` and `__rshift__()`.
@@ -957,7 +939,6 @@ class TestGPath:
 			("C:/a", "C:/b", "C:/", "C:/", "C:/", "C:/"),
 		]
 	)
-	@pytest.mark.dependency(name='test_find_common', depends=['test_eq_hash'])
 	def test_find_common(self,
 		path1: str,
 		path2: str,
@@ -1168,7 +1149,6 @@ class TestGPath:
 			}),
 		]
 	)
-	@pytest.mark.dependency(depends=['test_eq_hash', 'test_find_common'])
 	def test_partition(self, paths: list[str], common_current: bool, common_parent: bool, expected: dict[GPath, set[GPath]]):
 		"""
 			Test `partition()`.
@@ -1236,7 +1216,6 @@ class TestGPath:
 		],
 		indirect=['expected_gpath']
 	)
-	@pytest.mark.dependency(name='test_find_common', depends=['test_eq_hash'])
 	def test_join(self, paths: list[str], expected_gpath: GPath):
 		"""
 			Test `join()`.

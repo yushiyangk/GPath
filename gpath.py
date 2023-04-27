@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-from math import comb
 import os
 from collections.abc import Collection, Iterator, Sequence
 from typing import Any, Final, ClassVar
