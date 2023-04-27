@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+from math import comb
 import os
 from collections.abc import Collection, Iterator, Sequence
 from typing import Any, Final, ClassVar
@@ -13,16 +14,16 @@ PathLike = str | os.PathLike
 @functools.total_ordering
 class GPath():
 	"""
-		A normalised abstract file path with no dependency on the layout of the local filesystem or, if different, the source filesystem that generated the path representation.
+		A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.
 
 		The path can be manipulated before being rendered in a format that is meaningful to the local operating system.
 
 		Class attributes
 		----------------
 		- `separator: str`
-		   path separator that is meaningful to the local operating system
+		   path separator recognised by the local operating system
 		- `parent: str`
-		   path component indicating a parent directory that is meaningful to the local operating system; usually ".."
+		   path component that indicates a parent directory recognised by the local operating system; usually ".."
 	"""
 
 	__slots__ = ('_parts', '_device', '_root', '_dotdot')
@@ -32,9 +33,9 @@ class GPath():
 
 	def __init__(self, path: PathLike | GPath | None='') -> None:
 		"""
-			Initialise a normalised abstract file path, possibly by copying an existing GPath object.
+			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
-			Evoked by `GPath(path)` and mutates `self`
+			Evoked by `GPath(path)`
 
 			Parameters
 			----------
@@ -46,8 +47,8 @@ class GPath():
 				`ValueError`
 				if `other` is an invalid GPath
 		"""
-		self._parts: tuple[str, ...] = ()  # root- or dotdot- relative path
-		self._device: str | None = None
+		self._parts: tuple[str, ...] = tuple()  # root- or dotdot- relative path
+		self._device: str = ""
 		self._root: bool = False
 		self._dotdot: int = 0
 		if path is not None and path != '':
@@ -67,38 +68,46 @@ class GPath():
 				self._root = os.path.isabs(path)
 
 				parts = path.split(os.sep)  # os.path.normpath previously rewrote the path to use os.sep
-				if parts[0] == '':  # First element is '' if root
+				if len(parts) > 0 and parts[0] == '':  # First element is '' if root
 					parts = parts[1:]
-				if parts[-1] == '':  # Last element is '' if there is a trailing slash, which should only happen when the path is exactly root ('/')
+				if len(parts) > 0 and parts[-1] == '':  # Last element is '' if there is a trailing slash, which should only happen when the path is exactly root ('/')
 					parts = parts[:-1]
 
 				dotdot = 0
-				while parts[dotdot] == GPath.parent:  # GPath.parent == '..' usually
+				while dotdot < len(parts) and parts[dotdot] == GPath.parent:  # GPath.parent == '..' usually
 					dotdot += 1
 				self._parts = tuple(parts[dotdot:])
 				self._dotdot = dotdot
 
 	@staticmethod
-	def find_common(path1: GPathLike, path2: GPathLike) -> GPath | None:
+	def find_common(path1: GPathLike, path2: GPathLike, common_current: bool=True, common_parent: bool=False) -> GPath | None:
 		"""
-			Static method. Find the longest common base path shared by two abstract file paths.
+			Static method. Find the longest common base path shared by the two paths. Return None if the two paths do not share any base components, such as if they are not both relative paths or both absolute paths, or if they are rooted on different device names.
+
+			By default, two non-parent relative paths that do not share any named components are still considered to share a common base path, namely the imaginary current working directory (e.g. `GPath("some/rel/path")` and `GPath("another/rel/path")` will give `GPath("")` by default). To prevent this, set `common_current` to False, and None will be returned instead.
+
+			By default, two relative paths that are relative to different levels of parent directories are considered to not have a common base path, and will return None. To prevent this, set `common_parent` to True in order to return the highest level parent directory between the two paths (e.g. `("../relative/to/parent")` and `GPath("../../relative/to/grandparent")` will give `GPath("../..")` if `common_parent` is True). Note that `common_parent` implies `common_current`.
 
 			Parameters
 			----------
 			  `path1: GPath | str | os.PathLike`, `path2: GPath | str | os.PathLike`
-			   the abstract file paths to compare
+			   the paths to compare
+			  `common_current: bool=True`
+			   whether non-parent relative paths with no shared components should be considered to have a common base path; True by default
+			  `common_parent: bool=False`
+			   whether paths that are relative to different levels of parent directories should be considered to have a common base path; False by default
 
 			Returns
 			-------
 			- `GPath`
-			   longest common base path, which may be empty if `path1` and `path2` are relative to the same filesystem root or to the same level of parent directories
+			   longest common base path, which may be empty, if it exists based on the `common_current` and `common_parent` options
 			- `None`
 			   otherwise
 
 			Raises
 			------
-				`ValueError`
-				if either GPath is invalid
+			  `ValueError`
+			  if either GPath is invalid
 		"""
 		if isinstance(path1, GPath):
 			path1._validate()
@@ -114,6 +123,9 @@ class GPath():
 		if path1._root != path2._root:
 			return None
 
+		if common_parent:
+			common_current = True
+
 		parts = []
 		if path1._root:
 			common_path = GPath()
@@ -121,31 +133,46 @@ class GPath():
 				if part1 == part2:
 					parts.append(part1)
 			common_path._root = True
-			common_path._device = path1._device
 			# dotdot must be 0
 		else:
 			if path1._dotdot != path2._dotdot:
-				return None
-			common_path = GPath()
-			for part1, part2 in zip(path1._parts, path2._parts):
-				if part1 == part2:
-					parts.append(part1)
-			common_path._dotdot = path1._dotdot
+				if not common_parent:
+					return None
+
+				common_path = GPath()
+				common_path._dotdot = max(path1._dotdot, path2._dotdot)
+			else:
+				common_path = GPath()
+				common_path._dotdot = path1._dotdot
+				for part1, part2 in zip(path1._parts, path2._parts):
+					if part1 == part2:
+						parts.append(part1)
+
+		common_path._device = path1._device
 		common_path._parts = tuple(parts)
 
+		if not common_current and not bool(common_path):
+			if common_path != path1 or common_path != path2:
+				return None
 		return common_path
 
 	@staticmethod
-	def partition(paths: Collection[GPathLike]) -> dict[GPath, set[GPath]]:
+	def partition(*paths: Collection[GPathLike] | GPathLike, **find_common_kwargs: bool) -> dict[GPath, set[GPath]]:
 		"""
-			Static method. Partition a collection of abstract file paths based on the common base paths shared between members of the collection, such that each abstract file path can only belong to one partition.
+			Static method. Partition a collection of paths based on the common base paths shared between members of the collection, such that each path can only belong to one partition.
 
-			The partitioning logic is identical to that of `GPath.common(...)`. Paths that are relative to ancestor directories of different levels will be placed in distinct partitions.
+			The partitioning logic is identical to that of `GPath.common()`; by default, non-parent relative paths are always placed in the same partition, while paths that are relative to different levels of parent directories will be placed in separate partitions.
+
+			Evoked by either `GPath.partition([gpath1, gpath2, ...])` or `GPath.partition(gpath1, gpath2, ...)`
 
 			Parameters
 			----------
-			  `paths: Collection[GPath | str | os.PathLike]`
-			   the list of abstract file paths to partition
+			   `paths: Collection[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
+			   the paths to be partitioned, which can be given as either a list-like object or as variadic arguments
+			   `common_current: bool=True` (in `**find_common_kwargs`)
+			   whether non-parent  relative paths with no shared components should be considered to have a common base path (see `GPath.common()`); True by default
+			   `common_ancestor: bool=False` (in `**find_common_kwargs`)
+			   whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `GPath.common()`); False by default
 
 			Returns
 			-------
@@ -154,25 +181,31 @@ class GPath():
 
 			Raises
 			------
-				`ValueError`
-				if any of the GPath is invalid
+			  `ValueError`
+			  if any of the GPaths are invalid
 		"""
-		paths = [path if isinstance(path, GPath) else GPath(path) for path in paths]
+		flattened_paths: list[GPathLike] = []
+		for path_or_list in paths:
+			if isinstance(path_or_list, GPathLike):
+				flattened_paths.append(path_or_list)
+			else:
+				flattened_paths.extend(path_or_list)
+		gpaths = [path if isinstance(path, GPath) else GPath(path) for path in flattened_paths]
 
 		partition_map = {}
-		if len(paths) > 0:
-			partition_map[paths[0]] = set([paths[0]])
+		if len(gpaths) > 0:
+			partition_map[gpaths[0]] = set([gpaths[0]])
 
-		for path in paths[1:]:
+		for path in gpaths[1:]:
 			partition_found = False
 			for partition in partition_map:
-				candidate_common = GPath.find_common(partition, path)
-				if candidate_common is not None and bool(candidate_common):
+				candidate_common = GPath.find_common(partition, path, **find_common_kwargs)
+				if candidate_common is not None:
 					partition_found = True
 					if candidate_common != partition:
 						partition_map[candidate_common] = partition_map[partition]
 						del partition_map[partition]
-					partition_map[candidate_common].insert(path)
+					partition_map[candidate_common].add(path)
 					break
 			if not partition_found:
 				partition_map[path] = set([path])
@@ -180,65 +213,94 @@ class GPath():
 		return partition_map
 
 	@staticmethod
-	def join_str(paths: Sequence[GPathLike], delim: str="") -> str:
+	def join(*paths: Collection[GPathLike]) -> GPath:
 		"""
-			Static method. Convenience method for joining a list of abstract file paths using the delimeter, if given, and return it as a string.
+			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
+
+			Parameters
+			----------
+			   `paths: Collection[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
+			   the paths to be combined, which can be given as either a list-like object or as variadic arguments
+
+			Returns
+			-------
+			  `GPath`
+			   the combined path
+
+			Raises
+			------
+			  `ValueError`
+			  if any of the GPaths are invalid
 		"""
-		return delim.join(str(path) for path in paths)
+		flattened_paths: list[GPathLike] = []
+		for path_or_list in paths:
+			if isinstance(path_or_list, GPathLike):
+				flattened_paths.append(path_or_list)
+			else:
+				flattened_paths.extend(path_or_list)
 
-	def get_parts(self) -> list[str]:
+		if len(flattened_paths) == 0:
+			return GPath()
+
+		combined_path = flattened_paths[0]
+		if not isinstance(combined_path, GPath):
+			combined_path = GPath(combined_path)
+		for path in flattened_paths[1:]:
+			combined_path = combined_path + path
+
+		return combined_path
+
+	def get_parts(self, root: bool=True, parent: bool=True) -> list[str]:
 		"""
-			Get a list of strings representing each component of the abstract file path.
+			Get a list of strings representing each component of the path.
 
-			If the path is relative to a filesystem root, the first item in the returned list will contain the device name if it exists, or an empty string otherwise. This allows the full path to be reconstructed as a string using `GPath.separator.join(mygpath.get_parts())`.
+			By default, components representing the full path is returned in such a way that it can be reconstructed as a string using `GPath.separator.join(mygpath.get_parts())`. If it is an absolute path, the first item of the returned list will contain the device name if it exists, or be an empty string otherwise. If the path is exactly the filesystem root, the returned list will contain exactly two items, with the second being an empty string.
 
-			To get a list without information about any filesystem root, use `get_relative_parts()` instead.
+			If the path is relative to an parent directory (e.g. '../..'), each parent level will be given as a separate item in the returned list.
 
-			If the path is relative to an ancestor directory (e.g. '../..'), each parent level will be given as a separate item in the returned list.
+			To get a relative path without any components that indicate the filesystem root or device name, set `root` to False.
 
-			To get a list without information about any ancestor directory or filesystem root, use `get_name_parts()` instead.
+			To get a non-parent relative path without any components that indicate parent directories, set `parent` to False.
+
+			Parameters
+			----------
+			   `root: bool=True`
+			   whether to return components that indicate the filesystem root or device name; True by default
+			   `common_ancestor: bool=True`
+			   whether to return components that indicate parent directories; True by default
+
+			Returns
+			-------
+			  `list[str]`
+			   list of path components
 		"""
 		base_parts = []
 		if self._root:
-			base_parts = ['' if self._device is None else self._device]
+			if root:
+				if len(self._parts) == 0:
+					return [self._device, ""]
+
+				base_parts = [self._device]
+
 		elif self._dotdot > 0:
-			base_parts = [GPath.parent for i in range(self._dotdot)]
+			if parent:
+				base_parts = self.get_parent_parts()
+
 		return base_parts + list(self._parts)
-
-	def get_relative_parts(self) -> list[str]:
-		"""
-			Get a list of strings representing each relative component of the abstract file path.
-
-			The returned list will always represent a relative path, with no information about whether the path was relative to any filesystem root.
-
-			To get a list including the filesystem root, use `get_parts()` instead.
-
-			If the path is relative to an ancestor directory (e.g. '../..'), each parent level will be given as a separate item in the returned list.
-
-			To get a list without information about any ancestor directory as well, use `get_name_parts()` instead.
-		"""
-		base_parts = []
-		if self._dotdot > 0:
-			base_parts = [GPath.parent for i in range(self._dotdot)]
-		return base_parts + list(self._parts)
-
-	def get_named_parts(self) -> list[str]:
-		"""
-			Get a list of strings representing each named component of the abstract file path.
-
-			The returned list will always represent a descendent relative path, with no information about whether the path was relative to any filesystem root or to any ancestor directories.
-
-			To get a list of parts with more information, use `get_parts()` or `get_relative_parts()` instead.
-		"""
-		return list(self._parts)
 
 	def get_parent_parts(self) -> list[str]:
 		"""
-			Get a list of strings representing the ancestor directory that the path is relative to.
+			Get a list of strings representing the parent directory that the path is relative to, if any.
 
-			The returned list will one copy of `GPath.parent` for each parent level. If the path is not relative to an ancestor directory, the returned list will be empty.
+			The returned list will contain a copy of `GPath.parent` for each parent level. If the path is not relative to a parent directory, the returned list will be empty.
 		"""
 		return [GPath.parent for i in range(self._dotdot)]
+
+	def get_parent_level(self) -> int:
+		"""
+			Get the number of levels of parent directories that the path is relative to, if any.
+		"""
+		return self._dotdot
 
 	def get_device(self) -> str | None:
 		"""
@@ -254,7 +316,7 @@ class GPath():
 
 	def subpath(self, base: GPathLike) -> GPath | None:
 		"""
-			Find the relative subpath from `base` to `self` if `base` contains `self`.
+			Find the relative subpath from `base` to `self` if `base` contains `self`, or return None otherwise.
 
 			Parameters
 			----------
@@ -286,7 +348,7 @@ class GPath():
 
 	def __hash__(self) -> int:
 		"""
-			Calculate hash of the path.
+			Calculate hash of the GPath object.
 
 			Evoked by `hash(mygpath)`
 		"""
@@ -294,28 +356,28 @@ class GPath():
 
 	def __eq__(self, other: Any) -> bool:
 		"""
-			Check if two abstract file paths are completely identical. Always return False if `other` is not a GPath object.
+			Check if two GPaths are completely identical. Always return False if `other` is not a GPath object, even if it is a GPath-like object.
 
 			Evoked by `gpath1 == gpath2`
 		"""
-		if type(other) is GPath:
+		if isinstance(other, GPath):
 			return ((self._root, self._device, self._dotdot) + self._parts) == ((other._root, other._device, other._dotdot) + other._parts)
 		else:
 			return False
 
 	def __gt__(self, other: GPathLike) -> bool:
 		"""
-			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Root-relative paths are greater than ancestor-relative paths, which are greater than all other paths. Between two ancestor-relative paths, the path with more ancestor components is considered greater.
+			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Absolute paths come before (is less than) parent relative paths, which come before (is less than) non-parent relative paths. Between two parent relative paths, the path with the higher parent level is considered greater (comes later).
 
 			Evoked by `gpath1 < gpath2`
 		"""
 		if not isinstance(other, GPath):
 			other = GPath(other)
-		return ((self._root, self._device, self._dotdot) + self._parts) > ((other._root, other._device, other._dotdot) + other._parts)
+		return ((not self._root, self._device, -1 * self._dotdot) + self._parts) > ((not other._root, other._device, -1 * other._dotdot) + other._parts)
 
 	def __bool__(self) -> bool:
 		"""
-			Return True if `self` is relative to root or an ancestor directory, or if `self` has at least one named component; return False otherwise.
+			Return True if `self` is an absolute path, if `self` is relative to a parent directory, or if `self` has at least one named component; return False otherwise.
 
 			Evoked by `bool(mygpath)`
 		"""
@@ -323,7 +385,7 @@ class GPath():
 
 	def __str__(self) -> str:
 		"""
-			Return a string representation of the abstract file path that is meaningful to the local operating system.
+			Return a string representation of the path that is meaningful to the local operating system.
 
 			Evoked by `str(mygpath)`
 		"""
@@ -331,7 +393,7 @@ class GPath():
 
 	def __repr__(self) -> str:
 		"""
-			Return a string that can be printed as a source code representation of the abstract file path.
+			Return a string that can be printed as a source code representation of the GPath object.
 
 			Evoked by `repr(mygpath)`
 		"""
@@ -345,13 +407,16 @@ class GPath():
 		"""
 		return len(self._parts)
 
-	def __getitem__(self, n: int) -> str:
+	def __getitem__(self, index: int | slice) -> str | list[str]:
 		"""
-			Get the 0-indexed relative path component, excluding any device name or parent directories.
+			Get a 0-indexed relative path component, or a slice of path components, excluding any device name or parent directories.
 
-			Evoked by `mygpath[n]`
+			Evoked by `mygpath[n]`, `mygpath[start:end]`, `mygpath[start:end:step]`, etc.
 		"""
-		return self._parts[n]
+		if isinstance(index, int):
+			return self._parts[index]
+		elif isinstance(index, slice):
+			return list(self._parts[index])
 
 	def __iter__(self) -> Iterator[str]:
 		"""
@@ -372,12 +437,12 @@ class GPath():
 		if not isinstance(other, GPath):
 			other = GPath(other)
 
-		common_path = GPath.find_common(self, other)
+		common_path = GPath.find_common(self, other, common_current=True, common_parent=True)
 		return common_path is not None and common_path == self
 
 	def __add__(self, other: GPathLike) -> GPath:
 		"""
-			Add (append) `other` to the end of `self` if `other` is a relative path, and return a new copy. If `other` is relative to the filesystem root, or if `other` has a different device name, add nothing and return a copy of `self`.
+			Add (append) `other` to the end of `self` if `other` is a relative path, and return a new copy. If `other` is an absolute path, or if `other` has a different device name, add nothing and return a copy of `self`.
 
 			Evoked by `gpath1 + gpath2`
 
@@ -390,7 +455,7 @@ class GPath():
 
 		if other._root:
 			return GPath(self)
-		elif other._device != None and self._device != other._device:
+		elif other._device != None and other._device != "" and self._device != other._device:
 			return GPath(self)
 		else:
 			new_path = GPath(self)
@@ -413,8 +478,11 @@ class GPath():
 
 			Evoked by `mygpath - n`
 
-			Raises `ValueError` if `self` is an invalid GPath
+			Raises `ValueError` if `self` is an invalid GPath or if `n` is negative
 		"""
+		if n < 0:
+			raise ValueError("cannot subtract a negative number of components from the path; use __add__() instead")
+
 		new_path = GPath(self)
 		new_parts = [part for part in self._parts]
 		for i in range(n):
@@ -429,24 +497,32 @@ class GPath():
 
 	def __mul__(self, n: int) -> GPath:
 		"""
-			Duplicate the relative path in `self` `n` times and append them to `self`. If the path is relative to filesystem root, only the relative component of the path will be duplicated.
+			Duplicate the named components of `self` `n` times and return a new path with the duplicated components instead. Components representing a parent path or the filesystem root will not be duplicated; if it is an absolute path, only the relative components will be duplicated, whereas if it is a parent relative path, only the non-parent components will be duplicated.
 
-			Evoked by `mgpath * n`
+			If `n` is 0, the result should have no named components.
 
-			Raises `ValueError` if `self` is an invalid GPath
+			Evoked by `mygpath * n`
+
+			Raises `ValueError` if `self` is an invalid GPath or if `n` is negative.
 		"""
+		if n < 0:
+			raise ValueError("cannot multiply path by a negative integer")
 		new_path = GPath(self)
 		new_path._parts = self._parts * n
 		return new_path
 
 	def __lshift__(self, n: int) -> GPath:
 		"""
-			Imagine moving the current directory `n` steps up the filesystem tree. If the path is relative to an ancestor directory, remove up to `n` levels of parent directories from the start of the path and return a copy. If the path is not relative to an ancestor directory, return a copy of `self` unchanged.
+			Move the imaginary current working directory `n` steps up the filesystem tree. If it is a relative path, remove up to `n` levels of parent directories from the start of the path and return a copy. If it is an absolute path, return a copy of `self` unchanged.
+
+			If `n` is negative, the behaviour of `__rshift__(-n)` will be used instead.
 
 			Evoked by `mygpath << n`
 
-			Raises `ValueError` if `self` is an invalid GPath
+			Raises `ValueError` if `self` is an invalid GPath.
 		"""
+		if n < 0:
+			return self.__rshift__(-1 * n)
 		new_path = GPath(self)
 		if not new_path._root:
 			new_path._dotdot = max(new_path._dotdot - n, 0)
@@ -454,12 +530,16 @@ class GPath():
 
 	def __rshift__(self, n: int) -> GPath:
 		"""
-			Imagine moving the current directory `n` steps down the filesystem tree. If the path is not relative to filesystem root, add `n` levels of parent directoreis to the start of the path and return a copy. If the path is relative to filesystem root, return a copy of `self` unchanged.
+			Move the imaginary current working directory `n` steps down the filesystem tree. If it is a relative path, add `n` levels of parent directories to the start of the path and return a copy. If it is an absolute path, return a copy of `self` unchanged.
+
+			If `n` is negative, the behaviour of `__lshift__(-n)` will be used instead.
 
 			Evoked by `mygpath >> n`
 
 			Raises `ValueError` if `self` is an invalid GPath
 		"""
+		if n < 0:
+			return self.__lshift__(-1 * n)
 		new_path = GPath(self)
 		if not new_path._root:
 			new_path._dotdot += n
