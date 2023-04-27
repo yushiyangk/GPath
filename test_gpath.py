@@ -41,10 +41,8 @@ class TestGPath:
 			("c:/", tuple(), "c:", True, 0),
 		]
 	)
-	@pytest.mark.parametrize('device', [None, "dev"])
 	def test_constructor_root(self,
 		path: str,
-		device: str | None,
 		expected_parts: tuple[str, ...],
 		expected_device: str,
 		expected_root: bool,
@@ -53,12 +51,7 @@ class TestGPath:
 		"""
 			Test constructor `__init__()` as well as getters `is_root()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`, for paths requiring special treatment.
 		"""
-		if device is None:
-			gpath = GPath(path)
-		else:
-			gpath = GPath(path, device=device)
-			expected_device = device
-
+		gpath = GPath(path)
 		if expected_root and expected_dotdot > 0:
 			expected_dotdot = 0
 
@@ -129,12 +122,10 @@ class TestGPath:
 			#("C:", "C:", False),
 		]
 	)
-	@pytest.mark.parametrize('device', [None, "dev"])
 	def test_constructor(self,
 		path: str,
 		path_prefix: str,
 		path_suffix: str,
-		device: str | None,
 		expected_parts: tuple[str, ...],
 		expected_device: str,
 		expected_root: bool,
@@ -143,12 +134,7 @@ class TestGPath:
 		"""
 			Test constructor `__init__()` as well as getters `is_root()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`.
 		"""
-		if device is None:
-			gpath = GPath(path_prefix + path + path_suffix)
-		else:
-			gpath = GPath(path_prefix + path + path_suffix, device=device)
-			expected_device = device
-
+		gpath = GPath(path_prefix + path + path_suffix)
 		if expected_root and expected_dotdot > 0:
 			expected_dotdot = 0
 
