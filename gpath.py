@@ -497,9 +497,9 @@ class GPath():
 
 	def __mul__(self, n: int) -> GPath:
 		"""
-			Duplicate the named components of `self` `n` times and return a new path with the duplicated components instead. Components representing a parent path or the filesystem root will not be duplicated; if it is an absolute path, only the relative components will be duplicated, whereas if it is a parent relative path, only the non-parent components will be duplicated.
+			Duplicate the relative components of `self` `n` times and return a new path with the duplicated components instead. Named components will be duplicated separately from the components representing a parent directory. If it is an absolute path, only the relative components will be duplicated.
 
-			If `n` is 0, the result should have no named components.
+			If `n` is 0, the result should be an empty path (relative or absolute).
 
 			Evoked by `mygpath * n`
 
@@ -508,6 +508,7 @@ class GPath():
 		if n < 0:
 			raise ValueError("cannot multiply path by a negative integer")
 		new_path = GPath(self)
+		new_path._dotdot = self._dotdot * n
 		new_path._parts = self._parts * n
 		return new_path
 
