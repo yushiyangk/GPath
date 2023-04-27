@@ -555,6 +555,7 @@ class TestGPath:
 			("/", "..", None, None),
 			("/", "C:/", None, None),
 			("/a", "/", "a", "a"),
+			("/a", "/a", "", ""),
 			("/a/b", "/", "a/b", "a/b"),
 			("/a/b", "/a", "b", "b"),
 			("/a/b", "/b", None, "../a/b"),
@@ -566,6 +567,7 @@ class TestGPath:
 			("", "a", None, ".."),
 			("", "../a", None, None),
 			("a", "", "a", "a"),
+			("a", "a", "", ""),
 			("a", "..", None, None),
 			("a", "../a", None, None),
 			("a/b", "", "a/b", "a/b"),
@@ -580,6 +582,7 @@ class TestGPath:
 			("..", "a", None, "../.."),
 			("..", "../a", None, ".."),
 			("../a", "..", "a", "a"),
+			("../a", "../a", "", ""),
 			("../a", "", None, "../a"),
 			("../a", "a", None, "../../a"),
 			("../a/b", "..", "a/b", "a/b"),
@@ -595,6 +598,7 @@ class TestGPath:
 			("../..", "../a", None, "../.."),
 			("../..", "../../a", None, ".."),
 			("../../a", "../..", "a", "a"),
+			("../../a", "../../a", "", ""),
 			("../../a", "..", None, "../a"),
 			("../../a", "../a", None, "../../a"),
 			("../../a", "", None, "../../a"),
@@ -609,6 +613,7 @@ class TestGPath:
 			("C:/", "C:/", "", ""),
 			("C:/", "D:/", None, None),
 			("C:/a", "C:/", "a", "a"),
+			("C:/a", "C:/a", "", ""),
 			("C:/a/b", "C:/", "a/b", "a/b"),
 			("C:/a/b", "C:/a", "b", "b"),
 			("C:/a/b", "D:/a", None, None),
@@ -1038,109 +1043,89 @@ class TestGPath:
 				True,
 				False,
 				{
-					GPath("/"): {
-						GPath("/usr/bin"),
-						GPath("/usr/bin/python"),
-						GPath("/home/username/Documents/Secret Documents/Secret Document.txt"),
-					},
-					GPath("usr/bin"): {
+					GPath("/"): [
 						GPath("usr/bin"),
 						GPath("usr/bin/python"),
-					},
-					GPath("../usr/bin"): {
-						GPath("../usr/bin"),
-						GPath("../usr/bin/python"),
-					},
-					GPath("../../usr/bin"): {
-						GPath("../../usr/bin"),
-						GPath("../../usr/bin/python"),
-					},
-					GPath("C:/Program Files"): {
-						GPath("C:/Program Files"),
-						GPath("C:/Program Files/python.exe"),
-					},
-					GPath("D:/Documents"): {
-						GPath("D:/Documents"),
-					},
-					GPath("E:/"): {
-						GPath("E:/"),
-						GPath("E:/Secret Documents/Secret Document.txt"),
-					},
+						GPath("home/username/Documents/Secret Documents/Secret Document.txt"),
+					],
+					GPath("usr/bin"): [
+						GPath(""),
+						GPath("python"),
+					],
+					GPath("../usr/bin"): [
+						GPath(""),
+						GPath("python"),
+					],
+					GPath("../../usr/bin"): [
+						GPath(""),
+						GPath("python"),
+					],
+					GPath("C:/Program Files"): [
+						GPath(""),
+						GPath("python.exe"),
+					],
+					GPath("D:/Documents"): [
+						GPath(""),
+					],
+					GPath("E:/"): [
+						GPath(""),
+						GPath("Secret Documents/Secret Document.txt"),
+					],
 				}
 			),
-			([""], True, False, {GPath(""): {GPath("")}}),
-			([""], True, True, {GPath(""): {GPath("")}}),
-			([""], False, True, {GPath(""): {GPath("")}}),
-			([""], False, False, {GPath(""): {GPath("")}}),
+			([""], True, False, {GPath(""): [GPath("")]}),
+			([""], True, True, {GPath(""): []}),
+			([""], False, True, {GPath(""): []}),
+			([""], False, False, {GPath(""): [GPath("")]}),
 			([], True, False, {}),
 			([], True, True, {}),
 			([], False, True, {}),
 			([], False, False, {}),
 			(["", "usr/bin", "home/username", "../usr/bin", "../../usr/bin"], True, False, {
-				GPath(""): {
+				GPath(""): [
 					GPath(""),
 					GPath("usr/bin"),
 					GPath("home/username"),
-				},
-				GPath("../usr/bin"): {
-					GPath("../usr/bin"),
-				},
-				GPath("../../usr/bin"): {
-					GPath("../../usr/bin"),
-				},
+				],
+				GPath("../usr/bin"): [
+					GPath(""),
+				],
+				GPath("../../usr/bin"): [
+					GPath(""),
+				],
 			}),
 			(["", "usr/bin", "home/username"], True, True, {
-				GPath(""): {
-					GPath(""),
-					GPath("usr/bin"),
-					GPath("home/username"),
-				},
+				GPath(""): [],
 			}),
 			(["", "usr/bin", "home/username", "../usr/bin", "../../usr/bin"], True, True, {
-				GPath("../.."): {
-					GPath(""),
-					GPath("usr/bin"),
-					GPath("home/username"),
-					GPath("../usr/bin"),
-					GPath("../../usr/bin"),
-				},
+				GPath("../.."): [],
 			}),
 			(["", "usr/bin", "home/username"], False, True, {
-				GPath(""): {
-					GPath(""),
-					GPath("usr/bin"),
-					GPath("home/username"),
-				},
+				GPath(""): [],
 			}),
 			(["", "usr/bin", "home/username", "../usr/bin", "../../usr/bin"], False, True, {
-				GPath("../.."): {
-					GPath(""),
-					GPath("usr/bin"),
-					GPath("home/username"),
-					GPath("../usr/bin"),
-					GPath("../../usr/bin"),
-				},
+				GPath("../.."): [],
 			}),
 			(["", "usr/bin", "home/username", "../usr/bin", "../../usr/bin"], False, False, {
-				GPath(""): {
+				GPath(""): [
 					GPath(""),
-				},
-				GPath("usr/bin"): {
-					GPath("usr/bin"),
-				},
-				GPath("home/username"): {
-					GPath("home/username"),
-				},
-				GPath("../usr/bin"): {
-					GPath("../usr/bin"),
-				},
-				GPath("../../usr/bin"): {
-					GPath("../../usr/bin"),
-				},
+				],
+				GPath("usr/bin"): [
+					GPath(""),
+				],
+				GPath("home/username"): [
+					GPath(""),
+				],
+				GPath("../usr/bin"): [
+					GPath(""),
+				],
+				GPath("../../usr/bin"): [
+					GPath(""),
+				],
 			}),
 		]
 	)
-	def test_partition(self, paths: list[str], common_current: bool, common_parent: bool, expected: dict[GPath, set[GPath]]):
+	def test_partition(self, paths: list[str], common_current: bool, common_parent: bool, expected: dict[GPath, list[GPath]]):
 		"""
 			Test `partition()`.
 		"""

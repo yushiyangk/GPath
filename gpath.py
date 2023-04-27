@@ -167,11 +167,13 @@ class GPath():
 		return common_path
 
 	@staticmethod
-	def partition(*paths: Collection[GPathLike] | GPathLike, **find_common_kwargs: bool) -> dict[GPath, set[GPath]]:
+	def partition(*paths: Collection[GPathLike] | GPathLike, **find_common_kwargs: bool) -> dict[GPath, list[GPath]]:
 		"""
-			Static method. Partition a collection of paths based on the common base paths shared between members of the collection, such that each path can only belong to one partition.
+			Static method. Partition a collection of paths based on the common base paths shared between members of the collection, such that each path can only belong to one partition. Return a list of relative paths from the common base path in each partition.
 
-			The partitioning logic is identical to that of `GPath.common()`; by default, non-parent relative paths are always placed in the same partition, while paths that are relative to different levels of parent directories will be placed in separate partitions.
+			The partitioning logic is similar to that of `GPath.common()`; by default, non-parent relative paths are always placed in the same partition, while paths that are relative to different levels of parent directories will be placed in separate partitions.
+
+			Note that `common_parent` should only be set to True if the members of each partition are not of interest. When `common_parent` is True, the output lists will all be explicitly empty, because it is not possible to obtain a relative path from a parent directory of a higher level to one of a lower level. In most cases, this option should not be used.
 
 			Evoked by either `GPath.partition([gpath1, gpath2, ...])` or `GPath.partition(gpath1, gpath2, ...)`
 
@@ -181,7 +183,7 @@ class GPath():
 			   the paths to be partitioned, which can be given as either a list-like object or as variadic arguments
 			   `common_current: bool=True` (in `**find_common_kwargs`)
 			   whether non-parent  relative paths with no shared components should be considered to have a common base path (see `GPath.common()`); True by default
-			   `common_ancestor: bool=False` (in `**find_common_kwargs`)
+			   `common_parent: bool=False` (in `**find_common_kwargs`)
 			   whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `GPath.common()`); False by default
 
 			Returns
@@ -204,7 +206,10 @@ class GPath():
 
 		partition_map = {}
 		if len(gpaths) > 0:
-			partition_map[gpaths[0]] = set([gpaths[0]])
+			if 'common_parent' in find_common_kwargs and find_common_kwargs['common_parent'] == True:
+				partition_map[gpaths[0]] = []
+			else:
+				partition_map[gpaths[0]] = [gpaths[0]]
 
 		for path in gpaths[1:]:
 			partition_found = False
@@ -215,10 +220,17 @@ class GPath():
 					if candidate_common != partition:
 						partition_map[candidate_common] = partition_map[partition]
 						del partition_map[partition]
-					partition_map[candidate_common].add(path)
+					if 'common_parent' not in find_common_kwargs or find_common_kwargs['common_parent'] == False:
+						partition_map[candidate_common].append(path)
 					break
 			if not partition_found:
-				partition_map[path] = set([path])
+				if 'common_parent' in find_common_kwargs and find_common_kwargs['common_parent'] == True:
+					partition_map[path] = []
+				else:
+					partition_map[path] = [path]
+
+		for partition, path_list in partition_map.items():
+			partition_map[partition] = [path.subpath_from(partition) for path in path_list]
 
 		return partition_map
 
@@ -278,7 +290,7 @@ class GPath():
 			----------
 			   `root: bool=True`
 			   whether to return components that indicate the filesystem root or device name; True by default
-			   `common_ancestor: bool=True`
+			   `parent: bool=True`
 			   whether to return components that indicate parent directories; True by default
 
 			Returns
@@ -510,7 +522,7 @@ class GPath():
 
 	def __contains__(self, other: GPathLike) -> bool:
 		"""
-			Check if the path represented by `self` contains that represented by `other`; i.e. check if `self` is an ancestor path of `other`.
+			Check if the path represented by `self` contains the path represented by `other`; i.e. check if `self` is a parent directory of `other`.
 
 			Evoked by `other in mygpath`
 
