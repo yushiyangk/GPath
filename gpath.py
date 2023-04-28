@@ -53,8 +53,8 @@ class GPath():
 	__slots__ = ('_parts', '_device', '_absolute', '_parent')
 
 	separator: ClassVar = PATH_SEPARATOR
-	current: ClassVar = PATH_CURRENT
-	parent: ClassVar = PATH_PARENT
+	current_dir: ClassVar = PATH_CURRENT
+	parent_dir: ClassVar = PATH_PARENT
 
 
 	def __init__(self, path: Union[PathLike, GPath, None]="") -> None:
@@ -100,7 +100,7 @@ class GPath():
 					parts = parts[:-1]
 
 				dotdot = 0
-				while dotdot < len(parts) and parts[dotdot] == GPath.parent:  # GPath.parent == '..' usually
+				while dotdot < len(parts) and parts[dotdot] == GPath.parent_dir:  # GPath.parent_dir == '..' usually
 					dotdot += 1
 				self._parts = tuple(parts[dotdot:])
 				self._parent = dotdot
@@ -340,7 +340,7 @@ class GPath():
 		else:
 			if len(self._parts) == 0:
 				# bool(self) == False
-				return [GPath.current]
+				return [GPath.current_dir]
 
 			base_parts = []
 
@@ -351,9 +351,9 @@ class GPath():
 		"""
 			Get a list of strings representing the parent directory that the path is relative to, if any.
 
-			The returned list will contain a copy of `GPath.parent` for each parent level. If the path is not relative to a parent directory, the returned list will be empty.
+			The returned list will contain a copy of `GPath.parent_dir` for each parent level. If the path is not relative to a parent directory, the returned list will be empty.
 		"""
-		return [GPath.parent for i in range(self._parent)]
+		return [GPath.parent_dir for i in range(self._parent)]
 
 	def get_parent_level(self) -> int:
 		"""
