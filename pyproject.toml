@@ -31,9 +31,12 @@ requires-python = ">=3.10"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest ~= 7.3.1", "coverage ~= 7.2.3", "pyroma ~= 4.2", "build ~= 0.10.0"]
+dev = ["pytest ~= 7.3.1", "coverage ~= 7.2.3", "pyroma ~= 4.2", "build ~= 0.10.0", "tox~=4.5.1"]
 test = ["pytest ~= 7.3.1", "coverage ~= 7.2.3"]
-package = ["pyroma ~= 4.2", "build ~= 0.10.0"]
+config = ["pyroma ~= 4.2"]
+package = ["build ~= 0.10.0"]
+packagetest = ["twine ~= 4.0.2"]
+ci = ["tox~=4.5.1"]
 publish = ["twine ~= 4.0.2"]
 
 [project.urls]
@@ -42,10 +45,10 @@ Homepage = "https://github.com/yushiyangk/GPath"
 Issues = "https://github.com/yushiyangk/GPath/issues"
 
 [tool.pytest.ini_options]
-addopts = "--ignore=Lib"
+addopts = "tests"
 
 [tool.coverage.report]
-omit = ["tests/*"]
+include = ["gpath.py"]
 
 [tool.setuptools]
 packages = []

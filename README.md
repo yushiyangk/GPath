@@ -85,9 +85,13 @@ For coverage report, first run `coverage run -m pytest`, then either `coverage r
 
 ### Packaging
 
-Before packaging, check the package configuration by running `pyroma .`
+Before packaging, check the package config by running `pyroma .`
 
 To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`.
+
+### Automated tests
+
+To test for different supported environments, run `tox -p` (or `tox --parallel`). This will run unit tests, check for test coverage, and also generate packages.
 
 ### Config files
 
