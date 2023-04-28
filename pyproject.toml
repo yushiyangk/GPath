@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gpath"
+name = "generic-path"  # "gpath" is taken on PyPI, and "g-path" is too similar
 dynamic = ["version"]
 authors = [
 	{name = "Yu Shiyang", email = "yu.shiyang@gnayihs.uy"}

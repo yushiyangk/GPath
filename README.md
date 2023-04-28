@@ -5,7 +5,7 @@
 ## Install
 
 ```
-pip install gpath
+pip install generic-path
 ```
 
 ## Basic examples
@@ -87,7 +87,7 @@ For coverage report, first run `coverage run -m pytest`, then either `coverage r
 
 Before packaging, check the package configuration by running `pyroma .`
 
-To generate sdist and wheel packages, delete `dist/` and `gpath.egg-info/` if they exist, then run `python -m build`.
+To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`.
 
 ### Config files
 
@@ -103,4 +103,4 @@ Sometimes, if gpath was installed using `pip install .`, pip might have difficul
 <pre><code>Found existing installation: gpath <var>version</var>
 Can't uninstall 'gpath'. No files were found to uninstall.</code></pre>
 
-In this case, manually delete `build/` and `gpath.egg-info/` if they exist, as well as `Lib/site-packages/gpath.py` and <code>Lib/site-packages/gpath-<var>version</var>.dist-info/</code>, then verify that pip no longer sees the package by running `pip list`. If the package was installed outside of a local venv, the latter two items would instead be found at the same location where the other pip packages are installed.
+In this case, manually delete `build/` and `generic_path.egg-info/` if they exist, as well as `Lib/site-packages/gpath.py` and <code>Lib/site-packages/generic_path-<var>version</var>.dist-info/</code>, then verify that pip no longer sees the package by running `pip list`. If the package was installed outside of a local venv, the latter two items would instead be found at the same location where the other pip packages are installed.
