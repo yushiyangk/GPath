@@ -18,10 +18,11 @@ if sys.version_info >= (3, 8):
 	from typing import Final
 else:
 	Final = Any
-def is_gpathlike(obj: Any) -> bool:
-	if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 10):
+	def _is_gpathlike(obj: Any) -> bool:
 		return isinstance(obj, GPathLike)
-	else:
+else:
+	def _is_gpathlike(obj: Any) -> bool:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
@@ -226,7 +227,7 @@ class GPath():
 		"""
 		flattened_paths: list[GPathLike] = []
 		for path_or_list in paths:
-			if is_gpathlike(path_or_list):
+			if _is_gpathlike(path_or_list):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
@@ -287,7 +288,7 @@ class GPath():
 		"""
 		flattened_paths: list[GPathLike] = []
 		for path_or_list in paths:
-			if is_gpathlike(path_or_list):
+			if _is_gpathlike(path_or_list):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
