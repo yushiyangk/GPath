@@ -399,7 +399,7 @@ class TestGPath:
 	)
 	def test_str_repr(self, path: str):
 		"""
-			Test `__str__()` and `__repre__()`.
+			Test `__str__()` and `__repr__()`.
 		"""
 		gpath = GPath(path)
 		result = str(gpath)
