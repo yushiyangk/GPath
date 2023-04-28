@@ -47,13 +47,13 @@ partitions = GPath.partition("/usr/bin", "/usr/local/", "../../doc", "C:/Windows
 assert partitions == {
 	GPath("/usr")      : [GPath("/usr/bin"), GPath("/usr/local")],
 	GPath("../../doc") : [GPath("")],
-	GPath("C:/")       : [GPath("Windows"), GPath("Program Files")]
+	GPath("C:/")       : [GPath("Windows"), GPath("Program Files")],
 }
 ```
 
 ## Issues
 
-Found a bug? Please [file an issue](https://github.com/yushiyangk/GPath/issues), or, better yet, [submit a pull request](https://github.com/yushiyangk/GPath/pulls)
+Found a bug? Please [file an issue](https://github.com/yushiyangk/GPath/issues), or, better yet, [submit a pull request](https://github.com/yushiyangk/GPath/pulls).
 
 ## Development
 
@@ -103,4 +103,4 @@ Sometimes, if gpath was installed using `pip install .`, pip might have difficul
 <pre><code>Found existing installation: gpath <var>version</var>
 Can't uninstall 'gpath'. No files were found to uninstall.</code></pre>
 
-In this case, manually delete `build/` and `generic_path.egg-info/` if they exist, as well as `Lib/site-packages/gpath.py` and <code>Lib/site-packages/generic_path-<var>version</var>.dist-info/</code>, then verify that pip no longer sees the package by running `pip list`. If the package was installed outside of a local venv, the latter two items would instead be found at the same location where the other pip packages are installed.
+In this case, manually delete `build/` and `generic_path.egg-info/` if they exist, then run `pip uninstall generic-path` again. This should allow pip to successfully uninstall the package.
