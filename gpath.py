@@ -1,9 +1,15 @@
+"""
+	GPath is a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system.
+"""
+
 from __future__ import annotations
 
 import functools
 import os
 from collections.abc import Collection, Iterator, Sequence
 from typing import Any, Final, ClassVar
+
+__version__ = '0.1'
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
 PATH_CURRENT: Final = os.curdir

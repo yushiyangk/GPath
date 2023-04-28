@@ -1,5 +1,19 @@
+# Python
+__pycache__/
+
+# venv
 /Include/
 /Lib/
 /Scripts/
 /pyvenv.cfg
-__pycache__/
+
+# pytest and coveragepy
+/.coverage
+/htmlcov/
+
+# setuptools and build
+/dist/
+/*.egg-info/
+
+# PyPI
+/PyPI
