@@ -63,11 +63,11 @@ The source for the package is entirely contained in `gpath.py`, with tests in `t
 
 ### Virtual environment
 
-The virtual environment was created with `python -m venv .`.
+Create the venv using `python -m venv .`.
 
-To activate the virtual environment, on Linux run `source Scripts/activate`, and on Windows run `Scripts/Activate.ps1` or `Scripts/activate.bat`.
+To activate the venv, on Linux run `source Scripts/activate`, and on Windows run `Scripts/Activate.ps1` or `Scripts/activate.bat`.
 
-Later, to deactivate the virtual environment, run `deactivate`.
+Later, to deactivate the venv, run `deactivate`.
 
 ### Dependencies
 

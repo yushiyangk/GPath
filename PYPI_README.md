@@ -4,11 +4,11 @@ Make sure that you have an account on both PyPI (https://pypi.org/) and TestPyPI
 
 Create `.pypirc` in the user directory, `~` on Linux and `%USERDIR%` on Windows, with the following format
 <pre><code>[pypi]
-username = \_\_token\_\_
+username = __token__
 password = <var>pypi_api_token</var>
 
 [testpypi]
-username = \_\_token\_\_
+username = __token__
 password = <var>testpypi_api_token</var></code></pre>
 
 ### Dependencies
