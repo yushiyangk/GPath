@@ -4,12 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "generic-path"  # "gpath" is taken on PyPI, and "g-path" is too similar
-dynamic = ["version"]
+dynamic = ["version", "readme"]
 authors = [
 	{name = "Yu Shiyang", email = "yu.shiyang@gnayihs.uy"}
 ]
 description = "GPath provides a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system."
-readme = "README.md"
 license = {text = "MPL-2.0"}
 classifiers = [
 	"Development Status :: 3 - Alpha",
@@ -19,15 +18,18 @@ classifiers = [
 	"Operating System :: OS Independent",
 	"Programming Language :: Python :: 3",
 	"Programming Language :: Python :: 3 :: Only",
+	"Programming Language :: Python :: 3.7",
+	"Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
 	"Programming Language :: Python :: 3.10",
 	"Programming Language :: Python :: 3.11",
-	"Programming Language :: Python :: 3.12",
+	#"Programming Language :: Python :: 3.12",
 	"Topic :: Software Development :: Libraries :: Python Modules",
 	"Topic :: System :: Filesystems",
 	"Typing :: Typed",
 ]
 keywords = ["python", "filepath", "filesystem", "cross-platform"]
-requires-python = ">=3.10"
+requires-python = ">=3.7"
 dependencies = []
 
 [project.optional-dependencies]
@@ -56,3 +58,4 @@ py-modules = ["gpath"]
 
 [tool.setuptools.dynamic]
 version = {attr = "gpath.__version__"}
+readme = {file = ["README.md", "CHANGELOG.md"], content-type = "text/markdown"}

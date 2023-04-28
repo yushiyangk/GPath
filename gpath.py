@@ -6,16 +6,34 @@ from __future__ import annotations
 
 import functools
 import os
+import sys
 from collections.abc import Collection, Iterator, Sequence
-from typing import Any, Final, ClassVar
+#from typing import Any, ClassVar, Final
 
-__version__ = '0.1'
+
+# Type hinting prior to 3.10
+# Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
+from typing import Any, ClassVar, Optional, Union
+if sys.version_info >= (3, 8):
+	from typing import Final
+else:
+	Final = Any
+def is_gpathlike(obj: Any) -> bool:
+	if sys.version_info >= (3, 10):
+		return isinstance(obj, GPathLike)
+	else:
+		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
+
+
+__version__ = '0.2'
+
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
 PATH_CURRENT: Final = os.curdir
 PATH_PARENT: Final = os.pardir
 
-PathLike = str | os.PathLike
+PathLike = Union[str, os.PathLike]
+
 
 @functools.total_ordering
 class GPath():
@@ -38,7 +56,8 @@ class GPath():
 	current: ClassVar = PATH_CURRENT
 	parent: ClassVar = PATH_PARENT
 
-	def __init__(self, path: PathLike | GPath | None="") -> None:
+
+	def __init__(self, path: Union[PathLike, GPath, None]="") -> None:
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -86,6 +105,7 @@ class GPath():
 				self._parts = tuple(parts[dotdot:])
 				self._dotdot = dotdot
 
+
 	@staticmethod
 	def from_parts(parts: Sequence[str]) -> GPath:
 		"""
@@ -95,8 +115,9 @@ class GPath():
 		"""
 		return GPath(GPath.separator.join(parts))
 
+
 	@staticmethod
-	def find_common(path1: GPathLike, path2: GPathLike, common_current: bool=True, common_parent: bool=False) -> GPath | None:
+	def find_common(path1: GPathLike, path2: GPathLike, common_current: bool=True, common_parent: bool=False) -> Optional[GPath]:
 		"""
 			Static method. Find the longest common base path shared by the two paths. Return None if the two paths do not share any base components, such as if they are not both relative paths or both absolute paths, or if they are rooted on different device names.
 
@@ -172,8 +193,9 @@ class GPath():
 				return None
 		return common_path
 
+
 	@staticmethod
-	def partition(*paths: Collection[GPathLike] | GPathLike, **find_common_kwargs: bool) -> dict[GPath, list[GPath]]:
+	def partition(*paths: Union[Collection[GPathLike], GPathLike], **find_common_kwargs: bool) -> dict[GPath, list[GPath]]:
 		"""
 			Static method. Partition a collection of paths based on the common base paths shared between members of the collection, such that each path can only belong to one partition. Return a list of relative paths from the common base path in each partition.
 
@@ -204,7 +226,7 @@ class GPath():
 		"""
 		flattened_paths: list[GPathLike] = []
 		for path_or_list in paths:
-			if isinstance(path_or_list, GPathLike):
+			if is_gpathlike(path_or_list):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
@@ -240,8 +262,9 @@ class GPath():
 
 		return partition_map
 
+
 	@staticmethod
-	def join(*paths: Collection[GPathLike]) -> GPath:
+	def join(*paths: Union[Collection[GPathLike], GPathLike]) -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
@@ -264,7 +287,7 @@ class GPath():
 		"""
 		flattened_paths: list[GPathLike] = []
 		for path_or_list in paths:
-			if isinstance(path_or_list, GPathLike):
+			if is_gpathlike(path_or_list):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
@@ -279,6 +302,7 @@ class GPath():
 			combined_path = combined_path + path
 
 		return combined_path
+
 
 	def get_parts(self, root: bool=True, parent: bool=True) -> list[str]:
 		"""
@@ -322,6 +346,7 @@ class GPath():
 
 		return base_parts + list(self._parts)
 
+
 	def get_parent_parts(self) -> list[str]:
 		"""
 			Get a list of strings representing the parent directory that the path is relative to, if any.
@@ -336,7 +361,7 @@ class GPath():
 		"""
 		return self._dotdot
 
-	def get_device(self) -> str | None:
+	def get_device(self) -> Optional[str]:
 		"""
 			Get the device name of the path.
 		"""
@@ -348,7 +373,8 @@ class GPath():
 		"""
 		return self._root
 
-	def subpath_from(self, base: GPathLike) -> GPath | None:
+
+	def subpath_from(self, base: GPathLike) -> Optional[GPath]:
 		"""
 			Find the relative subpath from `base` to `self` if possible and if `base` contains `self`, or return None otherwise.
 
@@ -383,7 +409,8 @@ class GPath():
 		else:
 			return None
 
-	def relpath_from(self, origin: GPathLike) -> GPath | None:
+
+	def relpath_from(self, origin: GPathLike) -> Optional[GPath]:
 		"""
 			Find the relative path from `origin` to `self` if possible, or return None otherwise.
 
@@ -443,6 +470,7 @@ class GPath():
 
 			return new_path
 
+
 	def __hash__(self) -> int:
 		"""
 			Calculate hash of the GPath object.
@@ -450,6 +478,7 @@ class GPath():
 			Evoked by `hash(mygpath)`
 		"""
 		return hash((tuple(self._parts), self._device, self._root, self._dotdot))
+
 
 	def __eq__(self, other: Any) -> bool:
 		"""
@@ -462,6 +491,7 @@ class GPath():
 		else:
 			return False
 
+
 	def __gt__(self, other: GPathLike) -> bool:
 		"""
 			Check if `self` should be collated after `other` by comparing their component-wise lexicographical order. Absolute paths come before (is less than) parent relative paths, which come before (is less than) non-parent relative paths. Between two parent relative paths, the path with the higher parent level is considered greater (comes later).
@@ -472,6 +502,7 @@ class GPath():
 			other = GPath(other)
 		return ((not self._root, self._device, -1 * self._dotdot) + self._parts) > ((not other._root, other._device, -1 * other._dotdot) + other._parts)
 
+
 	def __bool__(self) -> bool:
 		"""
 			Return True if `self` is an absolute path, if `self` is relative to a parent directory, or if `self` has at least one named component; return False otherwise.
@@ -480,6 +511,7 @@ class GPath():
 		"""
 		return self._root or self._dotdot != 0 or len(self._parts) > 0
 
+
 	def __str__(self) -> str:
 		"""
 			Return a string representation of the path that is meaningful to the local operating system.
@@ -487,6 +519,7 @@ class GPath():
 			Evoked by `str(mygpath)`
 		"""
 		return GPath.separator.join(self.get_parts())
+
 
 	def __repr__(self) -> str:
 		"""
@@ -499,6 +532,7 @@ class GPath():
 		else:
 			return f"GPath({repr('')})"
 
+
 	def __len__(self) -> int:
 		"""
 			Get the number of relative path components, excluding any device name or parent directories.
@@ -507,7 +541,8 @@ class GPath():
 		"""
 		return len(self._parts)
 
-	def __getitem__(self, index: int | slice) -> str | list[str]:
+
+	def __getitem__(self, index: Union[int, slice]) -> Union[str, list[str]]:
 		"""
 			Get a 0-indexed relative path component, or a slice of path components, excluding any device name or parent directories.
 
@@ -518,6 +553,7 @@ class GPath():
 		elif isinstance(index, slice):
 			return list(self._parts[index])
 
+
 	def __iter__(self) -> Iterator[str]:
 		"""
 			Get an iterator through the relative path components, excluding any device name or parent directories.
@@ -525,6 +561,7 @@ class GPath():
 			Evoked by `iter(mygpath)`
 		"""
 		return iter(self._parts)
+
 
 	def __contains__(self, other: GPathLike) -> bool:
 		"""
@@ -539,6 +576,7 @@ class GPath():
 
 		common_path = GPath.find_common(self, other, common_current=True, common_parent=True)
 		return common_path is not None and common_path == self
+
 
 	def __add__(self, other: GPathLike) -> GPath:
 		"""
@@ -572,6 +610,7 @@ class GPath():
 			new_path._parts = tuple(new_parts)
 			return new_path
 
+
 	def __sub__(self, n: int) -> GPath:
 		"""
 			Remove `n` components from the end of the path and return a new copy.
@@ -595,6 +634,7 @@ class GPath():
 		new_path._parts = tuple(new_parts)
 		return new_path
 
+
 	def __mul__(self, n: int) -> GPath:
 		"""
 			Duplicate the relative components of `self` `n` times and return a new path with the duplicated components instead. Named components will be duplicated separately from the components representing a parent directory. If it is an absolute path, only the relative components will be duplicated.
@@ -612,6 +652,7 @@ class GPath():
 		new_path._parts = self._parts * n
 		return new_path
 
+
 	def __lshift__(self, n: int) -> GPath:
 		"""
 			Move the imaginary current working directory `n` steps up the filesystem tree. If it is a relative path, remove up to `n` levels of parent directories from the start of the path and return a copy. If it is an absolute path, return a copy of `self` unchanged.
@@ -628,6 +669,7 @@ class GPath():
 		if not new_path._root:
 			new_path._dotdot = max(new_path._dotdot - n, 0)
 		return new_path
+
 
 	def __rshift__(self, n: int) -> GPath:
 		"""
@@ -655,4 +697,5 @@ class GPath():
 				raise ValueError(f"invalid GPath, dotdot must be 0 when root is True: {repr(self)}")
 		return True
 
-GPathLike = GPath | PathLike
+
+GPathLike = Union[GPath, PathLike]

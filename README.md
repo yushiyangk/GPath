@@ -91,13 +91,14 @@ To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/
 
 ### Automated tests
 
-To test for different supported environments, run `tox -p` (or `tox --parallel`). This will run unit tests, check for test coverage, and also generate packages.
+To test for different supported environments, run `tox -p` or <code>tox -p <var>num_workers</var></code>. This will run unit tests, check for test coverage, and also generate packages.
 
 ### Config files
 
 - `pyproject.toml` Package metadata, as well as configs for test and build tools
 - `requirements.dev.txt` Package dependencies for development, in pip format
 - `requirements.publish.txt` Package dependencies for publishing, in pip format
+- `tox.ini` Config file for tox
 
 ### Troubleshooting
 

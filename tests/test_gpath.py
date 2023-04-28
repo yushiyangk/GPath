@@ -1,6 +1,13 @@
+from __future__ import annotations
+
 import pytest
 
 from gpath import GPath
+
+
+# Type hinting prior to 3.10
+# Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
+from typing import Optional, Union
 
 
 class TestGPath:
@@ -14,7 +21,7 @@ class TestGPath:
 		return GPath(request.param)
 
 	@pytest.fixture
-	def expected_gpath(self, request: pytest.FixtureRequest) -> GPath | None:
+	def expected_gpath(self, request: pytest.FixtureRequest) -> Optional[GPath]:
 		if request.param is None:
 			return None
 		else:
@@ -43,7 +50,7 @@ class TestGPath:
 		]
 	)
 	def test_constructor_root(self,
-		path: str | None,
+		path: Optional[str],
 		expected_parts: tuple[str, ...],
 		expected_device: str,
 		expected_root: bool,
@@ -467,7 +474,7 @@ class TestGPath:
 			slice(0, 1, 2), slice(0, 2, 2), slice(0, -1, 2),
 		]
 	)
-	def test_getitem_iter(self, gpath1: GPath, index: int | slice, expected_list: list[str]):
+	def test_getitem_iter(self, gpath1: GPath, index: Union[int, slice], expected_list: list[str]):
 		"""
 			Test `__getitem__()`, for both indexing and slicing, and `__iter__()`.
 		"""
@@ -621,7 +628,7 @@ class TestGPath:
 		],
 		indirect=['gpath1', 'gpath2']
 	)
-	def test_subpath_relpath(self, gpath1: GPath, gpath2: GPath, subpath_expected: str, relpath_expected: str | GPath):
+	def test_subpath_relpath(self, gpath1: GPath, gpath2: GPath, subpath_expected: str, relpath_expected: Union[str, GPath]):
 		"""
 			Test `subpath_from()` and `relpath_from()`.
 		"""
