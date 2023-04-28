@@ -91,7 +91,7 @@ To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/
 
 ### Config files
 
-- `pyproject.toml` Package metadata, as well as configs for pytest and setuptools
+- `pyproject.toml` Package metadata, as well as configs for test and build tools
 - `requirements.dev.txt` Package dependencies for development, in pip format
 - `requirements.publish.txt` Package dependencies for publishing, in pip format
 

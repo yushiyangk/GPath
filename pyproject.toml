@@ -44,6 +44,9 @@ Issues = "https://github.com/yushiyangk/GPath/issues"
 [tool.pytest.ini_options]
 addopts = "--ignore=Lib"
 
+[tool.coverage.report]
+omit = ["tests/*"]
+
 [tool.setuptools]
 packages = []
 py-modules = ["gpath"]
