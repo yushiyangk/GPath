@@ -50,7 +50,7 @@ class GPath():
 		   path component that indicates a parent directory recognised by the local operating system; usually ".."
 	"""
 
-	__slots__ = ('_parts', '_device', '_root', '_dotdot')
+	__slots__ = ('_parts', '_device', '_absolute', '_parent')
 
 	separator: ClassVar = PATH_SEPARATOR
 	current: ClassVar = PATH_CURRENT
@@ -75,15 +75,15 @@ class GPath():
 		"""
 		self._parts: tuple[str, ...] = tuple()  # root- or dotdot- relative path
 		self._device: str = ""
-		self._root: bool = False
-		self._dotdot: int = 0
+		self._absolute: bool = False
+		self._parent: int = 0
 		if path is not None and path != "":
 			if isinstance(path, GPath):
 				path._validate()
 				self._parts = path._parts
 				self._device = path._device
-				self._root = path._root
-				self._dotdot = path._dotdot
+				self._absolute = path._absolute
+				self._parent = path._parent
 			else:
 				# Remove redundant '.'s and '..'s and use OS-default path separators
 				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
@@ -91,7 +91,7 @@ class GPath():
 				if path == os.curdir:
 					path = ""
 				(self._device, path) = os.path.splitdrive(path)
-				self._root = os.path.isabs(path)
+				self._absolute = os.path.isabs(path)
 
 				parts = path.split(os.sep)  # os.path.normpath previously rewrote the path to use os.sep
 				if len(parts) > 0 and parts[0] == "":  # First element is '' if root
@@ -103,7 +103,7 @@ class GPath():
 				while dotdot < len(parts) and parts[dotdot] == GPath.parent:  # GPath.parent == '..' usually
 					dotdot += 1
 				self._parts = tuple(parts[dotdot:])
-				self._dotdot = dotdot
+				self._parent = dotdot
 
 
 	@staticmethod
@@ -157,30 +157,30 @@ class GPath():
 
 		if path1._device != path2._device:
 			return None
-		if path1._root != path2._root:
+		if path1._absolute != path2._absolute:
 			return None
 
 		if common_parent:
 			common_current = True
 
 		parts = []
-		if path1._root:
+		if path1._absolute:
 			common_path = GPath()
 			for part1, part2 in zip(path1._parts, path2._parts):
 				if part1 == part2:
 					parts.append(part1)
-			common_path._root = True
+			common_path._absolute = True
 			# dotdot must be 0
 		else:
-			if path1._dotdot != path2._dotdot:
+			if path1._parent != path2._parent:
 				if not common_parent:
 					return None
 
 				common_path = GPath()
-				common_path._dotdot = max(path1._dotdot, path2._dotdot)
+				common_path._parent = max(path1._parent, path2._parent)
 			else:
 				common_path = GPath()
-				common_path._dotdot = path1._dotdot
+				common_path._parent = path1._parent
 				for part1, part2 in zip(path1._parts, path2._parts):
 					if part1 == part2:
 						parts.append(part1)
@@ -328,13 +328,13 @@ class GPath():
 			  `list[str]`
 			   list of path components
 		"""
-		if root and self._root:
+		if root and self._absolute:
 			if len(self._parts) == 0:
 				return [self._device, ""]
 
 			base_parts = [self._device]
 
-		elif parent and self._dotdot > 0:
+		elif parent and self._parent > 0:
 			base_parts = self.get_parent_parts()
 
 		else:
@@ -353,13 +353,13 @@ class GPath():
 
 			The returned list will contain a copy of `GPath.parent` for each parent level. If the path is not relative to a parent directory, the returned list will be empty.
 		"""
-		return [GPath.parent for i in range(self._dotdot)]
+		return [GPath.parent for i in range(self._parent)]
 
 	def get_parent_level(self) -> int:
 		"""
 			Get the number of levels of parent directories that the path is relative to, if any.
 		"""
-		return self._dotdot
+		return self._parent
 
 	def get_device(self) -> Optional[str]:
 		"""
@@ -367,11 +367,17 @@ class GPath():
 		"""
 		return self._device
 
+	def is_absolute(self) -> bool:
+		"""
+			Check if the path is an absolute path
+		"""
+		return self._absolute
+
 	def is_root(self) -> bool:
 		"""
-			Check if the path is relative to filesystem root
+			Check if the path is exactly the root of the filesystem
 		"""
-		return self._root
+		return self._absolute and len(self._parts) == 0
 
 
 	def subpath_from(self, base: GPathLike) -> Optional[GPath]:
@@ -437,13 +443,13 @@ class GPath():
 		if not isinstance(origin, GPath):
 			origin = GPath(origin)
 
-		if origin._root:
+		if origin._absolute:
 			common = GPath.find_common(self, origin)
 			if common is None:
 				return None
 
 			new_path = GPath()
-			new_path._dotdot = len(origin) - len(common)
+			new_path._parent = len(origin) - len(common)
 			new_path._parts = self._parts[len(common):]
 			return new_path
 
@@ -451,7 +457,7 @@ class GPath():
 			common = GPath.find_common(self, origin, common_current=True, common_parent=True)
 			if common is None:
 				return None
-			if common._dotdot > self._dotdot:
+			if common._parent > self._parent:
 				return None  # Path from common to self's parent cannot be known
 
 			# common._dotdot == self._dotdot
@@ -459,13 +465,13 @@ class GPath():
 
 			new_path = GPath()
 			if len(common) == 0:
-				if origin._dotdot == self._dotdot:
-					new_path._dotdot = len(origin)
+				if origin._parent == self._parent:
+					new_path._parent = len(origin)
 				else:
-					new_path._dotdot = (common._dotdot - origin._dotdot) + len(origin)
+					new_path._parent = (common._parent - origin._parent) + len(origin)
 				new_path._parts = self._parts
 			else:
-				new_path._dotdot = len(origin) - len(common)
+				new_path._parent = len(origin) - len(common)
 				new_path._parts = self._parts[len(common):]
 
 			return new_path
@@ -477,7 +483,7 @@ class GPath():
 
 			Evoked by `hash(mygpath)`
 		"""
-		return hash((tuple(self._parts), self._device, self._root, self._dotdot))
+		return hash((tuple(self._parts), self._device, self._absolute, self._parent))
 
 
 	def __eq__(self, other: Any) -> bool:
@@ -487,7 +493,7 @@ class GPath():
 			Evoked by `gpath1 == gpath2`
 		"""
 		if isinstance(other, GPath):
-			return ((self._root, self._device, self._dotdot) + self._parts) == ((other._root, other._device, other._dotdot) + other._parts)
+			return ((self._absolute, self._device, self._parent) + self._parts) == ((other._absolute, other._device, other._parent) + other._parts)
 		else:
 			return False
 
@@ -500,7 +506,7 @@ class GPath():
 		"""
 		if not isinstance(other, GPath):
 			other = GPath(other)
-		return ((not self._root, self._device, -1 * self._dotdot) + self._parts) > ((not other._root, other._device, -1 * other._dotdot) + other._parts)
+		return ((not self._absolute, self._device, -1 * self._parent) + self._parts) > ((not other._absolute, other._device, -1 * other._parent) + other._parts)
 
 
 	def __bool__(self) -> bool:
@@ -509,7 +515,7 @@ class GPath():
 
 			Evoked by `bool(mygpath)`
 		"""
-		return self._root or self._dotdot != 0 or len(self._parts) > 0
+		return self._absolute or self._parent != 0 or len(self._parts) > 0
 
 
 	def __str__(self) -> str:
@@ -591,18 +597,18 @@ class GPath():
 		else:
 			other = GPath(other)
 
-		if other._root:
+		if other._absolute:
 			return GPath(self)
 		elif other._device != None and other._device != "" and self._device != other._device:
 			return GPath(self)
 		else:
 			new_path = GPath(self)
 			new_parts = [part for part in self._parts]
-			for i in range(other._dotdot):
+			for i in range(other._parent):
 				if len(new_parts) > 0:
 					new_parts.pop()
-				elif not new_path._root:
-					new_path._dotdot += 1
+				elif not new_path._absolute:
+					new_path._parent += 1
 				else:
 					pass  # parent of directory of root is still root
 
@@ -627,8 +633,8 @@ class GPath():
 		for i in range(n):
 			if len(new_parts) > 0:
 				new_parts.pop()
-			elif not new_path._root:
-				new_path._dotdot += 1
+			elif not new_path._absolute:
+				new_path._parent += 1
 			else:
 				pass  # removing components from root should still give root
 		new_path._parts = tuple(new_parts)
@@ -648,7 +654,7 @@ class GPath():
 		if n < 0:
 			raise ValueError("cannot multiply path by a negative integer")
 		new_path = GPath(self)
-		new_path._dotdot = self._dotdot * n
+		new_path._parent = self._parent * n
 		new_path._parts = self._parts * n
 		return new_path
 
@@ -666,8 +672,8 @@ class GPath():
 		if n < 0:
 			return self.__rshift__(-1 * n)
 		new_path = GPath(self)
-		if not new_path._root:
-			new_path._dotdot = max(new_path._dotdot - n, 0)
+		if not new_path._absolute:
+			new_path._parent = max(new_path._parent - n, 0)
 		return new_path
 
 
@@ -684,17 +690,17 @@ class GPath():
 		if n < 0:
 			return self.__lshift__(-1 * n)
 		new_path = GPath(self)
-		if not new_path._root:
-			new_path._dotdot += n
+		if not new_path._absolute:
+			new_path._parent += n
 		return new_path
 
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
-		if self._dotdot < 0:
-			raise ValueError(f"invalid GPath, _dotdot cannot be negative: {repr(self)}")
-		if self._root:
-			if self._dotdot != 0:
-				raise ValueError(f"invalid GPath, _dotdot must be 0 when root is True: {repr(self)}")
+		if self._parent < 0:
+			raise ValueError(f"invalid GPath, _parent cannot be negative: {repr(self)}")
+		if self._absolute:
+			if self._parent != 0:
+				raise ValueError(f"invalid GPath, _parent must be 0 when root is True: {repr(self)}")
 		else:
 			if self._device != "" and self._device is not None:
 				raise ValueError(f"invalid GPath, _device must be unset when root is False: {repr(self)}")

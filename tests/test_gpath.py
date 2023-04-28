@@ -29,7 +29,7 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
-		('path', 'expected_parts', 'expected_device', 'expected_root', 'expected_dotdot'),
+		('path', 'expected_parts', 'expected_device', 'expected_absolute', 'expected_parent'),
 		[
 			(None, tuple(), "", False, 0),
 			("", tuple(), "", False, 0),
@@ -53,48 +53,48 @@ class TestGPath:
 		path: Optional[str],
 		expected_parts: tuple[str, ...],
 		expected_device: str,
-		expected_root: bool,
-		expected_dotdot: int,
+		expected_absolute: bool,
+		expected_parent: int,
 	):
 		"""
-			Test constructor `__init__()` as well as getters `is_root()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`, for paths requiring special treatment.
+			Test constructor `__init__()` as well as getters `is_absolute()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`, for paths requiring special treatment.
 		"""
 		if path is None:
 			gpath = GPath()
 		else:
 			gpath = GPath(path)
 
-		if expected_root and expected_dotdot > 0:
-			expected_dotdot = 0
+		if expected_absolute and expected_parent > 0:
+			expected_parent = 0
 
 		assert gpath._parts == expected_parts
 		assert gpath._device == expected_device
-		assert gpath._root == expected_root
-		assert gpath._dotdot == expected_dotdot
+		assert gpath._absolute == expected_absolute
+		assert gpath._parent == expected_parent
 
-		assert gpath.is_root() == expected_root
+		assert gpath.is_absolute() == expected_absolute
 		assert gpath.get_device() == expected_device
-		assert gpath.get_parent_level() == expected_dotdot
+		assert gpath.get_parent_level() == expected_parent
 
 		gpath_copy = GPath(gpath)
 		assert gpath_copy._parts == expected_parts
 		assert gpath_copy._device == expected_device
-		assert gpath_copy._root == expected_root
-		assert gpath_copy._dotdot == expected_dotdot
+		assert gpath_copy._absolute == expected_absolute
+		assert gpath_copy._parent == expected_parent
 
-		assert gpath_copy.is_root() == expected_root
+		assert gpath_copy.is_absolute() == expected_absolute
 		assert gpath_copy.get_device() == expected_device
-		assert gpath_copy.get_parent_level() == expected_dotdot
+		assert gpath_copy.get_parent_level() == expected_parent
 
 		expected_parent_parts = []
-		for i in range(expected_dotdot):
+		for i in range(expected_parent):
 			expected_parent_parts.append("..")
 		assert gpath.get_parent_parts() == expected_parent_parts
 		assert gpath_copy.get_parent_parts() == expected_parent_parts
 
 
 	@pytest.mark.parametrize(
-		('path', 'expected_parts', 'expected_dotdot'),
+		('path', 'expected_parts', 'expected_parent'),
 		[
 			("..", tuple(), 1),
 			("../..", tuple(), 2),
@@ -124,7 +124,7 @@ class TestGPath:
 	)
 	@pytest.mark.parametrize('path_suffix', ["", "/", "//", "/.", "/./", "/././/"])
 	@pytest.mark.parametrize(
-		('path_prefix', 'expected_device', 'expected_root'),
+		('path_prefix', 'expected_device', 'expected_absolute'),
 		[
 			("", "", False),
 			("/", "", True),
@@ -140,38 +140,38 @@ class TestGPath:
 		path_suffix: str,
 		expected_parts: tuple[str, ...],
 		expected_device: str,
-		expected_root: bool,
-		expected_dotdot: int,
+		expected_absolute: bool,
+		expected_parent: int,
 	):
 		"""
-			Test constructor `__init__()` as well as getters `is_root()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`.
+			Test constructor `__init__()` as well as getters `is_absolute()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`.
 		"""
 		gpath = GPath(path_prefix + path + path_suffix)
-		if expected_root and expected_dotdot > 0:
-			expected_dotdot = 0
+		if expected_absolute and expected_parent > 0:
+			expected_parent = 0
 
 		assert gpath._parts == expected_parts
 		assert gpath._device == expected_device
-		assert gpath._root == expected_root
-		assert gpath._dotdot == expected_dotdot
+		assert gpath._absolute == expected_absolute
+		assert gpath._parent == expected_parent
 
-		assert gpath.is_root() == expected_root
+		assert gpath.is_absolute() == expected_absolute
 		assert gpath.get_device() == expected_device
-		assert gpath.get_parent_level() == expected_dotdot
+		assert gpath.get_parent_level() == expected_parent
 
 		gpath_copy = GPath(gpath)
 
 		assert gpath_copy._parts == expected_parts
 		assert gpath_copy._device == expected_device
-		assert gpath_copy._root == expected_root
-		assert gpath_copy._dotdot == expected_dotdot
+		assert gpath_copy._absolute == expected_absolute
+		assert gpath_copy._parent == expected_parent
 
-		assert gpath_copy.is_root() == expected_root
+		assert gpath_copy.is_absolute() == expected_absolute
 		assert gpath_copy.get_device() == expected_device
-		assert gpath_copy.get_parent_level() == expected_dotdot
+		assert gpath_copy.get_parent_level() == expected_parent
 
 		expected_parent_parts = []
-		for i in range(expected_dotdot):
+		for i in range(expected_parent):
 			expected_parent_parts.append("..")
 		assert gpath.get_parent_parts() == expected_parent_parts
 		assert gpath_copy.get_parent_parts() == expected_parent_parts
@@ -207,6 +207,28 @@ class TestGPath:
 
 		result = GPath.from_parts(parts)
 		assert result == gpath1
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'expected'),
+		[
+			("/", True),
+			("", False),
+			("..", False),
+			("C:/", True),
+			("/a", False),
+			("a", False),
+			("../a", False),
+			("C:/a", False),
+		],
+		indirect=['gpath1']
+	)
+	def test_is_root(self, gpath1: GPath, expected: bool):
+		"""
+			Test `is_root()`.
+		"""
+		result = gpath1.is_root()
+		assert result == expected
 
 
 	@pytest.mark.parametrize(
@@ -654,7 +676,7 @@ class TestGPath:
 
 		result = gpath1.relpath_from(gpath2)
 		if gpath1._device != "" and result != None:
-			print(result._parts, result._root, result._device, result._dotdot)
+			print(result._parts, result._absolute, result._device, result._parent)
 		assert result == relpath_expected_gpath
 
 
