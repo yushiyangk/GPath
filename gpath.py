@@ -691,10 +691,13 @@ class GPath():
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
 		if self._dotdot < 0:
-			raise ValueError(f"invalid GPath, dotdot cannot be negative: {repr(self)}")
+			raise ValueError(f"invalid GPath, _dotdot cannot be negative: {repr(self)}")
 		if self._root:
 			if self._dotdot != 0:
-				raise ValueError(f"invalid GPath, dotdot must be 0 when root is True: {repr(self)}")
+				raise ValueError(f"invalid GPath, _dotdot must be 0 when root is True: {repr(self)}")
+		else:
+			if self._device != "" and self._device is not None:
+				raise ValueError(f"invalid GPath, _device must be unset when root is False: {repr(self)}")
 		return True
 
 
