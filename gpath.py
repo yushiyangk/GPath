@@ -25,7 +25,7 @@ def is_gpathlike(obj: Any) -> bool:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
-__version__ = '0.2'
+__version__ = '0.2.1'
 
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep

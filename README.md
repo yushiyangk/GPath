@@ -45,7 +45,7 @@ The `GPath.partition()` method is useful when dealing with paths from various di
 partitions = GPath.partition("/usr/bin", "/usr/local/", "../../doc", "C:/Windows", "C:/Program Files")
 
 assert partitions == {
-	GPath("/usr")      : [GPath("/usr/bin"), GPath("/usr/local")],
+	GPath("/usr")      : [GPath("bin"), GPath("local")],
 	GPath("../../doc") : [GPath("")],
 	GPath("C:/")       : [GPath("Windows"), GPath("Program Files")],
 }
