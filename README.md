@@ -75,7 +75,7 @@ Run `pip install -r requirements.dev.txt`.
 
 ### Install
 
-To install the package locally (in the venv), run `pip install .`. To keep the installed package always in sync with the source code, instead run `pip install -e .`.
+To install the package locally (in the venv) while keeping it in sync with the source code, run `pip install -e .`.
 
 ### Testing
 
