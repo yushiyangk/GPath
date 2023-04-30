@@ -83,6 +83,10 @@ For unit tests, run `pytest` or `coverage run -m pytest`.
 
 For coverage report, first run `coverage run -m pytest`, then either `coverage report -m` to print to stdout or `coverage html` to generate an HTML report in `htmlcov/`.
 
+### Generate documentation
+
+Run `pdoc gpath.py -o docs/html --footer-text="GPath $(python -c 'from gpath import __version__ as v; print(v);')"`
+
 ### Packaging
 
 Before packaging, check the package config by running `pyroma .`
