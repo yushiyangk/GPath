@@ -5,13 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="pdoc 13.1.1"/>
     <title>gpath API documentation</title>
+	<script type="module">
+		document.addEventListener('DOMContentLoaded', () => {
+			// Remove all hyperlinks inside code blocks
+			document.querySelectorAll('.pdoc .docstring pre code a, .pdoc .summary pre code a').forEach((a) => a.removeAttribute('href'));
+
+			// Do not link to the current section from within its own docstring
+			document.querySelectorAll('.pdoc .docstring a, .pdoc .attr a, .pdoc .summary a').forEach((a) => {
+				const href = a.getAttribute('href');
+				if (href === null) return;
+				const hrefParts = href.split('#');
+				if (hrefParts.length < 2) return;
+
+				const id = hrefParts[1];
+				const target = document.getElementById(id);
+				if (target?.contains(a)) {
+					a.removeAttribute('href');
+				}
+			});
+
+			// Rearrange function signatures in summary to prepare for elision
+			document.querySelectorAll('.pdoc .summary dt').forEach((heading) => {
+				const returnType = heading.querySelector('.return-annotation');
+				if (returnType !== null) {
+					heading.appendChild(returnType);
+				}
+				const signature = heading.querySelector('.signature');
+				if (signature !== null && signature.childNodes !== null && signature.childNodes[0]?.textContent === '(') {
+					const name = heading.querySelector('.name');
+					heading.insertBefore(signature.childNodes[0], signature);
+				}
+				// ) <- workaround for bad parenthesis matching in text editor
+			});
+			// Elision of function signatures except return type
+			document.querySelectorAll('.pdoc .summary').forEach((summary) => {
+				// Instead of observing resize of every single dt, just observe the parent .summary instead since they have the same width
+				const headings = summary.querySelectorAll('dt');
+				const headingsArray = [...headings];
+      			const names = headingsArray.map((h) => h.querySelector('.name'));
+      			const signatures = headingsArray.map((h) => h.querySelector('.signature'));
+				const returnTypes = headingsArray.map((h) => h.querySelector('.return-annotation'));
+				const summaryResizeObserver = new ResizeObserver((entries) => {
+					for (const entry of entries) {
+						if (entry.contentBoxSize !== null && entry.contentBoxSize[0] !== null) {
+							const containerWidth = entry.contentBoxSize[0].inlineSize;
+							headings.forEach((heading, i) => {
+								if (names[i] !== null && signatures[i] !== null && returnTypes[i] !== null) {
+									const nameWidth = names[i].scrollWidth;
+									const signatureWidth = signatures[i].scrollWidth;
+									const returnTypeWidth = returnTypes[i].scrollWidth;
+									// Need to add padding, border, margin widths too in principle, but they are 0
+									if (nameWidth + signatureWidth + returnTypeWidth > containerWidth) {
+										signatures[i].style.width = (containerWidth - nameWidth - returnTypeWidth) + 'px';
+									} else if (signatures[i].style.width !== '') {
+										signatures[i].style.removeProperty('width');
+									}
+								}
+							});
+						}
+					}
+				});
+				summaryResizeObserver.observe(summary);
+			});
+
+		});
+	</script>
 
     <style>/*! * Bootstrap Reboot v5.0.0 (https://getbootstrap.com/) * Copyright 2011-2021 The Bootstrap Authors * Copyright 2011-2021 Twitter, Inc. * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE) * Forked from Normalize.css, licensed MIT (https://github.com/necolas/normalize.css/blob/master/LICENSE.md) */*,::after,::before{box-sizing:border-box}@media (prefers-reduced-motion:no-preference){:root{scroll-behavior:smooth}}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";font-size:1rem;font-weight:400;line-height:1.5;color:#212529;background-color:#fff;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}hr{margin:1rem 0;color:inherit;background-color:currentColor;border:0;opacity:.25}hr:not([size]){height:1px}h1,h2,h3,h4,h5,h6{margin-top:0;margin-bottom:.5rem;font-weight:500;line-height:1.2}h1{font-size:calc(1.375rem + 1.5vw)}@media (min-width:1200px){h1{font-size:2.5rem}}h2{font-size:calc(1.325rem + .9vw)}@media (min-width:1200px){h2{font-size:2rem}}h3{font-size:calc(1.3rem + .6vw)}@media (min-width:1200px){h3{font-size:1.75rem}}h4{font-size:calc(1.275rem + .3vw)}@media (min-width:1200px){h4{font-size:1.5rem}}h5{font-size:1.25rem}h6{font-size:1rem}p{margin-top:0;margin-bottom:1rem}abbr[data-bs-original-title],abbr[title]{-webkit-text-decoration:underline dotted;text-decoration:underline dotted;cursor:help;-webkit-text-decoration-skip-ink:none;text-decoration-skip-ink:none}address{margin-bottom:1rem;font-style:normal;line-height:inherit}ol,ul{padding-left:2rem}dl,ol,ul{margin-top:0;margin-bottom:1rem}ol ol,ol ul,ul ol,ul ul{margin-bottom:0}dt{font-weight:700}dd{margin-bottom:.5rem;margin-left:0}blockquote{margin:0 0 1rem}b,strong{font-weight:bolder}small{font-size:.875em}mark{padding:.2em;background-color:#fcf8e3}sub,sup{position:relative;font-size:.75em;line-height:0;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}a{color:#0d6efd;text-decoration:underline}a:hover{color:#0a58ca}a:not([href]):not([class]),a:not([href]):not([class]):hover{color:inherit;text-decoration:none}code,kbd,pre,samp{font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:1em;direction:ltr;unicode-bidi:bidi-override}pre{display:block;margin-top:0;margin-bottom:1rem;overflow:auto;font-size:.875em}pre code{font-size:inherit;color:inherit;word-break:normal}code{font-size:.875em;color:#d63384;word-wrap:break-word}a>code{color:inherit}kbd{padding:.2rem .4rem;font-size:.875em;color:#fff;background-color:#212529;border-radius:.2rem}kbd kbd{padding:0;font-size:1em;font-weight:700}figure{margin:0 0 1rem}img,svg{vertical-align:middle}table{caption-side:bottom;border-collapse:collapse}caption{padding-top:.5rem;padding-bottom:.5rem;color:#6c757d;text-align:left}th{text-align:inherit;text-align:-webkit-match-parent}tbody,td,tfoot,th,thead,tr{border-color:inherit;border-style:solid;border-width:0}label{display:inline-block}button{border-radius:0}button:focus:not(:focus-visible){outline:0}button,input,optgroup,select,textarea{margin:0;font-family:inherit;font-size:inherit;line-height:inherit}button,select{text-transform:none}[role=button]{cursor:pointer}select{word-wrap:normal}select:disabled{opacity:1}[list]::-webkit-calendar-picker-indicator{display:none}[type=button],[type=reset],[type=submit],button{-webkit-appearance:button}[type=button]:not(:disabled),[type=reset]:not(:disabled),[type=submit]:not(:disabled),button:not(:disabled){cursor:pointer}::-moz-focus-inner{padding:0;border-style:none}textarea{resize:vertical}fieldset{min-width:0;padding:0;margin:0;border:0}legend{float:left;width:100%;padding:0;margin-bottom:.5rem;font-size:calc(1.275rem + .3vw);line-height:inherit}@media (min-width:1200px){legend{font-size:1.5rem}}legend+*{clear:left}::-webkit-datetime-edit-day-field,::-webkit-datetime-edit-fields-wrapper,::-webkit-datetime-edit-hour-field,::-webkit-datetime-edit-minute,::-webkit-datetime-edit-month-field,::-webkit-datetime-edit-text,::-webkit-datetime-edit-year-field{padding:0}::-webkit-inner-spin-button{height:auto}[type=search]{outline-offset:-2px;-webkit-appearance:textfield}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-color-swatch-wrapper{padding:0}::file-selector-button{font:inherit}::-webkit-file-upload-button{font:inherit;-webkit-appearance:button}output{display:inline-block}iframe{border:0}summary{display:list-item;cursor:pointer}progress{vertical-align:baseline}[hidden]{display:none!important}</style>
     <style>/*! syntax-highlighting.css */pre{line-height:125%;}span.linenos{color:inherit; background-color:transparent; padding-left:5px; padding-right:20px;}.pdoc-code .hll{background-color:#ffffcc}.pdoc-code{background:#f8f8f8;}.pdoc-code .c{color:#3D7B7B; font-style:italic}.pdoc-code .err{border:1px solid #FF0000}.pdoc-code .k{color:#008000; font-weight:bold}.pdoc-code .o{color:#666666}.pdoc-code .ch{color:#3D7B7B; font-style:italic}.pdoc-code .cm{color:#3D7B7B; font-style:italic}.pdoc-code .cp{color:#9C6500}.pdoc-code .cpf{color:#3D7B7B; font-style:italic}.pdoc-code .c1{color:#3D7B7B; font-style:italic}.pdoc-code .cs{color:#3D7B7B; font-style:italic}.pdoc-code .gd{color:#A00000}.pdoc-code .ge{font-style:italic}.pdoc-code .gr{color:#E40000}.pdoc-code .gh{color:#000080; font-weight:bold}.pdoc-code .gi{color:#008400}.pdoc-code .go{color:#717171}.pdoc-code .gp{color:#000080; font-weight:bold}.pdoc-code .gs{font-weight:bold}.pdoc-code .gu{color:#800080; font-weight:bold}.pdoc-code .gt{color:#0044DD}.pdoc-code .kc{color:#008000; font-weight:bold}.pdoc-code .kd{color:#008000; font-weight:bold}.pdoc-code .kn{color:#008000; font-weight:bold}.pdoc-code .kp{color:#008000}.pdoc-code .kr{color:#008000; font-weight:bold}.pdoc-code .kt{color:#B00040}.pdoc-code .m{color:#666666}.pdoc-code .s{color:#BA2121}.pdoc-code .na{color:#687822}.pdoc-code .nb{color:#008000}.pdoc-code .nc{color:#0000FF; font-weight:bold}.pdoc-code .no{color:#880000}.pdoc-code .nd{color:#AA22FF}.pdoc-code .ni{color:#717171; font-weight:bold}.pdoc-code .ne{color:#CB3F38; font-weight:bold}.pdoc-code .nf{color:#0000FF}.pdoc-code .nl{color:#767600}.pdoc-code .nn{color:#0000FF; font-weight:bold}.pdoc-code .nt{color:#008000; font-weight:bold}.pdoc-code .nv{color:#19177C}.pdoc-code .ow{color:#AA22FF; font-weight:bold}.pdoc-code .w{color:#bbbbbb}.pdoc-code .mb{color:#666666}.pdoc-code .mf{color:#666666}.pdoc-code .mh{color:#666666}.pdoc-code .mi{color:#666666}.pdoc-code .mo{color:#666666}.pdoc-code .sa{color:#BA2121}.pdoc-code .sb{color:#BA2121}.pdoc-code .sc{color:#BA2121}.pdoc-code .dl{color:#BA2121}.pdoc-code .sd{color:#BA2121; font-style:italic}.pdoc-code .s2{color:#BA2121}.pdoc-code .se{color:#AA5D1F; font-weight:bold}.pdoc-code .sh{color:#BA2121}.pdoc-code .si{color:#A45A77; font-weight:bold}.pdoc-code .sx{color:#008000}.pdoc-code .sr{color:#A45A77}.pdoc-code .s1{color:#BA2121}.pdoc-code .ss{color:#19177C}.pdoc-code .bp{color:#008000}.pdoc-code .fm{color:#0000FF}.pdoc-code .vc{color:#19177C}.pdoc-code .vg{color:#19177C}.pdoc-code .vi{color:#19177C}.pdoc-code .vm{color:#19177C}.pdoc-code .il{color:#666666}</style>
     <style>/*! theme.css */:root{--pdoc-background:#fff;}.pdoc{--text:#212529;--muted:#6c757d;--link:#3660a5;--link-hover:#1659c5;--code:#f8f8f8;--active:#fff598;--accent:#eee;--accent2:#c1c1c1;--nav-hover:rgba(255, 255, 255, 0.5);--name:#0066BB;--def:#008800;--annotation:#007020;}</style>
     <style>/*! layout.css */html, body{width:100%;height:100%;}html, main{scroll-behavior:smooth;}body{background-color:var(--pdoc-background);}@media (max-width:769px){#navtoggle{cursor:pointer;position:absolute;width:50px;height:40px;top:1rem;right:1rem;border-color:var(--text);color:var(--text);display:flex;opacity:0.8;z-index:999;}#navtoggle:hover{opacity:1;}#togglestate + div{display:none;}#togglestate:checked + div{display:inherit;}main, header{padding:2rem 3vw;}header + main{margin-top:-3rem;}.git-button{display:none !important;}nav input[type="search"]{max-width:77%;}nav input[type="search"]:first-child{margin-top:-6px;}nav input[type="search"]:valid ~ *{display:none !important;}}@media (min-width:770px){:root{--sidebar-width:clamp(12.5rem, 28vw, 22rem);}nav{position:fixed;overflow:auto;height:100vh;width:var(--sidebar-width);}main, header{padding:3rem 2rem 3rem calc(var(--sidebar-width) + 3rem);width:calc(54rem + var(--sidebar-width));max-width:100%;}header + main{margin-top:-4rem;}#navtoggle{display:none;}}#togglestate{position:absolute;height:0;opacity:0;}nav.pdoc{--pad:clamp(0.5rem, 2vw, 1.75rem);--indent:1.5rem;background-color:var(--accent);border-right:1px solid var(--accent2);box-shadow:0 0 20px rgba(50, 50, 50, .2) inset;padding:0 0 0 var(--pad);overflow-wrap:anywhere;scrollbar-width:thin; scrollbar-color:var(--accent2) transparent }nav.pdoc::-webkit-scrollbar{width:.4rem; }nav.pdoc::-webkit-scrollbar-thumb{background-color:var(--accent2); }nav.pdoc > div{padding:var(--pad) 0;}nav.pdoc .module-list-button{display:inline-flex;align-items:center;color:var(--text);border-color:var(--muted);margin-bottom:1rem;}nav.pdoc .module-list-button:hover{border-color:var(--text);}nav.pdoc input[type=search]{display:block;outline-offset:0;width:calc(100% - var(--pad));}nav.pdoc .logo{max-width:calc(100% - var(--pad));max-height:35vh;display:block;margin:0 auto 1rem;transform:translate(calc(-.5 * var(--pad)), 0);}nav.pdoc ul{list-style:none;padding-left:0;}nav.pdoc > div > ul{margin-left:calc(0px - var(--pad));}nav.pdoc li a{padding:.2rem 0 .2rem calc(var(--pad) + var(--indent));}nav.pdoc > div > ul > li > a{padding-left:var(--pad);}nav.pdoc li{transition:all 100ms;}nav.pdoc li:hover{background-color:var(--nav-hover);}nav.pdoc a, nav.pdoc a:hover{color:var(--text);}nav.pdoc a{display:block;}nav.pdoc > h2:first-of-type{margin-top:1.5rem;}nav.pdoc .class:before{content:"class ";color:var(--muted);}nav.pdoc .function:after{content:"()";color:var(--muted);}nav.pdoc footer:before{content:"";display:block;width:calc(100% - var(--pad));border-top:solid var(--accent2) 1px;margin-top:1.5rem;padding-top:.5rem;}nav.pdoc footer{font-size:small;}</style>
     <style>/*! content.css */.pdoc{color:var(--text);box-sizing:border-box;line-height:1.5;background:none;}.pdoc .pdoc-button{cursor:pointer;display:inline-block;border:solid black 1px;border-radius:2px;font-size:.75rem;padding:calc(0.5em - 1px) 1em;transition:100ms all;}.pdoc .pdoc-alert{padding:1rem 1rem 1rem calc(1.5rem + 24px);border:1px solid transparent;border-radius:.25rem;background-repeat:no-repeat;background-position:1rem center;margin-bottom:1rem;}.pdoc .pdoc-alert > *:last-child{margin-bottom:0;}.pdoc .pdoc-alert-note {color:#084298;background-color:#cfe2ff;border-color:#b6d4fe;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23084298%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M8%2016A8%208%200%201%200%208%200a8%208%200%200%200%200%2016zm.93-9.412-1%204.705c-.07.34.029.533.304.533.194%200%20.487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703%200-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381%202.29-.287zM8%205.5a1%201%200%201%201%200-2%201%201%200%200%201%200%202z%22/%3E%3C/svg%3E");}.pdoc .pdoc-alert-warning{color:#664d03;background-color:#fff3cd;border-color:#ffecb5;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23664d03%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M8.982%201.566a1.13%201.13%200%200%200-1.96%200L.165%2013.233c-.457.778.091%201.767.98%201.767h13.713c.889%200%201.438-.99.98-1.767L8.982%201.566zM8%205c.535%200%20.954.462.9.995l-.35%203.507a.552.552%200%200%201-1.1%200L7.1%205.995A.905.905%200%200%201%208%205zm.002%206a1%201%200%201%201%200%202%201%201%200%200%201%200-2z%22/%3E%3C/svg%3E");}.pdoc .pdoc-alert-danger{color:#842029;background-color:#f8d7da;border-color:#f5c2c7;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22%23842029%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M5.52.359A.5.5%200%200%201%206%200h4a.5.5%200%200%201%20.474.658L8.694%206H12.5a.5.5%200%200%201%20.395.807l-7%209a.5.5%200%200%201-.873-.454L6.823%209.5H3.5a.5.5%200%200%201-.48-.641l2.5-8.5z%22/%3E%3C/svg%3E");}.pdoc .visually-hidden{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0, 0, 0, 0) !important;white-space:nowrap !important;border:0 !important;}.pdoc h1, .pdoc h2, .pdoc h3{font-weight:300;margin:.3em 0;padding:.2em 0;}.pdoc > section:not(.module-info) h1{font-size:1.5rem;font-weight:500;}.pdoc > section:not(.module-info) h2{font-size:1.4rem;font-weight:500;}.pdoc > section:not(.module-info) h3{font-size:1.3rem;font-weight:500;}.pdoc > section:not(.module-info) h4{font-size:1.2rem;}.pdoc > section:not(.module-info) h5{font-size:1.1rem;}.pdoc a{text-decoration:none;color:var(--link);}.pdoc a:hover{color:var(--link-hover);}.pdoc blockquote{margin-left:2rem;}.pdoc pre{border-top:1px solid var(--accent2);border-bottom:1px solid var(--accent2);margin-top:0;margin-bottom:1em;padding:.5rem 0 .5rem .5rem;overflow-x:auto;background-color:var(--code);}.pdoc code{color:var(--text);padding:.2em .4em;margin:0;font-size:85%;background-color:var(--code);border-radius:6px;}.pdoc a > code{color:inherit;}.pdoc pre > code{display:inline-block;font-size:inherit;background:none;border:none;padding:0;}.pdoc > section:not(.module-info){margin-bottom:1.5rem;}.pdoc .modulename{margin-top:0;font-weight:bold;}.pdoc .modulename a{color:var(--link);transition:100ms all;}.pdoc .git-button{float:right;border:solid var(--link) 1px;}.pdoc .git-button:hover{background-color:var(--link);color:var(--pdoc-background);}.view-source-toggle-state,.view-source-toggle-state ~ .pdoc-code{display:none;}.view-source-toggle-state:checked ~ .pdoc-code{display:block;}.view-source-button{display:inline-block;float:right;font-size:.75rem;line-height:1.5rem;color:var(--muted);padding:0 .4rem 0 1.3rem;cursor:pointer;text-indent:-2px;}.view-source-button > span{visibility:hidden;}.module-info .view-source-button{float:none;display:flex;justify-content:flex-end;margin:-1.2rem .4rem -.2rem 0;}.view-source-button::before{position:absolute;content:"View Source";display:list-item;list-style-type:disclosure-closed;}.view-source-toggle-state:checked ~ .attr .view-source-button::before,.view-source-toggle-state:checked ~ .view-source-button::before{list-style-type:disclosure-open;}.pdoc .docstring{margin-bottom:1.5rem;}.pdoc section:not(.module-info) .docstring{margin-left:clamp(0rem, 5vw - 2rem, 1rem);}.pdoc .docstring .pdoc-code{margin-left:1em;margin-right:1em;}.pdoc h1:target,.pdoc h2:target,.pdoc h3:target,.pdoc h4:target,.pdoc h5:target,.pdoc h6:target,.pdoc .pdoc-code > pre > span:target{background-color:var(--active);box-shadow:-1rem 0 0 0 var(--active);}.pdoc .pdoc-code > pre > span:target{display:block;}.pdoc div:target > .attr,.pdoc section:target > .attr,.pdoc dd:target > a{background-color:var(--active);}.pdoc *{scroll-margin:2rem;}.pdoc .pdoc-code .linenos{user-select:none;}.pdoc .attr:hover{filter:contrast(0.95);}.pdoc section, .pdoc .classattr{position:relative;}.pdoc .headerlink{--width:clamp(1rem, 3vw, 2rem);position:absolute;top:0;left:calc(0rem - var(--width));transition:all 100ms ease-in-out;opacity:0;}.pdoc .headerlink::before{content:"#";display:block;text-align:center;width:var(--width);height:2.3rem;line-height:2.3rem;font-size:1.5rem;}.pdoc .attr:hover ~ .headerlink,.pdoc *:target > .headerlink,.pdoc .headerlink:hover{opacity:1;}.pdoc .attr{display:block;margin:.5rem 0 .5rem;padding:.4rem .4rem .4rem 1rem;background-color:var(--accent);overflow-x:auto;}.pdoc .classattr{margin-left:2rem;}.pdoc .name{color:var(--name);font-weight:bold;}.pdoc .def{color:var(--def);font-weight:bold;}.pdoc .signature{background-color:transparent;}.pdoc .param, .pdoc .return-annotation{white-space:pre;}.pdoc .signature.multiline .param{display:block;}.pdoc .signature.condensed .param{display:inline-block;}.pdoc .annotation{color:var(--annotation);}.pdoc .view-value-toggle-state,.pdoc .view-value-toggle-state ~ .default_value{display:none;}.pdoc .view-value-toggle-state:checked ~ .default_value{display:inherit;}.pdoc .view-value-button{font-size:.5rem;vertical-align:middle;border-style:dashed;margin-top:-0.1rem;}.pdoc .view-value-button:hover{background:white;}.pdoc .view-value-button::before{content:"show";text-align:center;width:2.2em;display:inline-block;}.pdoc .view-value-toggle-state:checked ~ .view-value-button::before{content:"hide";}.pdoc .inherited{margin-left:2rem;}.pdoc .inherited dt{font-weight:700;}.pdoc .inherited dt, .pdoc .inherited dd{display:inline;margin-left:0;margin-bottom:.5rem;}.pdoc .inherited dd:not(:last-child):after{content:", ";}.pdoc .inherited .class:before{content:"class ";}.pdoc .inherited .function a:after{content:"()";}.pdoc .search-result .docstring{overflow:auto;max-height:25vh;}.pdoc .search-result.focused > .attr{background-color:var(--active);}.pdoc .attribution{margin-top:2rem;display:block;opacity:0.5;transition:all 200ms;filter:grayscale(100%);}.pdoc .attribution:hover{opacity:1;filter:grayscale(0%);}.pdoc .attribution img{margin-left:5px;height:35px;vertical-align:middle;width:70px;transition:all 200ms;}.pdoc table{display:block;width:max-content;max-width:100%;overflow:auto;margin-bottom:1rem;}.pdoc table th{font-weight:600;}.pdoc table th, .pdoc table td{padding:6px 13px;border:1px solid var(--accent2);}</style>
-    <style>/*! custom.css */</style></head>
+    <style>/*! custom.css */.pdoc .attribution{	font-size:small;}.pdoc .attribution img{	height:2em;	width:unset;	margin-left:0.1em;}.pdoc code{	padding:0.2em 0.2em;}.pdoc pre{	tab-size:4;}.pdoc section{	margin-bottom:2.25rem;}.pdoc .classattr, .pdoc .inherited{	margin-top:2.25rem;	margin-bottom:2.25rem;}.pdoc .docstring{	margin-bottom:1rem;}.pdoc .docstring .pdoc-code{	margin-left:unset;	margin-right:unset;}.pdoc .attr{	font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;	tab-size:4;}.pdoc .decorator{	color:var(--muted);}.pdoc .summary{	margin-bottom:1rem;margin-left:clamp(0rem, 5vw - 2rem, 1rem);}.pdoc .summary dt{	font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;	white-space:nowrap;}.pdoc .summary dt .signature{	display:inline-block;	box-sizing:border-box;	vertical-align:bottom;	overflow-x:hidden;	text-overflow:ellipsis;}.pdoc .summary dt .signature .param{	display:inline;	white-space:nowrap;}</style></head>
 <body>
     <nav class="pdoc">
         <label id="navtoggle" for="togglestate" class="pdoc-button"><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke-linecap='round' stroke="currentColor" stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/></svg></label>
@@ -151,8 +216,9 @@
                     <h1 class="modulename">
 gpath    </h1>
 
-                        <div class="docstring"><p>GPath is a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system.</p>
-</div>
+                <div class="docstring">
+<p>GPath is a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system.</p></div>
+
 
                         <input id="mod-gpath-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
@@ -216,7 +282,7 @@ gpath    </h1>
 </span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;Path component that indicates a parent directory; usually `..`&quot;&quot;&quot;</span>
 </span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>
 </span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>
-</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">GPath</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">GPath</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 </span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.</span>
 </span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>
@@ -1082,6 +1148,7 @@ gpath    </h1>
     <span class="def">class</span>
     <span class="name">GPath</span>:
 
+
                 <label class="view-source-button" for="GPath-view-source"><span>View Source</span></label>
 
     </div>
@@ -1106,7 +1173,7 @@ gpath    </h1>
 </span><span id="GPath-57"><a href="#GPath-57"><span class="linenos"> 57</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;Path component that indicates a parent directory; usually `..`&quot;&quot;&quot;</span>
 </span><span id="GPath-58"><a href="#GPath-58"><span class="linenos"> 58</span></a>
 </span><span id="GPath-59"><a href="#GPath-59"><span class="linenos"> 59</span></a>
-</span><span id="GPath-60"><a href="#GPath-60"><span class="linenos"> 60</span></a>	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">GPath</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GPath-60"><a href="#GPath-60"><span class="linenos"> 60</span></a>	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">GPath</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 </span><span id="GPath-61"><a href="#GPath-61"><span class="linenos"> 61</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-62"><a href="#GPath-62"><span class="linenos"> 62</span></a><span class="sd">			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.</span>
 </span><span id="GPath-63"><a href="#GPath-63"><span class="linenos"> 63</span></a>
@@ -1959,23 +2026,194 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.</p>
+    <div class="docstring">
+<p>A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.</p>
 
-<p>The path can be manipulated with various methods before being rendered in a format that is meaningful to the local operating system using <code><a href="#GPath.__str__">__str__()</a></code>.</p>
-</div>
+<p>The path can be manipulated with various methods before being rendered in a format that is meaningful to the local operating system using <code><a href="#GPath.__str__">__str__()</a></code>.</p></div>
+
+		<div class="summary">
+
+					<h2>Class variables summary</h2>
+		<dl>
+				<dt><span class="name"><a href="#GPath.separator">separator</a></span><span class="annotation">: ClassVar[str]</span>        =
+<span class="default_value">&#39;/&#39;</span></dt>
+
+<dd>
+<p>Path separator character, usually <code>/</code></p></dd>
+	<dt><span class="name"><a href="#GPath.current_dir">current_dir</a></span><span class="annotation">: ClassVar[str]</span>        =
+<span class="default_value">&#39;.&#39;</span></dt>
+
+<dd>
+<p>Path component that indicates the current directory; usually <code>.</code></p></dd>
+	<dt><span class="name"><a href="#GPath.parent_dir">parent_dir</a></span><span class="annotation">: ClassVar[str]</span>        =
+<span class="default_value">&#39;..&#39;</span></dt>
+
+<dd>
+<p>Path component that indicates a parent directory; usually <code>..</code></p></dd>
+
+		</dl>
+
+
+			
+
+					<h2>Constructor summary</h2>
+		<dl>
+				<dt>					<span class="name"><a href="#GPath.__init__">GPath</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></span>)</span></dt>
+
+<dd>
+<p>Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.</p></dd>
+
+		</dl>
+
+
+					<h2>Static methods summary</h2>
+		<dl>
+				<dt>					<span class="name"><a href="#GPath.from_parts">from_parts</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">parts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Create a GPath object from a sequence of strings, such as that generated by <code><a href="#GPath.get_parts">get_parts()</a></code>.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.find_common">find_common</a></span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">path1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">path2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">allow_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">allow_parents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Find the longest common base path shared by the two paths, or return None if no such path exists.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.partition">partition</a></span><span class="signature pdoc-code multiline">(<span class="param">	<span class="o">*</span><span class="n">paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]],</span> <span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">allow_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">allow_parents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span><span class="return-annotation">) -> <span class="nb">dict</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]]</span>:</span></span></dt>
+
+<dd>
+<p>Partition a collection of paths based on shared common base paths such that each path belongs to one partition.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.join">join</a></span><span class="signature pdoc-code multiline">(<span class="param">	<span class="o">*</span><span class="n">paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]],</span> <span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.</p></dd>
+
+		</dl>
+
+
+			
+
+					<h2>Instance methods summary</h2>
+		<dl>
+				<dt>					<span class="name"><a href="#GPath.get_parts">get_parts</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>, </span><span class="param"><span class="n">parent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span><span class="return-annotation">) -> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Convert the path to a list of strings that unambiguously represents the given path.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.get_parent_parts">get_parent_parts</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Get a list of strings representing the parent directory that the path is relative to, if any.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.get_parent_level">get_parent_level</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span></dt>
+
+<dd>
+<p>Get the number of levels of parent directories that the path is relative to, which may be 0.tain one copy of <code><a href="#GPath.parent_dir">GPath.parent_dir</a></code>. If the path is not relative to a parent directory, the returned list will be empty.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.get_device">get_device</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Get the device name.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.is_absolute">is_absolute</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
+
+<dd>
+<p>Check if the path is an absolute path.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.is_root">is_root</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
+
+<dd>
+<p>Check if the path is exactly the root of the filesystem.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.subpath_from">subpath_from</a></span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">base</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Find the relative subpath from <code>base</code> to <code>self</code> if possible and if <code>base</code> contains <code>self</code>, or return None otherwise.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.relpath_from">relpath_from</a></span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">origin</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Find the relative path from <code>origin</code> to <code>self</code> if possible, or return None otherwise.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__hash__">__hash__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span></dt>
+
+<dd>
+<p>Calculate hash of the GPath object.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__eq__">__eq__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Any</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
+
+<dd>
+<p>Check if two GPaths are completely identical.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__lt__">__lt__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
+
+<dd>
+<p>Check if <code>self</code> should be collated before <code>other</code> by comparing them in component-wise lexicographical order.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__bool__">__bool__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
+
+<dd>
+<p>Truthy if <code>self</code> is an absolute path, if <code>self</code> is relative to a parent directory, or if <code>self</code> has at least one named component.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__str__">__str__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
+
+<dd>
+<p>Return a string representation of the path.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__repr__">__repr__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
+
+<dd>
+<p>Return a string that, when printed, gives the Python code associated with instantiating the GPath object.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__len__">__len__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span></dt>
+
+<dd>
+<p>Get the number of named path components, excluding any device name or parent directories.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__getitem__">__getitem__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>:</span></span></dt>
+
+<dd>
+<p>Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__iter__">__iter__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span></dt>
+
+<dd>
+<p>Get an iterator through the named path components, excluding any device name or parent directories.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__contains__">__contains__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
+
+<dd>
+<p>Check if the path represented by <code>self</code> contains the path represented by <code>other</code>; i.e. check if <code>self</code> is a parent directory of <code>other</code>.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__add__">__add__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Add (append) <code>other</code> to the end of <code>self</code> if <code>other</code> is a relative path, and return a new copy.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__sub__">__sub__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Remove <code>n</code> components from the end of the path and return a new copy.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__mul__">__mul__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Duplicate the named components of <code>self</code> <code>n</code> times and return a new path with the duplicated components.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__lshift__">__lshift__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Move the imaginary current working directory <code>n</code> steps up the filesystem tree.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__rshift__">__rshift__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span></dt>
+
+<dd>
+<p>Move the imaginary current working directory <code>n</code> steps down the filesystem tree.</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__gt__">__gt__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span></dt>
+
+<dd>
+<p>Return a &gt; b.  Computed by @total_ordering from (not a &lt; b) and (a != b).</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__le__">__le__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span></dt>
+
+<dd>
+<p>Return a &lt;= b.  Computed by @total_ordering from (a &lt; b) or (a == b).</p></dd>
+	<dt>					<span class="name"><a href="#GPath.__ge__">__ge__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span></dt>
+
+<dd>
+<p>Return a &gt;= b.  Computed by @total_ordering from (not a &lt; b).</p></dd>
+
+		</dl>
+
+		</div>
 
 
                             <div id="GPath.__init__" class="classattr">
                                         <input id="GPath.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">GPath</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></span>)</span>
+        <span class="name">GPath</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></span>)</span>
+
 
                 <label class="view-source-button" for="GPath.__init__-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#GPath.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__init__-60"><a href="#GPath.__init__-60"><span class="linenos"> 60</span></a>	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">GPath</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__init__-60"><a href="#GPath.__init__-60"><span class="linenos"> 60</span></a>	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">GPath</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 </span><span id="GPath.__init__-61"><a href="#GPath.__init__-61"><span class="linenos"> 61</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath.__init__-62"><a href="#GPath.__init__-62"><span class="linenos"> 62</span></a><span class="sd">			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.</span>
 </span><span id="GPath.__init__-63"><a href="#GPath.__init__-63"><span class="linenos"> 63</span></a>
@@ -2030,7 +2268,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.</p>
+    <div class="docstring">
+<p>Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.</p>
 
 <h2 id="parameters">Parameters</h2>
 
@@ -2048,8 +2287,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Program Files&quot;</span><span class="p">)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2058,12 +2297,14 @@ gpath    </h1>
             <span class="name">separator</span><span class="annotation">: ClassVar[str]</span>        =
 <span class="default_value">&#39;/&#39;</span>
 
+
         
     </div>
     <a class="headerlink" href="#GPath.separator"></a>
     
-            <div class="docstring"><p>Path separator character, usually <code>/</code></p>
-</div>
+    <div class="docstring">
+<p>Path separator character, usually <code>/</code></p></div>
+
 
 
                             </div>
@@ -2072,12 +2313,14 @@ gpath    </h1>
             <span class="name">current_dir</span><span class="annotation">: ClassVar[str]</span>        =
 <span class="default_value">&#39;.&#39;</span>
 
+
         
     </div>
     <a class="headerlink" href="#GPath.current_dir"></a>
     
-            <div class="docstring"><p>Path component that indicates the current directory; usually <code>.</code></p>
-</div>
+    <div class="docstring">
+<p>Path component that indicates the current directory; usually <code>.</code></p></div>
+
 
 
                             </div>
@@ -2086,12 +2329,14 @@ gpath    </h1>
             <span class="name">parent_dir</span><span class="annotation">: ClassVar[str]</span>        =
 <span class="default_value">&#39;..&#39;</span>
 
+
         
     </div>
     <a class="headerlink" href="#GPath.parent_dir"></a>
     
-            <div class="docstring"><p>Path component that indicates a parent directory; usually <code>..</code></p>
-</div>
+    <div class="docstring">
+<p>Path component that indicates a parent directory; usually <code>..</code></p></div>
+
 
 
                             </div>
@@ -2101,7 +2346,8 @@ gpath    </h1>
                     <div class="decorator">@staticmethod</div>
 
         <span class="def">def</span>
-        <span class="name">from_parts</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">parts</span><span class="p">:</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">from_parts</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">parts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.from_parts-view-source"><span>View Source</span></label>
 
@@ -2118,10 +2364,11 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Create a GPath object from a sequence of strings, such as that generated by <code><a href="#GPath.get_parts">get_parts()</a></code>.</p>
+    <div class="docstring">
+<p>Create a GPath object from a sequence of strings, such as that generated by <code><a href="#GPath.get_parts">get_parts()</a></code>.</p>
 
-<p>Note that unlike <code><a href="#GPath.join">GPath.join()</a></code>, this method expects each item in the sequence to be a single string representing a path component, without any separators. Absolute paths are represented in the same manner as returned by <code><a href="#GPath.get_parts">get_parts()</a></code>.</p>
-</div>
+<p>Note that unlike <code><a href="#GPath.join">GPath.join()</a></code>, this method expects each item in the sequence to be a single string representing a path component, without any separators. Absolute paths are represented in the same manner as returned by <code><a href="#GPath.get_parts">get_parts()</a></code>.</p></div>
+
 
 
                             </div>
@@ -2131,7 +2378,8 @@ gpath    </h1>
                     <div class="decorator">@staticmethod</div>
 
         <span class="def">def</span>
-        <span class="name">find_common</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">path1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">path2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">allow_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">allow_parents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">]</span>:</span></span>
+        <span class="name">find_common</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">path1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">path2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">allow_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">allow_parents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.find_common-view-source"><span>View Source</span></label>
 
@@ -2224,7 +2472,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Find the longest common base path shared by the two paths, or return None if no such path exists.</p>
+    <div class="docstring">
+<p>Find the longest common base path shared by the two paths, or return None if no such path exists.</p>
 
 <p>A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the <code>allow_current</code> and <code>allow_parents</code> options.</p>
 
@@ -2258,8 +2507,8 @@ gpath    </h1>
 <span class="n"><a href="#GPath.find_common">GPath.find_common</a></span><span class="p">(</span><span class="s2">&quot;C:/Windows/System32&quot;</span><span class="p">,</span> <span class="s2">&quot;C:/Program Files&quot;</span><span class="p">)</span>  <span class="c1"># GPath(&quot;C:/&quot;)</span>
 <span class="n"><a href="#GPath.find_common">GPath.find_common</a></span><span class="p">(</span><span class="s2">&quot;../Documents&quot;</span><span class="p">,</span> <span class="s2">&quot;../Pictures&quot;</span><span class="p">)</span>              <span class="c1"># GPath(&quot;..&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2269,7 +2518,8 @@ gpath    </h1>
                     <div class="decorator">@staticmethod</div>
 
         <span class="def">def</span>
-        <span class="name">partition</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="o">*</span><span class="n">paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Collection</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]],</span> <span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">allow_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">allow_parents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span><span class="return-annotation">) -> <span class="nb">dict</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">]]</span>:</span></span>
+        <span class="name">partition</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="o">*</span><span class="n">paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]],</span> <span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span>,</span><span class="param">	<span class="n">allow_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">allow_parents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span><span class="return-annotation">) -> <span class="nb">dict</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.partition-view-source"><span>View Source</span></label>
 
@@ -2356,7 +2606,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Partition a collection of paths based on shared common base paths such that each path belongs to one partition.</p>
+    <div class="docstring">
+<p>Partition a collection of paths based on shared common base paths such that each path belongs to one partition.</p>
 
 <p>For each partition, return a list of relative paths from the base path of that partition to each corresponding input path within that partition, unless <code>allow_parents</code> is True (see below). If the input collection is ordered, the output order is preserved within each partition. If the input collection contains duplicates, the corresponding output lists will as well.</p>
 
@@ -2380,7 +2631,7 @@ gpath    </h1>
 <h2 id="raises">Raises</h2>
 
 <p><code>ValueError</code>
-  if any of the GPaths are invalid</p>
+if any of the GPaths are invalid</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -2388,13 +2639,13 @@ gpath    </h1>
 <pre><span></span><code><span class="n"><a href="#GPath.partition">GPath.partition</a></span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/bin&quot;</span><span class="p">,</span> <span class="s2">&quot;../../doc&quot;</span><span class="p">,</span> <span class="s2">&quot;C:/Windows&quot;</span><span class="p">,</span> <span class="s2">&quot;C:/Program Files&quot;</span><span class="p">)</span>
 
 <span class="k">assert</span> <span class="n">partitions</span> <span class="o">==</span> <span class="p">{</span>
-        <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr&quot;</span><span class="p">)</span>      <span class="p">:</span> <span class="p">[</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;bin&quot;</span><span class="p">),</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">)],</span>
-        <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../doc&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="p">[</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)],</span>
-        <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/&quot;</span><span class="p">)</span>       <span class="p">:</span> <span class="p">[</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;Windows&quot;</span><span class="p">),</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;Program Files&quot;</span><span class="p">)],</span>
+	<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr&quot;</span><span class="p">)</span>      <span class="p">:</span> <span class="p">[</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;bin&quot;</span><span class="p">),</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">)],</span>
+	<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../doc&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="p">[</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)],</span>
+	<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/&quot;</span><span class="p">)</span>       <span class="p">:</span> <span class="p">[</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;Windows&quot;</span><span class="p">),</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;Program Files&quot;</span><span class="p">)],</span>
 <span class="p">}</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2404,7 +2655,8 @@ gpath    </h1>
                     <div class="decorator">@staticmethod</div>
 
         <span class="def">def</span>
-        <span class="name">join</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="o">*</span><span class="n">paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Collection</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]],</span> <span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">join</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="o">*</span><span class="n">paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]],</span> <span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.join-view-source"><span>View Source</span></label>
 
@@ -2456,7 +2708,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.</p>
+    <div class="docstring">
+<p>Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.</p>
 
 <h2 id="parameters">Parameters</h2>
 
@@ -2478,8 +2731,8 @@ gpath    </h1>
 <span class="n"><a href="#GPath.join">GPath.join</a></span><span class="p">(</span><span class="s2">&quot;/usr/local/bin&quot;</span><span class="p">,</span> <span class="s2">&quot;../../bin&quot;</span><span class="p">)</span>  <span class="c1"># GPath(&quot;/usr/bin&quot;)</span>
 <span class="n"><a href="#GPath.join">GPath.join</a></span><span class="p">(</span><span class="s2">&quot;C:/&quot;</span><span class="p">,</span> <span class="s2">&quot;Windows&quot;</span><span class="p">)</span>               <span class="c1"># GPath(&quot;C:/Windows&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2489,6 +2742,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">get_parts</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>, </span><span class="param"><span class="n">parent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span><span class="return-annotation">) -> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.get_parts-view-source"><span>View Source</span></label>
 
@@ -2545,7 +2799,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Convert the path to a list of strings that unambiguously represents the given path.</p>
+    <div class="docstring">
+<p>Convert the path to a list of strings that unambiguously represents the given path.</p>
 
 <p>The list of strings is given in such a way that a valid path can be reconstructed as a single string using <code>GPath.separator.join(<var>g</var>.get_parts())</code>. By default, the list of strings represents the full input path, but this behaviour can be changed using the optional arguments.</p>
 
@@ -2573,8 +2828,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Program Files&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_parts</span><span class="p">()</span>  <span class="c1"># [&quot;C:&quot;, &quot;Program Files&quot;]</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_parts</span><span class="p">()</span>   <span class="c1"># [&quot;..&quot;, &quot;..&quot;, &quot;Documents&quot;]</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2584,6 +2839,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">get_parent_parts</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.get_parent_parts-view-source"><span>View Source</span></label>
 
@@ -2606,7 +2862,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Get a list of strings representing the parent directory that the path is relative to, if any.</p>
+    <div class="docstring">
+<p>Get a list of strings representing the parent directory that the path is relative to, if any.</p>
 
 <p>For each parent level, the returned list will contain one copy of <code><a href="#GPath.parent_dir">GPath.parent_dir</a></code>. If the path is not relative to a parent directory, the returned list will be empty.</p>
 
@@ -2616,8 +2873,8 @@ gpath    </h1>
 <pre><span></span><code><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_parent_parts</span><span class="p">()</span>  <span class="c1"># [&quot;..&quot;, &quot;..&quot;]</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;usr/local/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_parent_parts</span><span class="p">()</span>    <span class="c1"># []</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2627,6 +2884,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">get_parent_level</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.get_parent_level-view-source"><span>View Source</span></label>
 
@@ -2647,7 +2905,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Get the number of levels of parent directories that the path is relative to, which may be 0.tain one copy of <code><a href="#GPath.parent_dir">GPath.parent_dir</a></code>. If the path is not relative to a parent directory, the returned list will be empty.</p>
+    <div class="docstring">
+<p>Get the number of levels of parent directories that the path is relative to, which may be 0.tain one copy of <code><a href="#GPath.parent_dir">GPath.parent_dir</a></code>. If the path is not relative to a parent directory, the returned list will be empty.</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -2655,8 +2914,8 @@ gpath    </h1>
 <pre><span></span><code><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_parent_level</span><span class="p">()</span>  <span class="c1"># 2</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;usr/local/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_parent_level</span><span class="p">()</span>    <span class="c1"># 0</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2666,6 +2925,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">get_device</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.get_device-view-source"><span>View Source</span></label>
 
@@ -2687,7 +2947,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Get the device name.</p>
+    <div class="docstring">
+<p>Get the device name.</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -2696,8 +2957,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span>         <span class="c1"># &quot;&quot;</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span>  <span class="c1"># &quot;&quot;</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2707,6 +2968,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">is_absolute</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.is_absolute-view-source"><span>View Source</span></label>
 
@@ -2729,7 +2991,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Check if the path is an absolute path.</p>
+    <div class="docstring">
+<p>Check if the path is an absolute path.</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -2739,8 +3002,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;local/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span>        <span class="c1"># False</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span>  <span class="c1"># False</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2750,6 +3013,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">is_root</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.is_root-view-source"><span>View Source</span></label>
 
@@ -2773,7 +3037,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Check if the path is exactly the root of the filesystem.</p>
+    <div class="docstring">
+<p>Check if the path is exactly the root of the filesystem.</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -2784,8 +3049,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Windows&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_root</span><span class="p">()</span>       <span class="c1"># False</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_root</span><span class="p">()</span>  <span class="c1"># False</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2794,7 +3059,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">subpath_from</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">base</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">]</span>:</span></span>
+        <span class="name">subpath_from</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">base</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.subpath_from-view-source"><span>View Source</span></label>
 
@@ -2847,7 +3113,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Find the relative subpath from <code>base</code> to <code>self</code> if possible and if <code>base</code> contains <code>self</code>, or return None otherwise.</p>
+    <div class="docstring">
+<p>Find the relative subpath from <code>base</code> to <code>self</code> if possible and if <code>base</code> contains <code>self</code>, or return None otherwise.</p>
 
 <p>None will also be returned if there are unknown components in the subpath from <code>base</code> to <code>self</code>. For instance, if <code>self</code> is relative to the parent directory while <code>base</code> is relative to the grandparent directory, the path from the grandparent directory <code>../..</code> to the parent directory <code>..</code> cannot be known.</p>
 
@@ -2877,8 +3144,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">subpath_from</span><span class="p">(</span><span class="s2">&quot;/usr/local/bin&quot;</span><span class="p">)</span>  <span class="c1"># None</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">subpath_from</span><span class="p">(</span><span class="s2">&quot;../Documents&quot;</span><span class="p">)</span>    <span class="c1"># None</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -2887,7 +3154,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">relpath_from</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">origin</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">]</span>:</span></span>
+        <span class="name">relpath_from</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">origin</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.relpath_from-view-source"><span>View Source</span></label>
 
@@ -2965,7 +3233,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Find the relative path from <code>origin</code> to <code>self</code> if possible, or return None otherwise.</p>
+    <div class="docstring">
+<p>Find the relative path from <code>origin</code> to <code>self</code> if possible, or return None otherwise.</p>
 
 <p>None will also be returned if there are unknown components in the relative path from <code>origin</code> to <code>self</code>. For instance, if <code>self</code> is relative to the parent directory while <code>base</code> base is relative to the grandparent directory, the path from the grandparent directory <code>../..</code> to the parent directory <code>..</code> cannot be known.</p>
 
@@ -2995,8 +3264,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">subpath_from</span><span class="p">(</span><span class="s2">&quot;/usr/local/bin&quot;</span><span class="p">)</span>  <span class="c1"># GPath(&quot;../../bin&quot;)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">subpath_from</span><span class="p">(</span><span class="s2">&quot;../Documents&quot;</span><span class="p">)</span>    <span class="c1"># None</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3006,6 +3275,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__hash__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__hash__-view-source"><span>View Source</span></label>
 
@@ -3021,10 +3291,11 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Calculate hash of the GPath object.</p>
+    <div class="docstring">
+<p>Calculate hash of the GPath object.</p>
 
-<p>Usage: <code>hash(<var>g</var>)</code></p>
-</div>
+<p>Usage: <code>hash(<var>g</var>)</code></p></div>
+
 
 
                             </div>
@@ -3034,6 +3305,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__eq__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Any</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__eq__-view-source"><span>View Source</span></label>
 
@@ -3063,7 +3335,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Check if two GPaths are completely identical.</p>
+    <div class="docstring">
+<p>Check if two GPaths are completely identical.</p>
 
 <p>Always return False if <code>other</code> is not a GPath object, even if it is a GPath-like object.</p>
 
@@ -3077,8 +3350,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;D:/&quot;</span><span class="p">)</span>            <span class="c1"># False</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;/usr/bin&quot;</span>         <span class="c1"># False</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3087,7 +3360,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__lt__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+        <span class="name">__lt__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__lt__-view-source"><span>View Source</span></label>
 
@@ -3117,7 +3391,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Check if <code>self</code> should be collated before <code>other</code> by comparing them in component-wise lexicographical order.</p>
+    <div class="docstring">
+<p>Check if <code>self</code> should be collated before <code>other</code> by comparing them in component-wise lexicographical order.</p>
 
 <p>Absolute paths come before (is less than) parent relative paths, which come before (is less than) non-parent relative paths. Between two parent relative paths, the path with the higher parent level comes first (is lesser).</p>
 
@@ -3132,8 +3407,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>        <span class="c1"># True</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr&quot;</span><span class="p">)</span>     <span class="c1"># True</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3143,6 +3418,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__bool__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__bool__-view-source"><span>View Source</span></label>
 
@@ -3167,7 +3443,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Truthy if <code>self</code> is an absolute path, if <code>self</code> is relative to a parent directory, or if <code>self</code> has at least one named component.</p>
+    <div class="docstring">
+<p>Truthy if <code>self</code> is an absolute path, if <code>self</code> is relative to a parent directory, or if <code>self</code> has at least one named component.</p>
 
 <p>Usage: <code>bool(<var>g</var>)</code>, <code>not <var>g</var></code>, or <code>if <var>g</var>:</code></p>
 
@@ -3179,8 +3456,8 @@ gpath    </h1>
 <span class="nb">bool</span><span class="p">(</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;doc&quot;</span><span class="p">))</span>  <span class="c1"># True</span>
 <span class="nb">bool</span><span class="p">(</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span>     <span class="c1"># False</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3190,6 +3467,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__str__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__str__-view-source"><span>View Source</span></label>
 
@@ -3205,10 +3483,11 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Return a string representation of the path.</p>
+    <div class="docstring">
+<p>Return a string representation of the path.</p>
 
-<p>Usage: <code>str(<var>g</var>)</code></p>
-</div>
+<p>Usage: <code>str(<var>g</var>)</code></p></div>
+
 
 
                             </div>
@@ -3218,6 +3497,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__repr__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__repr__-view-source"><span>View Source</span></label>
 
@@ -3236,10 +3516,11 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Return a string that, when printed, gives the Python code associated with instantiating the GPath object.</p>
+    <div class="docstring">
+<p>Return a string that, when printed, gives the Python code associated with instantiating the GPath object.</p>
 
-<p>Usage: <code>repr(<var>g</var>)</code></p>
-</div>
+<p>Usage: <code>repr(<var>g</var>)</code></p></div>
+
 
 
                             </div>
@@ -3249,6 +3530,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__len__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__len__-view-source"><span>View Source</span></label>
 
@@ -3273,7 +3555,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Get the number of named path components, excluding any device name or parent directories.</p>
+    <div class="docstring">
+<p>Get the number of named path components, excluding any device name or parent directories.</p>
 
 <p>Usage: <code>len(<var>g</var>)</code></p>
 
@@ -3285,8 +3568,8 @@ gpath    </h1>
 <span class="nb">len</span><span class="p">(</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Windows))  # 0</span>
 <span class="nb">len</span><span class="p">(</span><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/))         # 0</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3296,6 +3579,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__getitem__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__getitem__-view-source"><span>View Source</span></label>
 
@@ -3323,7 +3607,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</p>
+    <div class="docstring">
+<p>Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</p>
 
 <p>Usage: <code><var>g</var>[<var>n</var>]</code>, <code><var>g</var>[<var>start</var>:<var>end</var>]</code>, <code><var>g</var>[<var>start</var>:<var>end</var>:<var>step</var>]</code>, etc.</p>
 
@@ -3335,8 +3620,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/local/bin&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>   <span class="c1"># [&quot;local&quot;, &quot;bin&quot;]</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/local/bin&quot;</span><span class="p">)[::</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># [&quot;usr&quot;, &quot;bin&quot;]</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3345,7 +3630,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__iter__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span>
+        <span class="name">__iter__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__iter__-view-source"><span>View Source</span></label>
 
@@ -3361,10 +3647,11 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Get an iterator through the named path components, excluding any device name or parent directories.</p>
+    <div class="docstring">
+<p>Get an iterator through the named path components, excluding any device name or parent directories.</p>
 
-<p>Usage: <code>iter(<var>g</var>)</code> or <code>for <var>p</var> in <var>g</var>:</code></p>
-</div>
+<p>Usage: <code>iter(<var>g</var>)</code> or <code>for <var>p</var> in <var>g</var>:</code></p></div>
+
 
 
                             </div>
@@ -3373,7 +3660,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__contains__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+        <span class="name">__contains__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__contains__-view-source"><span>View Source</span></label>
 
@@ -3404,7 +3692,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Check if the path represented by <code>self</code> contains the path represented by <code>other</code>; i.e. check if <code>self</code> is a parent directory of <code>other</code>.</p>
+    <div class="docstring">
+<p>Check if the path represented by <code>self</code> contains the path represented by <code>other</code>; i.e. check if <code>self</code> is a parent directory of <code>other</code>.</p>
 
 <p>Usage: <code><var>other</var> in <var>self</var></code></p>
 
@@ -3418,8 +3707,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../..&quot;</span><span class="p">)</span>             <span class="c1"># True</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/&quot;</span><span class="p">)</span>               <span class="c1"># False</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3428,7 +3717,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__add__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">gpath.GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">__add__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__add__-view-source"><span>View Source</span></label>
 
@@ -3478,7 +3768,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Add (append) <code>other</code> to the end of <code>self</code> if <code>other</code> is a relative path, and return a new copy.</p>
+    <div class="docstring">
+<p>Add (append) <code>other</code> to the end of <code>self</code> if <code>other</code> is a relative path, and return a new copy.</p>
 
 <p>If <code>other</code> is an absolute path, or if <code>other</code> has a different device name, add nothing and return a copy of <code>self</code>.</p>
 
@@ -3493,8 +3784,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Windows/System32&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../SysWOW64/drivers&quot;</span><span class="p">)</span>  <span class="c1"># GPath(&quot;C:/Windows/SysWOW64/drivers&quot;)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../..&quot;</span><span class="p">)</span>                                 <span class="c1"># GPath(&quot;../../..&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3503,7 +3794,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__sub__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">__sub__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__sub__-view-source"><span>View Source</span></label>
 
@@ -3543,7 +3835,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Remove <code>n</code> components from the end of the path and return a new copy.</p>
+    <div class="docstring">
+<p>Remove <code>n</code> components from the end of the path and return a new copy.</p>
 
 <p>Usage: <code><var>self</var> - <var>n</var></code></p>
 
@@ -3557,8 +3850,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;Documents&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span>            <span class="c1"># GPath(&quot;..&quot;)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>                    <span class="c1"># GPath(&quot;/&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3567,7 +3860,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__mul__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">__mul__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__mul__-view-source"><span>View Source</span></label>
 
@@ -3602,7 +3896,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Duplicate the named components of <code>self</code> <code>n</code> times and return a new path with the duplicated components.</p>
+    <div class="docstring">
+<p>Duplicate the named components of <code>self</code> <code>n</code> times and return a new path with the duplicated components.</p>
 
 <p>Named components will be duplicated separately from the components representing a parent directory. If <code>self</code> is an absolute path, only the relative components will be duplicated.</p>
 
@@ -3619,8 +3914,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../docs&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>     <span class="c1"># GPath(&quot;../../docs/docs&quot;)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Windows&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">0</span>  <span class="c1"># GPath(&quot;C:/&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3629,7 +3924,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__lshift__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">__lshift__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__lshift__-view-source"><span>View Source</span></label>
 
@@ -3664,7 +3960,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Move the imaginary current working directory <code>n</code> steps up the filesystem tree.</p>
+    <div class="docstring">
+<p>Move the imaginary current working directory <code>n</code> steps up the filesystem tree.</p>
 
 <p>If <code>self</code> is a relative path, remove up to <code>n</code> levels of parent directories from the start of the path and return a copy. If it is an absolute path, return a copy of <code>self</code> unchanged.</p>
 
@@ -3681,8 +3978,8 @@ gpath    </h1>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../doc&quot;</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span>               <span class="c1"># GPath(&quot;doc&quot;)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span>             <span class="c1"># GPath(&quot;/usr/bin&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3691,7 +3988,8 @@ gpath    </h1>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">__rshift__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">gpath.GPath</a></span>:</span></span>
+        <span class="name">__rshift__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">n</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="n"><a href="#GPath">GPath</a></span>:</span></span>
+
 
                 <label class="view-source-button" for="GPath.__rshift__-view-source"><span>View Source</span></label>
 
@@ -3725,7 +4023,8 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Move the imaginary current working directory <code>n</code> steps down the filesystem tree.</p>
+    <div class="docstring">
+<p>Move the imaginary current working directory <code>n</code> steps down the filesystem tree.</p>
 
 <p>If <code>self</code> is a relative path, add <code>n</code> levels of parent directories to the start of the path and return a copy. If it is an absolute path, return a copy of <code>self</code> unchanged.</p>
 
@@ -3741,8 +4040,8 @@ gpath    </h1>
 <pre><span></span><code><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../SysWOW64/drivers&quot;</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>  <span class="c1"># GPath(&quot;../../SysWOW64/drivers&quot;)</span>
 <span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span>             <span class="c1"># GPath(&quot;/usr/bin&quot;)</span>
 </code></pre>
-</div>
-</div>
+</div></div>
+
 
 
                             </div>
@@ -3752,6 +4051,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__gt__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span>
+
 
                 <label class="view-source-button" for="GPath.__gt__-view-source"><span>View Source</span></label>
 
@@ -3766,8 +4066,9 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Return a &gt; b.  Computed by @total_ordering from (not a &lt; b) and (a != b).</p>
-</div>
+    <div class="docstring">
+<p>Return a &gt; b.  Computed by @total_ordering from (not a &lt; b) and (a != b).</p></div>
+
 
 
                             </div>
@@ -3777,6 +4078,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__le__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span>
+
 
                 <label class="view-source-button" for="GPath.__le__-view-source"><span>View Source</span></label>
 
@@ -3791,8 +4093,9 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Return a &lt;= b.  Computed by @total_ordering from (a &lt; b) or (a == b).</p>
-</div>
+    <div class="docstring">
+<p>Return a &lt;= b.  Computed by @total_ordering from (a &lt; b) or (a == b).</p></div>
+
 
 
                             </div>
@@ -3802,6 +4105,7 @@ gpath    </h1>
             
         <span class="def">def</span>
         <span class="name">__ge__</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span>
+
 
                 <label class="view-source-button" for="GPath.__ge__-view-source"><span>View Source</span></label>
 
@@ -3816,8 +4120,9 @@ gpath    </h1>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Return a &gt;= b.  Computed by @total_ordering from (not a &lt; b).</p>
-</div>
+    <div class="docstring">
+<p>Return a &gt;= b.  Computed by @total_ordering from (not a &lt; b).</p></div>
+
 
 
                             </div>
@@ -3846,14 +4151,16 @@ gpath    </h1>
                 <section id="GPathLike">
                     <div class="attr variable">
             <span class="name">GPathLike</span>        =
-<span class="default_value">typing.Union[<a href="#GPath">gpath.GPath</a>, str, os.PathLike]</span>
+<span class="default_value">typing.Union[<a href="#GPath">GPath</a>, str, os.PathLike]</span>
+
 
         
     </div>
     <a class="headerlink" href="#GPathLike"></a>
     
-            <div class="docstring"><p>Union type of GPath-like objects that can be used as the argument for most GPath methods.</p>
-</div>
+    <div class="docstring">
+<p>Union type of GPath-like objects that can be used as the argument for most GPath methods.</p></div>
+
 
 
                 </section>

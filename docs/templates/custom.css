@@ -1,0 +1,67 @@
+.pdoc .attribution {
+	font-size: small;
+}
+
+.pdoc .attribution img {
+	height: 2em;
+	width: unset;
+	margin-left: 0.1em;
+}
+
+.pdoc code {
+	padding: 0.2em 0.2em;
+}
+
+.pdoc pre {
+	tab-size: 4;
+}
+
+.pdoc section {
+	margin-bottom: 2.25rem;
+}
+
+.pdoc .classattr, .pdoc .inherited {
+	margin-top: 2.25rem;
+	margin-bottom: 2.25rem;
+}
+
+.pdoc .docstring {
+	margin-bottom: 1rem;
+}
+
+.pdoc .docstring .pdoc-code {
+	margin-left: unset;
+	margin-right: unset;
+}
+
+.pdoc .attr {
+	font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+	tab-size: 4;
+}
+
+.pdoc .decorator {
+	color: var(--muted);
+}
+
+.pdoc .summary {
+	margin-bottom: 1rem;
+    margin-left: clamp(0rem, 5vw - 2rem, 1rem);
+}
+
+.pdoc .summary dt {
+	font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+	white-space: nowrap;
+}
+
+.pdoc .summary dt .signature {
+	display: inline-block;
+	box-sizing: border-box;
+	vertical-align: bottom;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
+.pdoc .summary dt .signature .param {
+	display: inline;
+	white-space: nowrap;
+}

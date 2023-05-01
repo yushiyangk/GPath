@@ -56,7 +56,7 @@ class GPath():
 	"""Path component that indicates a parent directory; usually `..`"""
 
 
-	def __init__(self, path: Union[PathLike, GPath, None]="") -> None:
+	def __init__(self, path: Union[PathLike, GPath, None]=""):
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
