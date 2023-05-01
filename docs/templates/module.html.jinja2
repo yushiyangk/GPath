@@ -1,0 +1,14 @@
+{% extends "default/module.html.jinja2" %}
+
+
+{#
+	Treat dunder methods as public
+	https://pdoc.dev/docs/pdoc.html#control-what-is-documented
+#}
+{% macro is_public(doc) %}
+	{% if doc.kind == "function" and doc.name.startswith("__") and doc.name.endswith("__") %}
+		true
+	{% else %}
+		{{ default_is_public(doc) }}
+	{% endif %}
+{% endmacro %}

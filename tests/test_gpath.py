@@ -917,8 +917,8 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
-		#('path1', 'path2', 'common_current', 'common_parent', 'expected_path'),
-		('path1', 'path2', 'common_current_expected', 'common_parent_expected', 'common_current_parent_expected', 'no_common_expected'),
+		#('path1', 'path2', 'allow_current', 'allow_parents', 'expected_path'),
+		('path1', 'path2', 'allow_current_expected', 'allow_parents_expected', 'allow_current_parent_expected', 'no_common_expected'),
 		[
 			("/", "/", "/", "/", "/", "/"),
 			("/", "", None, None, None, None),
@@ -967,90 +967,90 @@ class TestGPath:
 	def test_find_common(self,
 		path1: str,
 		path2: str,
-		common_current_expected: str,
-		common_parent_expected: str,
-		common_current_parent_expected: str,
+		allow_current_expected: str,
+		allow_parents_expected: str,
+		allow_current_parent_expected: str,
 		no_common_expected: str
 	):
 		"""
 			Test `find_common()`.
 		"""
-		assert common_parent_expected == common_current_parent_expected
+		assert allow_parents_expected == allow_current_parent_expected
 
-		if common_current_expected is not None:
-			common_current_expected_gpath = GPath(common_current_expected)
+		if allow_current_expected is not None:
+			allow_current_expected_gpath = GPath(allow_current_expected)
 		else:
-			common_current_expected_gpath = None
+			allow_current_expected_gpath = None
 
 		result = GPath.find_common(path1, path2)
-		assert result == common_current_expected_gpath
+		assert result == allow_current_expected_gpath
 		result = GPath.find_common(path2, path1)
-		assert result == common_current_expected_gpath
+		assert result == allow_current_expected_gpath
 
 		result = GPath.find_common(GPath(path1), GPath(path2))
-		assert result == common_current_expected_gpath
+		assert result == allow_current_expected_gpath
 		result = GPath.find_common(GPath(path2), GPath(path1))
-		assert result == common_current_expected_gpath
+		assert result == allow_current_expected_gpath
 
-		result = GPath.find_common(path1, path2, common_current=True, common_parent=False)
-		assert result == common_current_expected_gpath
-		result = GPath.find_common(path2, path1, common_current=True, common_parent=False)
-		assert result == common_current_expected_gpath
+		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=False)
+		assert result == allow_current_expected_gpath
+		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=False)
+		assert result == allow_current_expected_gpath
 
-		result = GPath.find_common(GPath(path1), GPath(path2), common_current=True, common_parent=False)
-		assert result == common_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), common_current=True, common_parent=False)
-		assert result == common_current_expected_gpath
+		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=False)
+		assert result == allow_current_expected_gpath
+		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=False)
+		assert result == allow_current_expected_gpath
 
-		if common_parent_expected is not None:
-			common_parent_expected_gpath = GPath(common_parent_expected)
+		if allow_parents_expected is not None:
+			allow_parents_expected_gpath = GPath(allow_parents_expected)
 		else:
-			common_parent_expected_gpath = None
+			allow_parents_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, common_current=False, common_parent=True)
-		assert result == common_parent_expected_gpath
-		result = GPath.find_common(path2, path1, common_current=False, common_parent=True)
-		assert result == common_parent_expected_gpath
+		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=True)
+		assert result == allow_parents_expected_gpath
+		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=True)
+		assert result == allow_parents_expected_gpath
 
-		result = GPath.find_common(GPath(path1), GPath(path2), common_current=False, common_parent=True)
-		assert result == common_parent_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), common_current=False, common_parent=True)
-		assert result == common_parent_expected_gpath
+		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=True)
+		assert result == allow_parents_expected_gpath
+		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=True)
+		assert result == allow_parents_expected_gpath
 
-		if common_current_parent_expected is not None:
-			common_current_parent_expected_gpath = GPath(common_current_parent_expected)
+		if allow_current_parent_expected is not None:
+			allow_current_parent_expected_gpath = GPath(allow_current_parent_expected)
 		else:
-			common_current_parent_expected_gpath = None
+			allow_current_parent_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, common_current=True, common_parent=True)
-		assert result == common_current_parent_expected_gpath
-		result = GPath.find_common(path2, path1, common_current=True, common_parent=True)
-		assert result == common_current_parent_expected_gpath
+		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=True)
+		assert result == allow_current_parent_expected_gpath
+		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=True)
+		assert result == allow_current_parent_expected_gpath
 
-		result = GPath.find_common(GPath(path1), GPath(path2), common_current=True, common_parent=True)
-		assert result == common_current_parent_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), common_current=True, common_parent=True)
-		assert result == common_current_parent_expected_gpath
+		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=True)
+		assert result == allow_current_parent_expected_gpath
+		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=True)
+		assert result == allow_current_parent_expected_gpath
 
 		if no_common_expected is not None:
 			no_common_expected_gpath = GPath(no_common_expected)
 		else:
 			no_common_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, common_current=False, common_parent=False)
+		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=False)
 		assert result == no_common_expected_gpath
-		result = GPath.find_common(path2, path1, common_current=False, common_parent=False)
+		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=False)
 		assert result == no_common_expected_gpath
 
-		result = GPath.find_common(GPath(path1), GPath(path2), common_current=False, common_parent=False)
+		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=False)
 		assert result == no_common_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), common_current=False, common_parent=False)
+		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=False)
 		assert result == no_common_expected_gpath
 
 
 
 	@pytest.mark.parametrize(
-		('paths', 'common_current', 'common_parent', 'expected'),
+		('paths', 'allow_current', 'allow_parents', 'expected'),
 		[
 			(
 				[
@@ -1154,19 +1154,19 @@ class TestGPath:
 			}),
 		]
 	)
-	def test_partition(self, paths: list[str], common_current: bool, common_parent: bool, expected: dict[GPath, list[GPath]]):
+	def test_partition(self, paths: list[str], allow_current: bool, allow_parents: bool, expected: dict[GPath, list[GPath]]):
 		"""
 			Test `partition()`.
 		"""
-		result = GPath.partition(paths, common_current=common_current, common_parent=common_parent)
+		result = GPath.partition(paths, allow_current=allow_current, allow_parents=allow_parents)
 		assert result == expected
-		result = GPath.partition(*paths, common_current=common_current, common_parent=common_parent)
+		result = GPath.partition(*paths, allow_current=allow_current, allow_parents=allow_parents)
 		assert result == expected
 
 		gpaths = [GPath(path) for path in paths]
-		result = GPath.partition(gpaths, common_current=common_current, common_parent=common_parent)
+		result = GPath.partition(gpaths, allow_current=allow_current, allow_parents=allow_parents)
 		assert result == expected
-		result = GPath.partition(*gpaths, common_current=common_current, common_parent=common_parent)
+		result = GPath.partition(*gpaths, allow_current=allow_current, allow_parents=allow_parents)
 		assert result == expected
 
 

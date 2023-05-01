@@ -42,10 +42,10 @@ shifted_left = g2 << 1   # GPath("SysWOW64/drivers")
 
 The `GPath.partition()` method is useful when dealing with paths from various different sources:
 ```python
-partitions = GPath.partition("/usr/bin", "/usr/local/", "../../doc", "C:/Windows", "C:/Program Files")
+partitions = GPath.partition("/usr/bin", "/usr/local/bin", "../../doc", "C:/Windows", "C:/Program Files")
 
 assert partitions == {
-	GPath("/usr")      : [GPath("bin"), GPath("local")],
+	GPath("/usr")      : [GPath("bin"), GPath("local/bin")],
 	GPath("../../doc") : [GPath("")],
 	GPath("C:/")       : [GPath("Windows"), GPath("Program Files")],
 }
