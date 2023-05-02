@@ -8,6 +8,10 @@
 	margin-left: 0.1em;
 }
 
+nav.pdoc .function::after {
+	content: none;
+}
+
 .pdoc code {
 	padding: 0.2em 0.2em;
 }

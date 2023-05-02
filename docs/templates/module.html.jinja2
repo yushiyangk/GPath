@@ -173,6 +173,45 @@
 
 
 {#
+	Annotations for nav menu
+#}
+{% macro nav_members(members) %}
+	<ul class="memberlist">
+		{% for m in members if (is_public(m) | trim) %}
+			<li>
+				{% if m.kind == "class" %}
+					<a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
+					{% if m.own_members %}
+						{{ nav_members(m.own_members) | indent(12) }}
+					{% endif %}
+				{% elif m.kind == "module" %}
+					<a class="module" href="#{{ m.name }}">{{ m.name }}</a>
+				{% elif m.kind == "function" %}
+					{% if m.name == "__init__" %}
+						<a class="function" href="#{{ m.qualname }}">{{ m.qualname.split(".")[-2] }}</a>
+					{% elif "@staticmethod" in m.decorators %}
+						<a class="function" href="#{{ m.qualname }}">{{ m.name }}<span class="decorator">() @staticmethod</span></a>
+					{% elif "@classmethod" in m.decorators %}
+						<a class="function" href="#{{ m.qualname }}">{{ m.name }}<span class="decorator">() @classmethod</span></a>
+					{% else %}
+						<a class="function" href="#{{ m.qualname }}">{{ m.name }}<span class="decorator">()</span></a>
+					{% endif %}
+				{% elif m.kind == "variable" %}
+					{% if m.is_classvar %}
+						<a class="variable" href="#{{ m.qualname }}">{{ m.name }}<span class="decorator">: ClassVar</span></a>
+					{% else %}
+						<a class="variable" href="#{{ m.qualname }}">{{ m.name }}</a>
+					{% endif %}
+				{% else %}
+					<a class="{{ m.kind }}" href="#{{ m.qualname }}">{{ m.name }}</a>
+				{% endif %}
+			</li>
+		{% endfor %}
+	</ul>
+{% endmacro %}
+
+
+{#
 	Changes to linking in docstring, and additional summary sections
 #}
 {% macro docstring(doc) %}
@@ -190,6 +229,13 @@
 		<div class="summary">
 
 			{% set list -%}
+				{% for m in doc.own_members if m.kind == "function" and (is_public(m) | trim) and m.name == "__init__" -%}
+					{{ summary(m)}}
+				{%- endfor %}
+			{%- endset %}
+			{{ class_summary("Constructor summary", list) }}
+
+			{% set list -%}
 				{% for m in doc.own_members if m.kind == "variable" and (is_public(m) | trim) and m.is_classvar -%}
 					{{ summary(m) }}
 				{%- endfor %}
@@ -202,13 +248,6 @@
 				{%- endfor %}
 			{%- endset %}
 			{{ class_summary("Instance variables summary", list) }}
-
-			{% set list -%}
-				{% for m in doc.own_members if m.kind == "function" and (is_public(m) | trim) and m.name == "__init__" -%}
-					{{ summary(m)}}
-				{%- endfor %}
-			{%- endset %}
-			{{ class_summary("Constructor summary", list) }}
 
 			{% set list -%}
 				{% for m in doc.own_members if m.kind == "function" and (is_public(m) | trim) and "@staticmethod" in m.decorators -%}
