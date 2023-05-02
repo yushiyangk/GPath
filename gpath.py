@@ -26,7 +26,7 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
-__version__ = '0.2.1'
+__version__ = '0.3'
 
 
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
