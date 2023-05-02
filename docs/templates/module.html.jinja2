@@ -91,7 +91,7 @@
 #}
 {% macro shorttypes(s) %}
 	{%- autoescape false -%}
-		{{- s | replace("gpath.", "") | replace('<span class="n">typing</span><span class="o">.</span>', "") | replace('<span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span>', "") -}}
+		{{- s | replace("gpath.", "") | replace("typing.", "") | replace('<span class="n">typing</span><span class="o">.</span>', "") | replace("collections.abc.", "") | replace('<span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span>', "") -}}
 	{%- endautoescape -%}
 {% endmacro %}
 
