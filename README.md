@@ -73,29 +73,29 @@ Later, to deactivate the venv, run `deactivate`.
 
 Run `pip install -r requirements.dev.txt`.
 
-### Install
+### Tasks
 
-To install the package locally (in the venv) while keeping it in sync with the source code, run `pip install -e .`.
+For unit tests, run `pytest`.
 
-### Testing
+To run unit tests across all supported Python versions, run `tox p -m testall`. This is slower than just `pytest`. Note that only Python versions that are installed locally will be run.
 
-For unit tests, run `pytest` or `coverage run -m pytest`.
+To run the full set of tests and tasks, run `tox p -m prepare`. This should be done prior to package publication. Alternatively, see below for manually running individual steps in this process.
+
+#### Unit tests
+
+Run `pytest` or `coverage run -m pytest`.
 
 For coverage report, first run `coverage run -m pytest`, then either `coverage report -m` to print to stdout or `coverage html` to generate an HTML report in `htmlcov/`.
 
-### Generate documentation
+#### Generate documentation
 
-Run `pdoc gpath.py -o docs/html --footer-text="GPath $(python -c 'from gpath import __version__ as v; print(v);')"`
+Run `pdoc gpath.py -o docs/html -t docs/templates --footer-text="GPath $(python -c 'from gpath import __version__ as v; print(v);')" --edit-url gpath='https://github.com/yushiyangk/GPath/blob/main/gpath.py'`
 
-### Packaging
+#### Packaging
 
 Before packaging, check the package config by running `pyroma .`
 
 To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`.
-
-### Automated tests
-
-To test for different supported environments, run `tox -p` or <code>tox -p <var>num_workers</var></code>. This will run unit tests, check for test coverage, and also generate packages.
 
 ### Config files
 
