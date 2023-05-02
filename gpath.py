@@ -739,20 +739,23 @@ class GPath():
 
 	def __add__(self, other: GPathLike) -> GPath:
 		"""
-			Add (append) `other` to the end of `self` if `other` is a relative path, and return a new copy.
+			Add (concatenate) `other` to the end of `self` if `other` is a relative path, and return a new copy.
 
-			If `other` is an absolute path, or if `other` has a different device name, add nothing and return a copy of `self`.
+			If `other` is an absolute path, or if `other` has a different device name, return an unchanged copy of `self`.
 
-			Usage: <code><var>self</var> + <var>other</var></code>
+			Alias: `__div__()`
+
+			Usage: <code><var>self</var> + <var>other</var></code> or <code><var>self</var> / <var>other</var></code>
 
 			Raises `ValueError` if either GPath is invalid
 
 			Examples
 			--------
 			```python
-			GPath("/usr") + GPath("local/bin)                            # GPath("/usr/local/bin")
-			GPath("C:/Windows/System32") + GPath("../SysWOW64/drivers")  # GPath("C:/Windows/SysWOW64/drivers")
-			GPath("..") + GPath("../..")                                 # GPath("../../..")
+			GPath("/usr") + GPath("local/bin")                   # GPath("/usr/local/bin")
+			GPath("C:/Windows/System32") + GPath("../SysWOW64")  # GPath("C:/Windows/SysWOW64")
+			GPath("..") + GPath("../..")                         # GPath("../../..")
+			GPath("..") / GPath("../..")                         # GPath("../../..")
 			```
 		"""
 		if isinstance(other, GPath):
@@ -839,6 +842,13 @@ class GPath():
 		new_path._parent = self._parent * n
 		new_path._parts = self._parts * n
 		return new_path
+
+
+	def __div__(self, other: GPathLike) -> GPath:
+		"""
+			Alias of `__add__()`.
+		"""
+		return self.__add__(other)
 
 
 	def __lshift__(self, n: int) -> GPath:
