@@ -44,6 +44,7 @@ publish = ["twine ~= 4.0.2"]
 [project.urls]
 # key is used verbatim on PyPI
 Homepage = "https://github.com/yushiyangk/GPath"
+Documentation = "https://gpath.gnayihs.uy/"
 Issues = "https://github.com/yushiyangk/GPath/issues"
 
 [tool.pytest.ini_options]
