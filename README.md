@@ -85,17 +85,19 @@ To run the full set of tests and tasks, run `tox p -m prepare`. This should be d
 
 Run `pytest` or `coverage run -m pytest`.
 
-For coverage report, first run `coverage run -m pytest`, then either `coverage report -m` to print to stdout or `coverage html` to generate an HTML report in `htmlcov/`.
+For coverage report, first run `coverage run -m pytest`, then either `coverage report -m` to print to stdout or `coverage html` to generate an HTML report in `htmlcov/`. Alternatively, run `tox r -m test` to do both steps automatically.
 
-#### Generate documentation
+#### Documentation
 
-Run `pdoc gpath.py -o docs/html -t docs/templates --footer-text="GPath $(python -c 'from gpath import __version__ as v; print(v);')" --edit-url gpath='https://github.com/yushiyangk/GPath/blob/main/gpath.py'`
+Run `tox r -m docs`.
+
+The documentation is generated in `docs/html/`, using template files in `docs/template/`. However, note that the favicon file must be placed at `docs/html/favicon.png` manually as pdoc is unable to do so.
 
 #### Packaging
 
-Before packaging, check the package config by running `pyroma .`
+Before packaging, check the package config by running `pyroma .` or `tox r -m config`.
 
-To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`.
+To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`. Run `twine check dist/*` to check that the packages were generated properly. Alternatively, run `tox r -m package` to do these steps automatically.
 
 ### Config files
 
