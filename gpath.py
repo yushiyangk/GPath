@@ -29,6 +29,9 @@ else:
 __version__ = '0.3'
 
 
+__all__ = ['GPath', 'GPathLike']
+
+
 PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
 PATH_CURRENT: Final = os.curdir
 PATH_PARENT: Final = os.pardir
@@ -56,7 +59,7 @@ class GPath():
 	"""Path component that indicates a parent directory; usually `..`"""
 
 
-	def __init__(self, path: Union[PathLike, GPath, None]=""):
+	def __init__(self, path: Union[str, os.PathLike, GPath, None]=""):
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -918,5 +921,5 @@ class GPath():
 		return True
 
 
-GPathLike = Union[GPath, PathLike]
+GPathLike = Union[GPath, str, os.PathLike]
 """Union type of GPath-like objects that can be used as the argument for most GPath methods."""

@@ -117,3 +117,7 @@ Sometimes, if gpath was installed using `pip install .`, pip might have difficul
 Can't uninstall 'gpath'. No files were found to uninstall.</code></pre>
 
 In this case, manually delete `build/` and `generic_path.egg-info/` if they exist, then run `pip uninstall generic-path` again. This should allow pip to successfully uninstall the package.
+
+#### Tox always fails with exit 1
+
+Delete the contents of `.tox/` and try again.
