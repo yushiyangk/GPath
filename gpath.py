@@ -7,7 +7,7 @@ from __future__ import annotations
 import functools
 import os
 import sys
-from collections.abc import Collection, Hashable, Iterator, Sequence
+from collections.abc import Hashable, Iterable, Iterator, Sequence
 #from typing import Any, ClassVar, Final
 
 
@@ -209,7 +209,7 @@ class GPath(Hashable):
 		return common_path
 
 	@staticmethod
-	def partition(*paths: Union[Collection[GPathLike], GPathLike], allow_current: bool=True, allow_parents: bool=False) -> dict[GPath, list[GPath]]:
+	def partition(*paths: Union[Iterable[GPathLike], GPathLike], allow_current: bool=True, allow_parents: bool=False) -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
@@ -219,7 +219,7 @@ class GPath(Hashable):
 
 			Parameters
 			----------
-			`paths: Collection[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
+			`paths: Iterable[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
 			: the paths to be partitioned, which can be given as either a list-like object or as variadic arguments
 
 			`allow_current`
@@ -289,13 +289,13 @@ class GPath(Hashable):
 
 
 	@staticmethod
-	def join(*paths: Union[Collection[GPathLike], GPathLike]) -> GPath:
+	def join(*paths: Union[Sequence[GPathLike], GPathLike]) -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
 			Parameters
 			----------
-			`paths`: `Collection[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
+			`paths`: `Sequence[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
 			: the paths to be combined, which can be given as either a list-like object or as variadic arguments
 
 			Returns
