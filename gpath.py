@@ -7,7 +7,7 @@ from __future__ import annotations
 import functools
 import os
 import sys
-from collections.abc import Collection, Iterator, Sequence
+from collections.abc import Collection, Hashable, Iterator, Sequence
 #from typing import Any, ClassVar, Final
 
 
@@ -40,7 +40,7 @@ PathLike = Union[str, os.PathLike]
 
 
 @functools.total_ordering
-class GPath():
+class GPath(Hashable):
 	"""
 		A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.
 
@@ -804,7 +804,7 @@ class GPath():
 			```
 		"""
 		if n < 0:
-			raise ValueError("cannot subtract a negative number of components from the path; use __add__() instead")
+			raise ValueError("cannot subtract a negative number of components from the path: {n}; use __add__() instead")
 
 		new_path = GPath(self)
 		new_parts = [part for part in self._parts]
@@ -840,7 +840,7 @@ class GPath():
 			```
 		"""
 		if n < 0:
-			raise ValueError("cannot multiply path by a negative integer")
+			raise ValueError("cannot multiply path by a negative integer: {n}")
 		new_path = GPath(self)
 		new_path._parent = self._parent * n
 		new_path._parts = self._parts * n

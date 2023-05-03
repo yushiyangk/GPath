@@ -237,7 +237,7 @@ gpath    </h1>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="kn">import</span> <span class="nn">functools</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="kn">import</span> <span class="nn">os</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="kn">import</span> <span class="nn">sys</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="c1">#from typing import Any, ClassVar, Final</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a>
 </span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a>
@@ -270,7 +270,7 @@ gpath    </h1>
 </span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a>
 </span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a>
 </span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="nd">@functools</span><span class="o">.</span><span class="n">total_ordering</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a><span class="k">class</span> <span class="nc">GPath</span><span class="p">():</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a><span class="k">class</span> <span class="nc">GPath</span><span class="p">(</span><span class="n">Hashable</span><span class="p">):</span>
 </span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">		A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.</span>
 </span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a>
@@ -1034,7 +1034,7 @@ gpath    </h1>
 </span><span id="L-804"><a href="#L-804"><span class="linenos">804</span></a><span class="sd">			```</span>
 </span><span id="L-805"><a href="#L-805"><span class="linenos">805</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="L-806"><a href="#L-806"><span class="linenos">806</span></a>		<span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="L-807"><a href="#L-807"><span class="linenos">807</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot subtract a negative number of components from the path; use __add__() instead&quot;</span><span class="p">)</span>
+</span><span id="L-807"><a href="#L-807"><span class="linenos">807</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot subtract a negative number of components from the path: </span><span class="si">{n}</span><span class="s2">; use __add__() instead&quot;</span><span class="p">)</span>
 </span><span id="L-808"><a href="#L-808"><span class="linenos">808</span></a>
 </span><span id="L-809"><a href="#L-809"><span class="linenos">809</span></a>		<span class="n">new_path</span> <span class="o">=</span> <span class="n">GPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span><span id="L-810"><a href="#L-810"><span class="linenos">810</span></a>		<span class="n">new_parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">]</span>
@@ -1070,7 +1070,7 @@ gpath    </h1>
 </span><span id="L-840"><a href="#L-840"><span class="linenos">840</span></a><span class="sd">			```</span>
 </span><span id="L-841"><a href="#L-841"><span class="linenos">841</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="L-842"><a href="#L-842"><span class="linenos">842</span></a>		<span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="L-843"><a href="#L-843"><span class="linenos">843</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot multiply path by a negative integer&quot;</span><span class="p">)</span>
+</span><span id="L-843"><a href="#L-843"><span class="linenos">843</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot multiply path by a negative integer: </span><span class="si">{n}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="L-844"><a href="#L-844"><span class="linenos">844</span></a>		<span class="n">new_path</span> <span class="o">=</span> <span class="n">GPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span><span id="L-845"><a href="#L-845"><span class="linenos">845</span></a>		<span class="n">new_path</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">*</span> <span class="n">n</span>
 </span><span id="L-846"><a href="#L-846"><span class="linenos">846</span></a>		<span class="n">new_path</span><span class="o">.</span><span class="n">_parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span> <span class="o">*</span> <span class="n">n</span>
@@ -1163,7 +1163,7 @@ gpath    </h1>
                     <div class="decorator">@functools.total_ordering</div>
 
     <span class="def">class</span>
-    <span class="name">GPath</span>:
+    <span class="name">GPath</span><wbr>(<span class="base">Hashable</span>):
 
 
                 <label class="view-source-button" for="GPath-view-source"><span>View Source</span></label>
@@ -1171,7 +1171,7 @@ gpath    </h1>
     </div>
     <a class="headerlink" href="#GPath"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="GPath-43"><a href="#GPath-43"><span class="linenos"> 43</span></a><span class="nd">@functools</span><span class="o">.</span><span class="n">total_ordering</span>
-</span><span id="GPath-44"><a href="#GPath-44"><span class="linenos"> 44</span></a><span class="k">class</span> <span class="nc">GPath</span><span class="p">():</span>
+</span><span id="GPath-44"><a href="#GPath-44"><span class="linenos"> 44</span></a><span class="k">class</span> <span class="nc">GPath</span><span class="p">(</span><span class="n">Hashable</span><span class="p">):</span>
 </span><span id="GPath-45"><a href="#GPath-45"><span class="linenos"> 45</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-46"><a href="#GPath-46"><span class="linenos"> 46</span></a><span class="sd">		A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.</span>
 </span><span id="GPath-47"><a href="#GPath-47"><span class="linenos"> 47</span></a>
@@ -1935,7 +1935,7 @@ gpath    </h1>
 </span><span id="GPath-805"><a href="#GPath-805"><span class="linenos">805</span></a><span class="sd">			```</span>
 </span><span id="GPath-806"><a href="#GPath-806"><span class="linenos">806</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="GPath-807"><a href="#GPath-807"><span class="linenos">807</span></a>		<span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="GPath-808"><a href="#GPath-808"><span class="linenos">808</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot subtract a negative number of components from the path; use __add__() instead&quot;</span><span class="p">)</span>
+</span><span id="GPath-808"><a href="#GPath-808"><span class="linenos">808</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot subtract a negative number of components from the path: </span><span class="si">{n}</span><span class="s2">; use __add__() instead&quot;</span><span class="p">)</span>
 </span><span id="GPath-809"><a href="#GPath-809"><span class="linenos">809</span></a>
 </span><span id="GPath-810"><a href="#GPath-810"><span class="linenos">810</span></a>		<span class="n">new_path</span> <span class="o">=</span> <span class="n">GPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span><span id="GPath-811"><a href="#GPath-811"><span class="linenos">811</span></a>		<span class="n">new_parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">]</span>
@@ -1971,7 +1971,7 @@ gpath    </h1>
 </span><span id="GPath-841"><a href="#GPath-841"><span class="linenos">841</span></a><span class="sd">			```</span>
 </span><span id="GPath-842"><a href="#GPath-842"><span class="linenos">842</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="GPath-843"><a href="#GPath-843"><span class="linenos">843</span></a>		<span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="GPath-844"><a href="#GPath-844"><span class="linenos">844</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot multiply path by a negative integer&quot;</span><span class="p">)</span>
+</span><span id="GPath-844"><a href="#GPath-844"><span class="linenos">844</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot multiply path by a negative integer: </span><span class="si">{n}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="GPath-845"><a href="#GPath-845"><span class="linenos">845</span></a>		<span class="n">new_path</span> <span class="o">=</span> <span class="n">GPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span><span id="GPath-846"><a href="#GPath-846"><span class="linenos">846</span></a>		<span class="n">new_path</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">*</span> <span class="n">n</span>
 </span><span id="GPath-847"><a href="#GPath-847"><span class="linenos">847</span></a>		<span class="n">new_path</span><span class="o">.</span><span class="n">_parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span> <span class="o">*</span> <span class="n">n</span>
@@ -3856,7 +3856,7 @@ if any of the GPaths are invalid</p>
 </span><span id="GPath.__sub__-805"><a href="#GPath.__sub__-805"><span class="linenos">805</span></a><span class="sd">			```</span>
 </span><span id="GPath.__sub__-806"><a href="#GPath.__sub__-806"><span class="linenos">806</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="GPath.__sub__-807"><a href="#GPath.__sub__-807"><span class="linenos">807</span></a>		<span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="GPath.__sub__-808"><a href="#GPath.__sub__-808"><span class="linenos">808</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot subtract a negative number of components from the path; use __add__() instead&quot;</span><span class="p">)</span>
+</span><span id="GPath.__sub__-808"><a href="#GPath.__sub__-808"><span class="linenos">808</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot subtract a negative number of components from the path: </span><span class="si">{n}</span><span class="s2">; use __add__() instead&quot;</span><span class="p">)</span>
 </span><span id="GPath.__sub__-809"><a href="#GPath.__sub__-809"><span class="linenos">809</span></a>
 </span><span id="GPath.__sub__-810"><a href="#GPath.__sub__-810"><span class="linenos">810</span></a>		<span class="n">new_path</span> <span class="o">=</span> <span class="n">GPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span><span id="GPath.__sub__-811"><a href="#GPath.__sub__-811"><span class="linenos">811</span></a>		<span class="n">new_parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">]</span>
@@ -3925,7 +3925,7 @@ if any of the GPaths are invalid</p>
 </span><span id="GPath.__mul__-841"><a href="#GPath.__mul__-841"><span class="linenos">841</span></a><span class="sd">			```</span>
 </span><span id="GPath.__mul__-842"><a href="#GPath.__mul__-842"><span class="linenos">842</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="GPath.__mul__-843"><a href="#GPath.__mul__-843"><span class="linenos">843</span></a>		<span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="GPath.__mul__-844"><a href="#GPath.__mul__-844"><span class="linenos">844</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot multiply path by a negative integer&quot;</span><span class="p">)</span>
+</span><span id="GPath.__mul__-844"><a href="#GPath.__mul__-844"><span class="linenos">844</span></a>			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot multiply path by a negative integer: </span><span class="si">{n}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="GPath.__mul__-845"><a href="#GPath.__mul__-845"><span class="linenos">845</span></a>		<span class="n">new_path</span> <span class="o">=</span> <span class="n">GPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </span><span id="GPath.__mul__-846"><a href="#GPath.__mul__-846"><span class="linenos">846</span></a>		<span class="n">new_path</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">*</span> <span class="n">n</span>
 </span><span id="GPath.__mul__-847"><a href="#GPath.__mul__-847"><span class="linenos">847</span></a>		<span class="n">new_path</span><span class="o">.</span><span class="n">_parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span> <span class="o">*</span> <span class="n">n</span>
@@ -4192,7 +4192,11 @@ if any of the GPaths are invalid</p>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt>builtins.object</dt>
+                                    <div><dt>collections.abc.Hashable</dt>
+                                <dd id="GPath.__subclasshook__" class="function">__subclasshook__</dd>
+
+            </div>
+            <div><dt>builtins.object</dt>
                                 <dd id="GPath.__new__" class="function">__new__</dd>
                 <dd id="GPath.__getattribute__" class="function">__getattribute__</dd>
                 <dd id="GPath.__setattr__" class="function">__setattr__</dd>
@@ -4201,7 +4205,6 @@ if any of the GPaths are invalid</p>
                 <dd id="GPath.__reduce_ex__" class="function">__reduce_ex__</dd>
                 <dd id="GPath.__reduce__" class="function">__reduce__</dd>
                 <dd id="GPath.__getstate__" class="function">__getstate__</dd>
-                <dd id="GPath.__subclasshook__" class="function">__subclasshook__</dd>
                 <dd id="GPath.__init_subclass__" class="function">__init_subclass__</dd>
                 <dd id="GPath.__format__" class="function">__format__</dd>
                 <dd id="GPath.__sizeof__" class="function">__sizeof__</dd>
