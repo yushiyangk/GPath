@@ -8,7 +8,7 @@ dynamic = ["version", "readme"]
 authors = [
 	{name = "Yu Shiyang", email = "yu.shiyang@gnayihs.uy"}
 ]
-description = "GPath provides a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system."
+description = "Generalised abstract file path that provides path manipulations independent from the local environment"
 license = {text = "MPL-2.0"}
 classifiers = [
 	"Development Status :: 3 - Alpha",

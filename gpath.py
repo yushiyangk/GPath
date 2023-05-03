@@ -1,5 +1,5 @@
 """
-	GPath is a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system.
+	GPath is a robust, generalised abstract file path that provides path manipulations independent from the local environment, maximising cross-platform compatibility.
 """
 
 from __future__ import annotations
@@ -42,9 +42,13 @@ PathLike = Union[str, os.PathLike]
 @functools.total_ordering
 class GPath(Hashable):
 	"""
-		A normalised and generalised abstract file path that has no dependency on the layout of any real filesystem. This allows us to manipulate file paths that were generated on a different system, particularly one with a different operating environment as compared to the local system.
+		An immutable generalised abstract file path that has no dependency on any real filesystem.
 
-		The path can be manipulated with various methods before being rendered in a format that is meaningful to the local operating system using `__str__()`.
+		The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform.
+
+		The path is always stored in a normalised state, and all operations return a new instance.
+
+		For display, the path can be rendered as a string using <code>str(<var>g</var>)</code>. To maximise cross-platform compatibility, the path is always treated as case sensitive, and will be rendered with `/` as the path separator if possible. If the GPath object represents a viable real path on the local system, it will always be rendered in a format that is meaningful to the local system.
 	"""
 
 	__slots__ = ('_parts', '_device', '_absolute', '_parent')
@@ -84,6 +88,7 @@ class GPath(Hashable):
 		self._device: str = ""
 		self._absolute: bool = False
 		self._parent: int = 0
+
 		if path is not None and path != "":
 			if isinstance(path, GPath):
 				path._validate()
@@ -91,6 +96,7 @@ class GPath(Hashable):
 				self._device = path._device
 				self._absolute = path._absolute
 				self._parent = path._parent
+
 			else:
 				# Remove redundant '.'s and '..'s and use OS-default path separators
 				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
