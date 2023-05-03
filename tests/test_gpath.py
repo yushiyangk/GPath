@@ -57,7 +57,7 @@ class TestGPath:
 		expected_parent: int,
 	):
 		"""
-			Test constructor `__init__()` as well as getters `is_absolute()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`, for paths requiring special treatment.
+			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`, for paths requiring special treatment.
 		"""
 		if path is None:
 			gpath = GPath()
@@ -72,9 +72,10 @@ class TestGPath:
 		assert gpath._absolute == expected_absolute
 		assert gpath._parent == expected_parent
 
-		assert gpath.is_absolute() == expected_absolute
-		assert gpath.get_device() == expected_device
-		assert gpath.get_parent_level() == expected_parent
+		assert gpath.absolute == expected_absolute
+		assert gpath.device == expected_device
+		assert gpath.named_parts == list(expected_parts)
+		assert gpath.parent_level == expected_parent
 
 		gpath_copy = GPath(gpath)
 		assert gpath_copy._parts == expected_parts
@@ -82,15 +83,10 @@ class TestGPath:
 		assert gpath_copy._absolute == expected_absolute
 		assert gpath_copy._parent == expected_parent
 
-		assert gpath_copy.is_absolute() == expected_absolute
-		assert gpath_copy.get_device() == expected_device
-		assert gpath_copy.get_parent_level() == expected_parent
-
-		expected_parent_parts = []
-		for i in range(expected_parent):
-			expected_parent_parts.append("..")
-		assert gpath.get_parent_parts() == expected_parent_parts
-		assert gpath_copy.get_parent_parts() == expected_parent_parts
+		assert gpath_copy.absolute == expected_absolute
+		assert gpath_copy.device == expected_device
+		assert gpath_copy.named_parts == list(expected_parts)
+		assert gpath_copy.parent_level == expected_parent
 
 
 	@pytest.mark.parametrize(
@@ -144,7 +140,7 @@ class TestGPath:
 		expected_parent: int,
 	):
 		"""
-			Test constructor `__init__()` as well as getters `is_absolute()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`.
+			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`.
 		"""
 		gpath = GPath(path_prefix + path + path_suffix)
 		if expected_absolute and expected_parent > 0:
@@ -155,9 +151,10 @@ class TestGPath:
 		assert gpath._absolute == expected_absolute
 		assert gpath._parent == expected_parent
 
-		assert gpath.is_absolute() == expected_absolute
-		assert gpath.get_device() == expected_device
-		assert gpath.get_parent_level() == expected_parent
+		assert gpath.absolute == expected_absolute
+		assert gpath.device == expected_device
+		assert gpath.named_parts == list(expected_parts)
+		assert gpath.parent_level == expected_parent
 
 		gpath_copy = GPath(gpath)
 
@@ -166,47 +163,10 @@ class TestGPath:
 		assert gpath_copy._absolute == expected_absolute
 		assert gpath_copy._parent == expected_parent
 
-		assert gpath_copy.is_absolute() == expected_absolute
-		assert gpath_copy.get_device() == expected_device
-		assert gpath_copy.get_parent_level() == expected_parent
-
-		expected_parent_parts = []
-		for i in range(expected_parent):
-			expected_parent_parts.append("..")
-		assert gpath.get_parent_parts() == expected_parent_parts
-		assert gpath_copy.get_parent_parts() == expected_parent_parts
-
-
-	@pytest.mark.parametrize(
-		('gpath1', 'parts'),
-		[
-			("/", ["", ""]),
-			("/a", ["", "a"]),
-			("/a/b", ["", "a", "b"]),
-			("", ["."]),
-			("a", ["a"]),
-			("a/b", ["a", "b"]),
-			("..", [".."]),
-			("../a", ["..", "a"]),
-			("../a/b", ["..", "a", "b"]),
-			("../..", ["..", ".."]),
-			("../../a", ["..", "..", "a"]),
-			("../../a/b", ["..", "..", "a", "b"]),
-			("C:/", ["C:", ""]),
-			("C:/a", ["C:", "a"]),
-			("C:/a/b", ["C:", "a", "b"]),
-		],
-		indirect=['gpath1']
-	)
-	def test_get_parts_from_parts(self, gpath1: GPath, parts: list[str]):
-		"""
-			Test `get_parts()` and `from_parts()`.
-		"""
-		result = gpath1.get_parts()
-		assert result == parts
-
-		result = GPath.from_parts(parts)
-		assert result == gpath1
+		assert gpath_copy.absolute == expected_absolute
+		assert gpath_copy.device == expected_device
+		assert gpath_copy.named_parts == list(expected_parts)
+		assert gpath_copy.parent_level == expected_parent
 
 
 	@pytest.mark.parametrize(
@@ -223,12 +183,41 @@ class TestGPath:
 		],
 		indirect=['gpath1']
 	)
-	def test_is_root(self, gpath1: GPath, expected: bool):
+	def test_root(self, gpath1: GPath, expected: bool):
 		"""
-			Test `is_root()`.
+			Test property getter for `root`.
 		"""
-		result = gpath1.is_root()
+		result = gpath1.root
 		assert result == expected
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'expected_parent_parts', 'expected_relative_parts'),
+		[
+			("/", [], []),
+			("/a", [], ["a"]),
+			("/a/b", [], ["a", "b"]),
+			("", [], []),
+			("a", [], ["a"]),
+			("a/b", [], ["a", "b"]),
+			("..", [".."], [".."]),
+			("../a", [".."], ["..", "a"]),
+			("../a/b", [".."], ["..", "a", "b"]),
+			("../..", ["..", ".."], ["..", ".."]),
+			("../../a", ["..", ".."], ["..", "..", "a"]),
+			("../../a/b", ["..", ".."], ["..", "..", "a", "b"]),
+			("C:/", [], []),
+			("C:/a", [], ["a"]),
+			("C:/a/b", [], ["a", "b"]),
+		],
+		indirect=['gpath1']
+	)
+	def test_parent_relative_parts(self, gpath1: GPath, expected_parent_parts: list[str], expected_relative_parts: list[str]):
+		"""
+			Test property getters for `parent_parts` and `relative_parts`.
+		"""
+		assert gpath1.parent_parts == expected_parent_parts
+		assert gpath1.relative_parts == expected_relative_parts
 
 
 	@pytest.mark.parametrize(
