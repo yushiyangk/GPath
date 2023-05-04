@@ -598,18 +598,18 @@ class GPath(Hashable):
 		"""
 			Check if `self` should be collated before `other` by comparing them in component-wise lexicographical order.
 
-			Absolute paths come before (is less than) parent relative paths, which come before (is less than) non-parent relative paths. Between two parent relative paths, the path with the higher parent level comes first (is lesser).
+			Relative paths come before (are less than) absolute paths, and non-parent relative paths come before (are less than) parent-relative paths. Between two parent relative paths, the path with the lower parent level comes first (is lesser).
 
 			Usage: <code><var>self</var> < <var>other</var></code>
 
 			Examples
 			--------
 			```python
-			GPath("/") < GPath("C:/")      # True
-			GPath("C:/") < GPath("../..")  # True
-			GPath("../..") < GPath("..")   # True
-			GPath("..") < GPath("")        # True
-			GPath("/") < GPath("/usr")     # True
+			GPath("") < GPath("..")       # True
+			GPath("..") < GPath("../..")  # True
+			GPath("../..") < GPath("/")   # True
+			GPath("/") < GPath("C:/")     # True
+			GPath("") < GPath("usr")      # True
 			```
 		"""
 		if not isinstance(other, GPath):
@@ -925,9 +925,9 @@ class GPath(Hashable):
 	def _order(self) -> tuple:
 		# Get a tuple that represents the ordering of the class
 		return (
-			not self._absolute,  # root before not root
+			self._absolute,  # relative before absolute
 			self._device,  # no device before devices
-			-1 * self._parent_level,  # high parent before low parent before no parent
+			self._parent_level,  # no parent before low parent before high parent
 			self._parts  # empty before few components before many components
 		)
 
