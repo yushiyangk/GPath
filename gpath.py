@@ -35,6 +35,7 @@ __all__ = ['GPath', 'GPathLike']
 LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
 LOCAL_DEVICE_SEPARATOR: Final = ":"
 LOCAL_ROOT_INDICATOR: Final = LOCAL_SEPARATOR
+LOCAL_PLAIN_ROOT_INDICATOR: Final = os.sep  # Windows does not accept a single '/' as device root
 LOCAL_CURRENT_INDICATOR: Final = os.curdir
 LOCAL_PARENT_INDICATOR: Final = os.pardir
 
@@ -63,6 +64,7 @@ class GPath(Hashable):
 	_separator: ClassVar[str] = LOCAL_SEPARATOR
 	_device_separator: ClassVar[str] = LOCAL_DEVICE_SEPARATOR
 	_root_indicator: ClassVar[str] = LOCAL_ROOT_INDICATOR
+	_plain_root_indicator: ClassVar[str] = LOCAL_PLAIN_ROOT_INDICATOR
 	_current_indicator: ClassVar[str] = LOCAL_CURRENT_INDICATOR
 	_parent_indicator: ClassVar[str] = LOCAL_PARENT_INDICATOR
 
@@ -640,7 +642,10 @@ class GPath(Hashable):
 			Usage: <code>str(<var>g</var>)</code>
 		"""
 		if bool(self):
-			return self._device + (GPath._root_indicator if self._absolute else "") + GPath._separator.join(self.relative_parts)
+			if self.root and self._device == "":
+				return GPath._plain_root_indicator
+			else:
+				return self._device + (GPath._root_indicator if self._absolute else "") + GPath._separator.join(self.relative_parts)
 		else:
 			return GPath._current_indicator
 

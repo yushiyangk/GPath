@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from gpath import GPath
@@ -447,7 +449,6 @@ class TestGPath:
 	@pytest.mark.parametrize(
 		('path'),
 		[
-			("/"),
 			("."),
 			(".."),
 			("../.."),
@@ -467,11 +468,30 @@ class TestGPath:
 	)
 	def test_str_repr(self, path: str):
 		"""
-			Test `__str__()` and `__repr__()`.
+			Test `__str__()` and `__repr__()` for cross-platform outputs.
 		"""
 		gpath = GPath(path)
 		result = str(gpath)
 		assert result == path
+
+		result = repr(gpath)
+		result_eval = eval(result)
+		assert result_eval == gpath
+
+
+	@pytest.mark.parametrize(
+		('path', 'expected'),
+		[
+			("/", {'posix': "/", 'nt': "\\", 'java': "/"}),
+		]
+	)
+	def test_str_repr_platform(self, path: str, expected: dict[str, str]):
+		"""
+			Test `__str__()` and `__repr__()` for platform-dependent outputs.
+		"""
+		gpath = GPath(path)
+		result = str(gpath)
+		assert result == expected[os.name]
 
 		result = repr(gpath)
 		result_eval = eval(result)
