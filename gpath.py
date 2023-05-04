@@ -58,13 +58,13 @@ class GPath(Hashable):
 		'_device',
 		'_absolute',
 		'_parent_level',
-
-		'_separator',
-		'_device_separator',
-		'_root_indicator',
-		'_current_indicator',
-		'_parent_indicator',
 	)
+
+	_separator: ClassVar[str] = LOCAL_SEPARATOR
+	_device_separator: ClassVar[str] = LOCAL_DEVICE_SEPARATOR
+	_root_indicator: ClassVar[str] = LOCAL_ROOT_INDICATOR
+	_current_indicator: ClassVar[str] = LOCAL_CURRENT_INDICATOR
+	_parent_indicator: ClassVar[str] = LOCAL_PARENT_INDICATOR
 
 
 	def __init__(self, path: Union[str, os.PathLike, GPath, None]=""):
@@ -88,11 +88,6 @@ class GPath(Hashable):
 			GPath("C:/Program Files")
 			```
 		"""
-		self._separator: str = LOCAL_SEPARATOR
-		self._device_separator: str = LOCAL_DEVICE_SEPARATOR
-		self._root_indicator: str = LOCAL_ROOT_INDICATOR
-		self._current_indicator: str = LOCAL_CURRENT_INDICATOR
-		self._parent_indicator: str = LOCAL_PARENT_INDICATOR
 
 		self._parts: tuple[str, ...] = tuple()  # root- or parent- relative path
 		self._device: str = ""
@@ -106,11 +101,6 @@ class GPath(Hashable):
 				self._device = path._device
 				self._absolute = path._absolute
 				self._parent_level = path._parent_level
-				self._separator = path._separator
-				self._device_separator = path._device_separator
-				self._root_indicator = path._root_indicator
-				self._current_indicator = path._current_indicator
-				self._parent_indicator = path._parent_indicator
 
 			else:
 				# Remove redundant '.'s and '..'s and use OS-default path separators
@@ -128,7 +118,7 @@ class GPath(Hashable):
 					parts = parts[:-1]
 
 				dotdot = 0
-				while dotdot < len(parts) and parts[dotdot] == self._parent_indicator:
+				while dotdot < len(parts) and parts[dotdot] == GPath._parent_indicator:
 					dotdot += 1
 				self._parts = tuple(parts[dotdot:])
 				self._parent_level = dotdot
@@ -176,7 +166,7 @@ class GPath(Hashable):
 			GPath("usr/local/bin").parent_parts    # []
 			```
 		"""
-		return [self._parent_indicator for i in range(self._parent_level)]
+		return [GPath._parent_indicator for i in range(self._parent_level)]
 
 	@property
 	def relative_parts(self) -> list[str]:
@@ -241,41 +231,6 @@ class GPath(Hashable):
 			```
 		"""
 		return self._absolute and len(self._parts) == 0
-
-	@property
-	def __separator(self) -> str:
-		"""
-			Read-only character or string used as the path separator; usually `/`
-		"""
-		return self._separator
-
-	@property
-	def __device_separator(self) -> str:
-		"""
-			Read-only character or string used as the separator between the device name and the path; usually `:`
-		"""
-		return self._separator
-
-	@property
-	def __root_indicator(self) -> str:
-		"""
-			Read-only character or string used to indicate the filesystem root; usually `/`
-		"""
-		return self._separator
-
-	@property
-	def __current_indicator(self) -> str:
-		"""
-			Read-only path component used to indicate the current directory; usually `..`
-		"""
-		return self._current_indicator
-
-	@property
-	def __parent_indicator(self) -> str:
-		"""
-			Read-only path component used to indicate a parent directory; usually `.`
-		"""
-		return self._parent_indicator
 
 
 	@staticmethod
@@ -611,7 +566,7 @@ class GPath(Hashable):
 
 			Usage: <code>hash(<var>g</var>)</code>
 		"""
-		return hash((tuple(self._parts), self._device, self._absolute, self._parent_level, self._separator, self._current_indicator, self._parent_indicator))
+		return hash((tuple(self._parts), self._device, self._absolute, self._parent_level, GPath._separator, GPath._current_indicator, GPath._parent_indicator))
 
 
 	def __eq__(self, other: Any) -> bool:
@@ -685,9 +640,9 @@ class GPath(Hashable):
 			Usage: <code>str(<var>g</var>)</code>
 		"""
 		if bool(self):
-			return self._device + (self._root_indicator if self._absolute else "") + self._separator.join(self.relative_parts)
+			return self._device + (GPath._root_indicator if self._absolute else "") + GPath._separator.join(self.relative_parts)
 		else:
-			return self._current_indicator
+			return GPath._current_indicator
 
 
 	def __repr__(self) -> str:
@@ -951,11 +906,6 @@ class GPath(Hashable):
 			self._device,
 			self._parent_level,
 			self._parts,
-			self._separator,
-			self._device_separator,
-			self._root_indicator,
-			self._current_indicator,
-			self._parent_indicator,
 		)
 
 
@@ -964,22 +914,9 @@ class GPath(Hashable):
 		# Get a tuple that represents the ordering of the class
 		return (
 			not self._absolute,  # root before not root
-			self._root_indicator if self._absolute else "",  # compare _root_indicator if both absolute
-			self._device != "",  # devices before no device
-			(self._device, self._device_separator) if self._device != "" else (),  # compare (...) if both have devices
+			self._device,  # no device before devices
 			-1 * self._parent_level,  # high parent before low parent before no parent
-			(self._parent_indicator, self._separator) if self._parent_level > 0 else (),  # compare (...) if both have equal non-zero parents
-			bool(self),  # empty before non-empty
-			self._current_indicator if not bool(self) else "",  # compare _current_indicator if both empty
-			(self._parts[0], self._separator) if len(self._parts) > 0 else (),  # compare _parts[0] then _separator if both have parts
-			self._parts[1:],  # then compare the remaining parts if any
-
-			# Any possibly unused properties, to preserve total ordering
-			self._root_indicator,
-			self._device_separator,
-			self._parent_indicator,
-			self._current_indicator,
-			self._separator,
+			self._parts  # empty before few components before many components
 		)
 
 
