@@ -731,9 +731,11 @@ class GPath(Hashable):
 
 	def __add__(self, other: GPathLike) -> GPath:
 		"""
-			Add (concatenate) `other` to the end of `self` if `other` is a relative path, and return a new copy.
+			Add (concatenate) `other` to the end of `self`, and return a new copy.
 
-			If `other` is an absolute path, or if `other` has a different device name, return an unchanged copy of `self`.
+			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the device name.
+
+			If `other` has a device name, the returned path will have the same device name as `other`. Otherwise, the returned path will have the same device name as `self`. If neither has a device name, the returned path will not have a device name as well.
 
 			Alias: `__div__()`
 
@@ -746,6 +748,7 @@ class GPath(Hashable):
 			```python
 			GPath("/usr") + GPath("local/bin")                   # GPath("/usr/local/bin")
 			GPath("C:/Windows/System32") + GPath("../SysWOW64")  # GPath("C:/Windows/SysWOW64")
+			GPath("C:/Windows/System32") + GPath("/usr/bin")     # GPath("C:/usr/bin")
 			GPath("..") + GPath("../..")                         # GPath("../../..")
 			GPath("..") / GPath("../..")                         # GPath("../../..")
 			```
@@ -755,12 +758,12 @@ class GPath(Hashable):
 		else:
 			other = GPath(other)
 
+		new_path = GPath(self)
 		if other._absolute:
-			return GPath(self)
-		elif other._device != None and other._device != "" and self._device != other._device:
-			return GPath(self)
+			new_path._parts = other._parts
+			new_path._absolute = other._absolute
+			new_path._parent_level = other._parent_level
 		else:
-			new_path = GPath(self)
 			new_parts = [part for part in self._parts]
 			for i in range(other._parent_level):
 				if len(new_parts) > 0:
@@ -772,7 +775,11 @@ class GPath(Hashable):
 
 			new_parts.extend(other._parts)
 			new_path._parts = tuple(new_parts)
-			return new_path
+
+		if other._device != "":
+			new_path._device = other._device
+
+		return new_path
 
 
 	def __sub__(self, n: int) -> GPath:
