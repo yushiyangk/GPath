@@ -105,7 +105,11 @@ class GPath(Hashable):
 				self._parent_level = path._parent_level
 
 			else:
-				(self._device, path) = os.path.splitdrive(path)
+				(device, path) = os.path.splitdrive(path)
+
+				if len(device) == 2 and device[1] == ":":
+					device = device[0]
+				self._device = device
 
 				# Remove redundant '.'s and '..'s and use OS-default path separators
 				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
@@ -645,7 +649,7 @@ class GPath(Hashable):
 			if self.root and self._device == "":
 				return GPath._plain_root_indicator
 			else:
-				return self._device + (GPath._root_indicator if self._absolute else "") + GPath._separator.join(self.relative_parts)
+				return (self._device + GPath._device_separator if self._device != "" else "") + (GPath._root_indicator if self._absolute else "") + GPath._separator.join(self.relative_parts)
 		else:
 			return GPath._current_indicator
 
