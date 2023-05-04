@@ -32,9 +32,11 @@ __version__ = '0.3'
 __all__ = ['GPath', 'GPathLike']
 
 
-PATH_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
-PATH_CURRENT: Final = os.curdir
-PATH_PARENT: Final = os.pardir
+LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
+LOCAL_DEVICE_SEPARATOR: Final = ":"
+LOCAL_ROOT_INDICATOR: Final = LOCAL_SEPARATOR
+LOCAL_CURRENT_INDICATOR: Final = os.curdir
+LOCAL_PARENT_INDICATOR: Final = os.pardir
 
 PathLike = Union[str, os.PathLike]
 
@@ -51,16 +53,18 @@ class GPath(Hashable):
 		For display, the path can be rendered as a string using <code>str(<var>g</var>)</code>. To maximise cross-platform compatibility, the path is always treated as case sensitive, and will be rendered with `/` as the path separator if possible. If the GPath object represents a viable real path on the local system, it will always be rendered in a format that is meaningful to the local system.
 	"""
 
-	__slots__ = ('_parts', '_device', '_absolute', '_parent')
+	__slots__ = (
+		'_parts',
+		'_device',
+		'_absolute',
+		'_parent_level',
 
-	separator: ClassVar[str] = PATH_SEPARATOR
-	"""Path separator character, usually `/`"""
-
-	current_dir: ClassVar[str] = PATH_CURRENT
-	"""Path component that indicates the current directory; usually `.`"""
-
-	parent_dir: ClassVar[str] = PATH_PARENT
-	"""Path component that indicates a parent directory; usually `..`"""
+		'_separator',
+		'_device_separator',
+		'_root_indicator',
+		'_current_indicator',
+		'_parent_indicator',
+	)
 
 
 	def __init__(self, path: Union[str, os.PathLike, GPath, None]=""):
@@ -84,10 +88,16 @@ class GPath(Hashable):
 			GPath("C:/Program Files")
 			```
 		"""
+		self._separator: str = LOCAL_SEPARATOR
+		self._device_separator: str = LOCAL_DEVICE_SEPARATOR
+		self._root_indicator: str = LOCAL_ROOT_INDICATOR
+		self._current_indicator: str = LOCAL_CURRENT_INDICATOR
+		self._parent_indicator: str = LOCAL_PARENT_INDICATOR
+
 		self._parts: tuple[str, ...] = tuple()  # root- or parent- relative path
 		self._device: str = ""
 		self._absolute: bool = False
-		self._parent: int = 0
+		self._parent_level: int = 0
 
 		if path is not None and path != "":
 			if isinstance(path, GPath):
@@ -95,7 +105,12 @@ class GPath(Hashable):
 				self._parts = path._parts
 				self._device = path._device
 				self._absolute = path._absolute
-				self._parent = path._parent
+				self._parent_level = path._parent_level
+				self._separator = path._separator
+				self._device_separator = path._device_separator
+				self._root_indicator = path._root_indicator
+				self._current_indicator = path._current_indicator
+				self._parent_indicator = path._parent_indicator
 
 			else:
 				# Remove redundant '.'s and '..'s and use OS-default path separators
@@ -113,10 +128,10 @@ class GPath(Hashable):
 					parts = parts[:-1]
 
 				dotdot = 0
-				while dotdot < len(parts) and parts[dotdot] == GPath.parent_dir:  # GPath.parent_dir == '..' usually
+				while dotdot < len(parts) and parts[dotdot] == self._parent_indicator:
 					dotdot += 1
 				self._parts = tuple(parts[dotdot:])
-				self._parent = dotdot
+				self._parent_level = dotdot
 
 
 	@property
@@ -147,12 +162,12 @@ class GPath(Hashable):
 			GPath("usr/local/bin").parent_level    # 0
 			```
 		"""
-		return self._parent
+		return self._parent_level
 
 	@property
 	def parent_parts(self) -> list[str]:
 		"""
-			Read-only path components representing a parent directory that it is relative to, if any, with a copy of `GPath.parent_dir` for each level of parent directory
+			Read-only path components representing a parent directory that it is relative to, if any, with a copy of `parent_indicator` for each level of parent directory
 
 			Examples
 			--------
@@ -161,12 +176,12 @@ class GPath(Hashable):
 			GPath("usr/local/bin").parent_parts    # []
 			```
 		"""
-		return [GPath.parent_dir for i in range(self._parent)]
+		return [self._parent_indicator for i in range(self._parent_level)]
 
 	@property
 	def relative_parts(self) -> list[str]:
 		"""
-			Read-only relative components of the path, not including the filesystem root or device name, with a copy of `GPath.parent_dir` for each level of parent directory
+			Read-only relative components of the path, not including the filesystem root or device name, with a copy of `parent_indicator` for each level of parent directory
 
 			Examples
 			--------
@@ -226,6 +241,41 @@ class GPath(Hashable):
 			```
 		"""
 		return self._absolute and len(self._parts) == 0
+
+	@property
+	def __separator(self) -> str:
+		"""
+			Read-only character or string used as the path separator; usually `/`
+		"""
+		return self._separator
+
+	@property
+	def __device_separator(self) -> str:
+		"""
+			Read-only character or string used as the separator between the device name and the path; usually `:`
+		"""
+		return self._separator
+
+	@property
+	def __root_indicator(self) -> str:
+		"""
+			Read-only character or string used to indicate the filesystem root; usually `/`
+		"""
+		return self._separator
+
+	@property
+	def __current_indicator(self) -> str:
+		"""
+			Read-only path component used to indicate the current directory; usually `..`
+		"""
+		return self._current_indicator
+
+	@property
+	def __parent_indicator(self) -> str:
+		"""
+			Read-only path component used to indicate a parent directory; usually `.`
+		"""
+		return self._parent_indicator
 
 
 	@staticmethod
@@ -292,15 +342,15 @@ class GPath(Hashable):
 			common_path._absolute = True
 			# dotdot must be 0
 		else:
-			if path1._parent != path2._parent:
+			if path1._parent_level != path2._parent_level:
 				if not allow_parents:
 					return None
 
 				common_path = GPath()
-				common_path._parent = max(path1._parent, path2._parent)
+				common_path._parent_level = max(path1._parent_level, path2._parent_level)
 			else:
 				common_path = GPath()
-				common_path._parent = path1._parent
+				common_path._parent_level = path1._parent_level
 				for part1, part2 in zip(path1._parts, path2._parts):
 					if part1 == part2:
 						parts.append(part1)
@@ -527,7 +577,7 @@ class GPath(Hashable):
 				return None
 
 			new_path = GPath()
-			new_path._parent = len(origin) - len(common)
+			new_path._parent_level = len(origin) - len(common)
 			new_path._parts = self._parts[len(common):]
 			return new_path
 
@@ -535,7 +585,7 @@ class GPath(Hashable):
 			common = GPath.find_common(self, origin, allow_current=True, allow_parents=True)
 			if common is None:
 				return None
-			if common._parent > self._parent:
+			if common._parent_level > self._parent_level:
 				return None  # Path from common to self's parent cannot be known
 
 			# common._dotdot == self._dotdot
@@ -543,13 +593,13 @@ class GPath(Hashable):
 
 			new_path = GPath()
 			if len(common) == 0:
-				if origin._parent == self._parent:
-					new_path._parent = len(origin)
+				if origin._parent_level == self._parent_level:
+					new_path._parent_level = len(origin)
 				else:
-					new_path._parent = (common._parent - origin._parent) + len(origin)
+					new_path._parent_level = (common._parent_level - origin._parent_level) + len(origin)
 				new_path._parts = self._parts
 			else:
-				new_path._parent = len(origin) - len(common)
+				new_path._parent_level = len(origin) - len(common)
 				new_path._parts = self._parts[len(common):]
 
 			return new_path
@@ -561,7 +611,7 @@ class GPath(Hashable):
 
 			Usage: <code>hash(<var>g</var>)</code>
 		"""
-		return hash((tuple(self._parts), self._device, self._absolute, self._parent))
+		return hash((tuple(self._parts), self._device, self._absolute, self._parent_level, self._separator, self._current_indicator, self._parent_indicator))
 
 
 	def __eq__(self, other: Any) -> bool:
@@ -582,7 +632,7 @@ class GPath(Hashable):
 			```
 		"""
 		if isinstance(other, GPath):
-			return ((self._absolute, self._device, self._parent) + self._parts) == ((other._absolute, other._device, other._parent) + other._parts)
+			return self._tuple == other._tuple
 		else:
 			return False
 
@@ -607,7 +657,7 @@ class GPath(Hashable):
 		"""
 		if not isinstance(other, GPath):
 			other = GPath(other)
-		return ((not self._absolute, self._device, -1 * self._parent) + self._parts) < ((not other._absolute, other._device, -1 * other._parent) + other._parts)
+		return self._order < other._order
 
 
 	def __bool__(self) -> bool:
@@ -625,7 +675,7 @@ class GPath(Hashable):
 			bool(GPath(""))     # False
 			```
 		"""
-		return self._absolute or self._parent != 0 or len(self._parts) > 0
+		return self._absolute or self._device != "" or self._parent_level != 0 or len(self._parts) > 0
 
 
 	def __str__(self) -> str:
@@ -635,9 +685,9 @@ class GPath(Hashable):
 			Usage: <code>str(<var>g</var>)</code>
 		"""
 		if bool(self):
-			return self._device + (GPath.separator if self._absolute else "") + GPath.separator.join(self.relative_parts)
+			return self._device + (self._root_indicator if self._absolute else "") + self._separator.join(self.relative_parts)
 		else:
-			return "."
+			return self._current_indicator
 
 
 	def __repr__(self) -> str:
@@ -757,11 +807,11 @@ class GPath(Hashable):
 		else:
 			new_path = GPath(self)
 			new_parts = [part for part in self._parts]
-			for i in range(other._parent):
+			for i in range(other._parent_level):
 				if len(new_parts) > 0:
 					new_parts.pop()
 				elif not new_path._absolute:
-					new_path._parent += 1
+					new_path._parent_level += 1
 				else:
 					pass  # parent of directory of root is still root
 
@@ -796,7 +846,7 @@ class GPath(Hashable):
 			if len(new_parts) > 0:
 				new_parts.pop()
 			elif not new_path._absolute:
-				new_path._parent += 1
+				new_path._parent_level += 1
 			else:
 				pass  # removing components from root should still give root
 		new_path._parts = tuple(new_parts)
@@ -826,7 +876,7 @@ class GPath(Hashable):
 		if n < 0:
 			raise ValueError("cannot multiply path by a negative integer: {n}")
 		new_path = GPath(self)
-		new_path._parent = self._parent * n
+		new_path._parent_level = self._parent_level * n
 		new_path._parts = self._parts * n
 		return new_path
 
@@ -862,7 +912,7 @@ class GPath(Hashable):
 			return self.__rshift__(-1 * n)
 		new_path = GPath(self)
 		if not new_path._absolute:
-			new_path._parent = max(new_path._parent - n, 0)
+			new_path._parent_level = max(new_path._parent_level - n, 0)
 		return new_path
 
 
@@ -889,20 +939,62 @@ class GPath(Hashable):
 			return self.__lshift__(-1 * n)
 		new_path = GPath(self)
 		if not new_path._absolute:
-			new_path._parent += n
+			new_path._parent_level += n
 		return new_path
+
+
+	@property
+	def _tuple(self) -> tuple:
+		# Get a tuple of all fields
+		return (
+			self._absolute,
+			self._device,
+			self._parent_level,
+			self._parts,
+			self._separator,
+			self._device_separator,
+			self._root_indicator,
+			self._current_indicator,
+			self._parent_indicator,
+		)
+
+
+	@property
+	def _order(self) -> tuple:
+		# Get a tuple that represents the ordering of the class
+		return (
+			not self._absolute,  # root before not root
+			self._root_indicator if self._absolute else "",  # compare _root_indicator if both absolute
+			self._device != "",  # devices before no device
+			(self._device, self._device_separator) if self._device != "" else (),  # compare (...) if both have devices
+			-1 * self._parent_level,  # high parent before low parent before no parent
+			(self._parent_indicator, self._separator) if self._parent_level > 0 else (),  # compare (...) if both have equal non-zero parents
+			bool(self),  # empty before non-empty
+			self._current_indicator if not bool(self) else "",  # compare _current_indicator if both empty
+			(self._parts[0], self._separator) if len(self._parts) > 0 else (),  # compare _parts[0] then _separator if both have parts
+			self._parts[1:],  # then compare the remaining parts if any
+
+			# Any possibly unused properties, to preserve total ordering
+			self._root_indicator,
+			self._device_separator,
+			self._parent_indicator,
+			self._current_indicator,
+			self._separator,
+		)
+
 
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
-		if self._parent < 0:
+		if self._parent_level < 0:
 			raise ValueError(f"invalid GPath, _parent cannot be negative: {repr(self)}")
 		if self._absolute:
-			if self._parent != 0:
+			if self._parent_level != 0:
 				raise ValueError(f"invalid GPath, _parent must be 0 when root is True: {repr(self)}")
 		else:
 			if self._device != "" and self._device is not None:
 				raise ValueError(f"invalid GPath, _device must be unset when root is False: {repr(self)}")
 		return True
+
 
 
 GPathLike = Union[GPath, str, os.PathLike]
