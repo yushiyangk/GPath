@@ -46,7 +46,14 @@ class TestGPath:
 			("/./..", tuple(), "", True, 0),
 			("C:/", tuple(), "C:", True, 0),
 			("C:/.", tuple(), "C:", True, 0),
+			("C:/./.", tuple(), "C:", True, 0),
+			("C:/.//", tuple(), "C:", True, 0),
+			("C:", tuple(), "C:", False, 0),
+			("C:.", tuple(), "C:", False, 0),
+			("C:./.", tuple(), "C:", False, 0),
+			("C:.//", tuple(), "C:", False, 0),
 			("c:/", tuple(), "c:", True, 0),
+			("c:", tuple(), "c:", False, 0),
 		]
 	)
 	def test_constructor_root(self,
@@ -127,7 +134,7 @@ class TestGPath:
 			#("//", "", True),
 			("C:/", "C:", True),
 			("c:/", "c:", True),
-			#("C:", "C:", False),
+			("C:", "C:", False),
 		]
 	)
 	def test_constructor(self,
@@ -176,10 +183,14 @@ class TestGPath:
 			("", False),
 			("..", False),
 			("C:/", True),
+			("C:", False),
+			("C:..", False),
 			("/a", False),
 			("a", False),
 			("../a", False),
 			("C:/a", False),
+			("C:a", False),
+			("C:../a", False),
 		],
 		indirect=['gpath1']
 	)
@@ -209,6 +220,15 @@ class TestGPath:
 			("C:/", [], []),
 			("C:/a", [], ["a"]),
 			("C:/a/b", [], ["a", "b"]),
+			("C:", [], []),
+			("C:a", [], ["a"]),
+			("C:a/b", [], ["a", "b"]),
+			("C:..", [".."], [".."]),
+			("C:../a", [".."], ["..", "a"]),
+			("C:../a/b", [".."], ["..", "a", "b"]),
+			("C:../..", ["..", ".."], ["..", ".."]),
+			("C:../../a", ["..", ".."], ["..", "..", "a"]),
+			("C:../../a/b", ["..", ".."], ["..", "..", "a", "b"]),
 		],
 		indirect=['gpath1']
 	)
@@ -227,12 +247,14 @@ class TestGPath:
 			("", "", True),
 			("..", "..", True),
 			("C:/", "C:/", True),
+			("C:", "C:", True),
 			("/", "", False),
 			("..", "", False),
 			("..", "/", False),
 			("..", "../..", False),
 			("C:/", "c:/", False),
 			("C:/", "D:/", False),
+			("C:/", "C:", False),
 			("/usr/bin", "/usr/bin", True),
 			("/usr/bin", "/usr/./bin", True),
 			("usr/bin", "usr/bin", True),
@@ -291,6 +313,8 @@ class TestGPath:
 			("../../a/b", "../../a/b", False, True),
 			("C:/", "C:/", False, True),
 			("C:/a/b", "C:/a/b", False, True),
+			("C:", "C:", False, True),
+			("C:a/b", "C:a/b", False, True),
 
 			("", "/", True, False),
 			("", "..", True, False),
@@ -299,12 +323,17 @@ class TestGPath:
 			("C:/", "/", True, False),
 			("", "C:/", True, False),
 			("..", "C:/", True, False),
+			("C:", "C:/", True, False),
+			("C:", "", True, False),
+			("C:", "..", True, False),
 
 			("b", "a", True, False),
 			("aa", "a", True, False),
 			("a", "", True, False),
 			("a", "..", True, False),
 			("a", "/", True, False),
+			("a", "C:/", True, False),
+			("C:", "a", True, False),
 			("a/b", "a/a", True, False),
 			("b/a", "a/b", True, False),
 
@@ -313,6 +342,8 @@ class TestGPath:
 			("/a", "/", True, False),
 			("", "/a", True, False),
 			("..", "/a", True, False),
+			("C:/", "/a", True, False),
+			("C:", "/a", True, False),
 			("/a/b", "/a/a", True, False),
 			("/b/a", "/a/b", True, False),
 
@@ -321,12 +352,13 @@ class TestGPath:
 			("../a", "..", True, False),
 			("../a", "/", True, False),
 			("", "../a", True, False),
+			("../a", "C:/", True, False),
+			("C:", "../a", True, False),
 			("../a/b", "../a/a", True, False),
 			("../b/a", "../a/b", True, False),
 			("../a", "../../b", True, False),
 
 			("D:/", "C:/", True, False),
-			("CC:/", "C:/", True, False),
 			("C:/b", "C:/a", True, False),
 			("C:/aa", "C:/a", True, False),
 			("C:/a", "C:/", True, False),
@@ -334,8 +366,21 @@ class TestGPath:
 			("C:/a", "/", True, False),
 			("", "C:/a", True, False),
 			("..", "C:/a", True, False),
+			("C:", "C:/a", True, False),
 			("C:/a/b", "C:/a/a", True, False),
 			("C:/b/a", "C:/a/b", True, False),
+
+			("D:", "C:", True, False),
+			("C:b", "C:a", True, False),
+			("C:aa", "C:a", True, False),
+			("C:a", "C:", True, False),
+			("D:", "C:a", True, False),
+			("C:a", "/", True, False),
+			("C:a", "", True, False),
+			("C:a", "..", True, False),
+			("C:a", "C:/", True, False),
+			("C:a/b", "C:a/a", True, False),
+			("C:b/a", "C:a/b", True, False),
 		],
 		indirect=['gpath1', 'gpath2']
 	)
@@ -379,11 +424,13 @@ class TestGPath:
 			("..", True),
 			("../..", True),
 			("C:/", True),
+			("C:", True),
 
 			("/a", True),
 			("a", True),
 			("../a", True),
 			("C:/a", True),
+			("C:a", True),
 		],
 		indirect=['gpath1']
 	)
@@ -405,6 +452,7 @@ class TestGPath:
 			(".."),
 			("../.."),
 			("C:/"),
+			("C:"),
 			("/a"),
 			("/a/b"),
 			("a"),
@@ -413,6 +461,8 @@ class TestGPath:
 			("../a/b"),
 			("C:/a"),
 			("C:/a/b"),
+			("C:a"),
+			("C:a/b"),
 		]
 	)
 	def test_str_repr(self, path: str):
@@ -436,6 +486,7 @@ class TestGPath:
 			("..", 0),
 			("../..", 0),
 			("C:/", 0),
+			("C:", 0),
 			("/a", 1),
 			("/a/b", 2),
 			("a", 1),
@@ -444,6 +495,8 @@ class TestGPath:
 			("../a/b", 2),
 			("C:/a", 1),
 			("C:/a/b", 2),
+			("C:a", 1),
+			("C:a/b", 2),
 		],
 		indirect=['gpath1']
 	)
@@ -471,6 +524,8 @@ class TestGPath:
 			("../a/b", ["a", "b"]),
 			("C:/a", ["a"]),
 			("C:/a/b", ["a", "b"]),
+			("C:a", ["a"]),
+			("C:a/b", ["a", "b"]),
 		],
 		indirect=['gpath1']
 	)
@@ -512,14 +567,19 @@ class TestGPath:
 			("", "/", False),
 			("/", "..", False),
 			("..", "/", False),
-			("C:/", "/", False),
 			("/", "C:/", False),
+			("C:/", "/", False),
+			("/", "C:", False),
+			("C:", "/", False),
+
 			("C:/", "", False),
 			("", "C:/", False),
 			("C:/", "..", False),
 			("..", "C:/", False),
 			("C:/", "D:/", False),
 			("D:/", "C:/", False),
+			("C:/", "C:", False),
+			("C:", "C:/", False),
 
 			("a", "b", False),
 			("b", "a", False),
@@ -529,6 +589,8 @@ class TestGPath:
 			("../b", "../a", False),
 			("C:/a", "C:/b", False),
 			("C:/b", "C:/a", False),
+			("C:a", "C:b", False),
+			("C:b", "C:a", False),
 
 			("..", "", True),
 			("../..", "", True),
@@ -545,11 +607,13 @@ class TestGPath:
 			("/a", "/a/b", True),
 			("../a", "../a/b", True),
 			("C:/a", "C:/a/b", True),
+			("C:a", "C:a/b", True),
 
 			("a", "a", True),
 			("/a", "/a", True),
 			("../a", "../a", True),
 			("C:/a", "C:/a", True),
+			("C:a", "C:a", True),
 		],
 		indirect=['gpath1', 'gpath2']
 	)
@@ -572,6 +636,7 @@ class TestGPath:
 			("/", "", None, None),
 			("/", "..", None, None),
 			("/", "C:/", None, None),
+			("/", "C:", None, None),
 			("/a", "/", "a", "a"),
 			("/a", "/a", "", ""),
 			("/a/b", "/", "a/b", "a/b"),
@@ -582,6 +647,7 @@ class TestGPath:
 			("", "", "", ""),
 			("", "..", None, None),
 			("", "C:/", None, None),
+			("", "C:", None, None),
 			("", "a", None, ".."),
 			("", "../a", None, None),
 			("a", "", "a", "a"),
@@ -597,6 +663,7 @@ class TestGPath:
 			("..", "..", "", ""),
 			("..", "../..", None, None),
 			("..", "C:/", None, None),
+			("..", "C:", None, None),
 			("..", "a", None, "../.."),
 			("..", "../a", None, ".."),
 			("../a", "..", "a", "a"),
@@ -612,6 +679,7 @@ class TestGPath:
 			("../..", "..", None, ".."),
 			("../..", "../..", "", ""),
 			("../..", "C:/", None, None),
+			("../..", "C:", None, None),
 			("../..", "a", None, "../../.."),
 			("../..", "../a", None, "../.."),
 			("../..", "../../a", None, ".."),
@@ -630,12 +698,26 @@ class TestGPath:
 			("C:/", "..", None, None),
 			("C:/", "C:/", "", ""),
 			("C:/", "D:/", None, None),
+			("C:/", "C:", None, None),
 			("C:/a", "C:/", "a", "a"),
 			("C:/a", "C:/a", "", ""),
 			("C:/a/b", "C:/", "a/b", "a/b"),
 			("C:/a/b", "C:/a", "b", "b"),
 			("C:/a/b", "D:/a", None, None),
 			("C:/a/b", "C:/b", None, "../a/b"),
+
+			("C:", "/", None, None),
+			("C:", "", None, None),
+			("C:", "..", None, None),
+			("C:", "C:/", None, None),
+			("C:", "C:", "", ""),
+			("C:", "D:", None, None),
+			("C:a", "C:", "a", "a"),
+			("C:a", "C:a", "", ""),
+			("C:a/b", "C:", "a/b", "a/b"),
+			("C:a/b", "C:a", "b", "b"),
+			("C:a/b", "D:a", None, None),
+			("C:a/b", "C:b", None, "../a/b"),
 		],
 		indirect=['gpath1', 'gpath2']
 	)
@@ -674,12 +756,14 @@ class TestGPath:
 			("/", "", "/"),
 			("/", "..", "/"),
 			("/", "C:/", "C:/"),
+			("/", "C:", "C:/"),
 			("/", "a", "/a"),
 			("/", "../a", "/a"),
 			("/a", "/", "/"),
 			("/a", "", "/a"),
 			("/a", "..", "/"),
 			("/a", "C:/", "C:/"),
+			("/a", "C:", "C:/a"),
 			("/a", "b", "/a/b"),
 			("/a", "../b", "/b"),
 
@@ -687,12 +771,14 @@ class TestGPath:
 			("", "", ""),
 			("", "..", ".."),
 			("", "C:/", "C:/"),
+			("", "C:", "C:"),
 			("", "a", "a"),
 			("", "../a", "../a"),
 			("a", "/", "/"),
 			("a", "", "a"),
 			("a", "..", ""),
 			("a", "C:/", "C:/"),
+			("a", "C:", "C:a"),
 			("a", "b", "a/b"),
 			("a", "../b", "b"),
 
@@ -700,12 +786,14 @@ class TestGPath:
 			("..", "", ".."),
 			("..", "..", "../.."),
 			("..", "C:/", "C:/"),
+			("..", "C:", "C:.."),
 			("..", "a", "../a"),
 			("..", "../a", "../../a"),
 			("../a", "/", "/"),
 			("../a", "", "../a"),
 			("../a", "..", ".."),
 			("../a", "C:/", "C:/"),
+			("../a", "C:", "C:../a"),
 			("../a", "b", "../a/b"),
 			("../a", "../b", "../b"),
 
@@ -713,14 +801,18 @@ class TestGPath:
 			("C:/", "", "C:/"),
 			("C:/", "..", "C:/"),
 			("C:/", "C:/", "C:/"),
+			("C:/", "C:", "C:/"),
 			("C:/", "D:/", "D:/"),
+			("C:/", "D:", "D:/"),
 			("C:/", "a", "C:/a"),
 			("C:/", "../a", "C:/a"),
 			("C:/a", "/", "C:/"),
 			("C:/a", "", "C:/a"),
 			("C:/a", "..", "C:/"),
 			("C:/a", "C:/", "C:/"),
+			("C:/a", "C:", "C:/a"),
 			("C:/a", "D:/", "D:/"),
+			("C:/a", "D:", "D:/a"),
 			("C:/a", "b", "C:/a/b"),
 			("C:/a", "../b", "C:/b"),
 		],
@@ -764,6 +856,13 @@ class TestGPath:
 			("C:/a/b", 1, "C:/a"),
 			("C:/a/b", 2, "C:/"),
 			("C:/a/b", 3, "C:/"),
+
+			("C:", 0, "C:"),
+			("C:", 1, "C:.."),
+			("C:a/b", 0, "C:a/b"),
+			("C:a/b", 1, "C:a"),
+			("C:a/b", 2, "C:"),
+			("C:a/b", 3, "C:.."),
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
@@ -777,7 +876,7 @@ class TestGPath:
 
 	@pytest.mark.parametrize(
 		('gpath1'),
-		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b")],
+		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b"), ("C:"), ("C:a/b")],
 		indirect=['gpath1']
 	)
 	@pytest.mark.parametrize(('sub_value'), [-1])
@@ -826,6 +925,13 @@ class TestGPath:
 			("C:/a/b", 1, "C:/a/b"),
 			("C:/a/b", 2, "C:/a/b/a/b"),
 			("C:/a/b", 0, "C:/"),
+
+			("C:", 1, "C:"),
+			("C:", 2, "C:"),
+			("C:", 0, "C:"),
+			("C:a/b", 1, "C:a/b"),
+			("C:a/b", 2, "C:a/b/a/b"),
+			("C:a/b", 0, "C:"),
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
@@ -839,7 +945,7 @@ class TestGPath:
 
 	@pytest.mark.parametrize(
 		('gpath1'),
-		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b")],
+		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b"), ("C:"), ("C:a/b")],
 		indirect=['gpath1']
 	)
 	@pytest.mark.parametrize(('mul_value'), [-1, -2])
@@ -882,6 +988,11 @@ class TestGPath:
 			("C:/", 1, "C:/", "C:/"),
 			("C:/a/b", 0, "C:/a/b", "C:/a/b"),
 			("C:/a/b", 1, "C:/a/b", "C:/a/b"),
+
+			("C:", 0, "C:", "C:"),
+			("C:", 1, "C:", "C:.."),
+			("C:a/b", 0, "C:a/b", "C:a/b"),
+			("C:a/b", 1, "C:a/b", "C:../a/b"),
 		],
 		indirect=['gpath1']
 	)
@@ -911,6 +1022,7 @@ class TestGPath:
 			("/", "", None, None, None, None),
 			("/", "..", None, None, None, None),
 			("/", "C:/", None, None, None, None),
+			("/", "C:", None, None, None, None),
 			("/", "/a", "/", "/", "/", "/"),
 			("/", "a", None, None, None, None),
 			("/", "../a", None, None, None, None),
@@ -918,6 +1030,7 @@ class TestGPath:
 			("/a", "", None, None, None, None),
 			("/a", "..", None, None, None, None),
 			("/a", "C:/", None, None, None, None),
+			("/a", "C:", None, None, None, None),
 			("/a", "/b", "/", "/", "/", "/"),
 			("/a", "b", None, None, None, None),
 			("/a", "../b", None, None, None, None),
@@ -925,29 +1038,37 @@ class TestGPath:
 			("", "", "", "", "", ""),
 			("", "..", None, "..", "..", None),
 			("", "C:/", None, None, None, None),
+			("", "C:", None, None, None, None),
 			("", "a", "", "", "", None),
 			("", "../a", None, "..", "..", None),
 			#("a", "", "", "", "", None),
 			("a", "..", None, "..", "..", None),
 			("a", "C:/", None, None, None, None),
+			("a", "C:", None, None, None, None),
 			("a", "b", "", "", "", None),
 			("a", "../b", None, "..", "..", None),
 
 			("..", "..", "..", "..", "..", ".."),
 			("..", "../..", None, "../..", "../..", None),
 			("..", "C:/", None, None, None, None),
+			("..", "C:", None, None, None, None),
 			("..", "../a", "..", "..", "..", ".."),
 			("..", "../../a", None, "../..", "../..", None),
 			("../a", "..", "..", "..", "..", ".."),
 			("../a", "../..", None, "../..", "../..", None),
 			("../a", "C:/", None, None, None, None),
+			("../a", "C:", None, None, None, None),
 			("../a", "../b", "..", "..", "..", ".."),
 			("../a", "../../b", None, "../..", "../..", None),
 
 			("C:/", "C:/", "C:/", "C:/", "C:/", "C:/"),
+			("C:/", "C:", None, None, None, None),
 			("C:/", "D:/", None, None, None, None),
+			("C:/", "D:", None, None, None, None),
 			("C:/a", "C:/", "C:/", "C:/", "C:/", "C:/"),
+			("C:/a", "C:", None, None, None, None),
 			("C:/a", "D:/", None, None, None, None),
+			("C:/a", "D:", None, None, None, None),
 			("C:/a", "C:/b", "C:/", "C:/", "C:/", "C:/"),
 		]
 	)
@@ -1053,8 +1174,9 @@ class TestGPath:
 					"C:/Program Files",
 					"C:/Program Files/python.exe",
 					"D:/Documents",
-					"E:/",
-					"E:/Secret Documents/Secret Document.txt",
+					"E:",
+					"E:Apples",
+					"E:Secret Documents/Secret Document.txt",
 				],
 				True,
 				False,
@@ -1083,8 +1205,9 @@ class TestGPath:
 					GPath("D:/Documents"): [
 						GPath(""),
 					],
-					GPath("E:/"): [
+					GPath("E:"): [
 						GPath(""),
+						GPath("Apples"),
 						GPath("Secret Documents/Secret Document.txt"),
 					],
 				}
@@ -1177,6 +1300,7 @@ class TestGPath:
 			(["/usr", "../../local", "bin"], "/local/bin"),
 			(["/usr", "../local", "../bin"], "/bin"),
 			(["/usr", "C:/local", "bin"], "C:/local/bin"),
+			(["/usr", "C:local", "bin"], "C:/usr/local/bin"),
 			(["/", "usr", "bin"], "/usr/bin"),
 
 			(["usr", "local", "bin"], "usr/local/bin"),
@@ -1185,6 +1309,7 @@ class TestGPath:
 			(["usr", "../../local", "bin"], "../local/bin"),
 			(["usr", "../local", "../bin"], "bin"),
 			(["usr", "C:/local", "bin"], "C:/local/bin"),
+			(["usr", "C:local", "bin"], "C:usr/local/bin"),
 			(["", "usr", "bin"], "usr/bin"),
 
 			(["../usr", "local", "bin"], "../usr/local/bin"),
@@ -1194,6 +1319,7 @@ class TestGPath:
 			(["../usr", "../local", "../bin"], "../bin"),
 			(["../usr", "../local", "../../bin"], "../../bin"),
 			(["../usr", "C:/local", "bin"], "C:/local/bin"),
+			(["../usr", "C:local", "bin"], "C:../usr/local/bin"),
 			(["..", "usr", "bin"], "../usr/bin"),
 			(["../..", "usr", "bin"], "../../usr/bin"),
 			(["..", "..", "usr", "bin"], "../../usr/bin"),
@@ -1204,7 +1330,9 @@ class TestGPath:
 			(["C:/Windows", "../../System32", "Containers"], "C:/System32/Containers"),
 			(["C:/Windows", "../System32", "../Containers"], "C:/Containers"),
 			(["C:/Windows", "C:/System32", "Containers"], "C:/System32/Containers"),
+			(["C:/Windows", "C:System32", "Containers"], "C:/Windows/System32/Containers"),
 			(["C:/Windows", "D:/System32", "Containers"], "D:/System32/Containers"),
+			(["C:/Windows", "D:System32", "Containers"], "D:/Windows/System32/Containers"),
 			(["C:/", "Windows", "System32"], "C:/Windows/System32"),
 		],
 		indirect=['expected_gpath']

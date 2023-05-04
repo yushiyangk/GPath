@@ -103,12 +103,12 @@ class GPath(Hashable):
 				self._parent_level = path._parent_level
 
 			else:
+				(self._device, path) = os.path.splitdrive(path)
+
 				# Remove redundant '.'s and '..'s and use OS-default path separators
 				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
-
 				if path == os.curdir:
 					path = ""
-				(self._device, path) = os.path.splitdrive(path)
 				self._absolute = os.path.isabs(path)
 
 				parts = path.split(os.sep)  # os.path.normpath previously rewrote the path to use os.sep
@@ -934,9 +934,6 @@ class GPath(Hashable):
 		if self._absolute:
 			if self._parent_level != 0:
 				raise ValueError(f"invalid GPath, _parent must be 0 when root is True: {repr(self)}")
-		else:
-			if self._device != "" and self._device is not None:
-				raise ValueError(f"invalid GPath, _device must be unset when root is False: {repr(self)}")
 		return True
 
 
