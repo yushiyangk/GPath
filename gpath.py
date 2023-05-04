@@ -32,14 +32,12 @@ __version__ = '0.3'
 __all__ = ['GPath', 'GPathLike']
 
 
-LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
-LOCAL_DEVICE_SEPARATOR: Final = ":"
-LOCAL_ROOT_INDICATOR: Final = LOCAL_SEPARATOR
-LOCAL_PLAIN_ROOT_INDICATOR: Final = os.sep  # Windows does not accept a single '/' as device root
-LOCAL_CURRENT_INDICATOR: Final = os.curdir
-LOCAL_PARENT_INDICATOR: Final = os.pardir
-
-PathLike = Union[str, os.PathLike]
+_LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
+_LOCAL_DEVICE_SEPARATOR: Final = ":"
+_LOCAL_ROOT_INDICATOR: Final = _LOCAL_SEPARATOR
+_LOCAL_PLAIN_ROOT_INDICATOR: Final = os.sep  # Windows does not accept a single '/' as device root
+_LOCAL_CURRENT_INDICATOR: Final = os.curdir
+_LOCAL_PARENT_INDICATOR: Final = os.pardir
 
 
 @functools.total_ordering
@@ -61,12 +59,12 @@ class GPath(Hashable):
 		'_parent_level',
 	)
 
-	_separator: ClassVar[str] = LOCAL_SEPARATOR
-	_device_separator: ClassVar[str] = LOCAL_DEVICE_SEPARATOR
-	_root_indicator: ClassVar[str] = LOCAL_ROOT_INDICATOR
-	_plain_root_indicator: ClassVar[str] = LOCAL_PLAIN_ROOT_INDICATOR
-	_current_indicator: ClassVar[str] = LOCAL_CURRENT_INDICATOR
-	_parent_indicator: ClassVar[str] = LOCAL_PARENT_INDICATOR
+	_separator: ClassVar[str] = _LOCAL_SEPARATOR
+	_device_separator: ClassVar[str] = _LOCAL_DEVICE_SEPARATOR
+	_root_indicator: ClassVar[str] = _LOCAL_ROOT_INDICATOR
+	_plain_root_indicator: ClassVar[str] = _LOCAL_PLAIN_ROOT_INDICATOR
+	_current_indicator: ClassVar[str] = _LOCAL_CURRENT_INDICATOR
+	_parent_indicator: ClassVar[str] = _LOCAL_PARENT_INDICATOR
 
 
 	def __init__(self, path: Union[str, os.PathLike, GPath, None]=""):
