@@ -920,7 +920,7 @@ class GPath(Hashable):
 		return hash((tuple(self._parts), self._namespace, self._root, self._parent_level, GPath._separator, GPath._current_indicator, GPath._parent_indicator))
 
 
-	def __eq__(self, other: Any) -> bool:
+	def __eq__(self, other: GPathLike) -> bool:
 		"""
 			Check if two GPaths are completely identical.
 
@@ -934,13 +934,11 @@ class GPath(Hashable):
 			GPath("/usr/bin") == GPath("/usr/bin")  # True
 			GPath("/usr/bin") == GPath("usr/bin")   # False
 			GPath("C:/") == GPath("D:/")            # False
-			GPath("/usr/bin") == "/usr/bin"         # False
 			```
 		"""
-		if isinstance(other, GPath):
-			return self._tuple == other._tuple
-		else:
-			return False
+		if not isinstance(other, GPath):
+			other = GPath(other)
+		return self._tuple == other._tuple
 
 
 	def __lt__(self, other: GPathLike) -> bool:

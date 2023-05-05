@@ -296,9 +296,9 @@ class TestGPath:
 		assert result == expected
 
 		result = gpath1 == path2
-		assert result == False
+		assert result == expected
 		result = gpath2 == path1
-		assert result == False
+		assert result == expected
 
 		if expected is True:
 			assert hash(gpath1) == hash(gpath2)
