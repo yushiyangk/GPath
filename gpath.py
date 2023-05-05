@@ -16,7 +16,7 @@ from enum import auto, IntEnum, IntFlag
 
 # Type hinting prior to 3.10
 # Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
-from typing import Any, Callable, ClassVar, Collection, Generator, Optional, Union
+from typing import overload, Any, Callable, ClassVar, Collection, Generator, Optional, Union
 if sys.version_info >= (3, 8):
 	from typing import Final
 else:
@@ -604,8 +604,14 @@ class GPath(Hashable):
 		return self._root and len(self._parts) == 0
 
 
+	@overload
+	def partition(paths: Iterable[GPathLike], **kwargs) -> dict[GPath, list[GPath]]:
+		...
+	@overload
+	def partition(*paths: GPathLike, **kwargs) -> dict[GPath, list[GPath]]:
+		...
 	@staticmethod
-	def partition(*paths: Union[Iterable[GPathLike], GPathLike], allow_current: bool=True, allow_parents: bool=False, encoding: str='utf-8') -> dict[GPath, list[GPath]]:
+	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: str='utf-8') -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
@@ -687,8 +693,14 @@ class GPath(Hashable):
 		return partition_map
 
 
+	@overload
+	def join(paths: Iterable[GPathLike], **kwargs) -> GPath:
+		...
+	@overload
+	def join(*paths: GPathLike, **kwargs) -> GPath:
+		...
 	@staticmethod
-	def join(*paths: Union[Sequence[GPathLike], GPathLike], encoding: str='utf-8') -> GPath:
+	def join(*paths, encoding: str='utf-8') -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
@@ -1028,10 +1040,10 @@ class GPath(Hashable):
 			Examples
 			--------
 			```python
-			len(GPath("/usr/bin"))   # 2
-			len(GPath("/"))          # 0
-			len(GPath("C:/Windows))  # 0
-			len(GPath("C:/))         # 0
+			len(GPath("/usr/bin"))    # 2
+			len(GPath("/"))           # 0
+			len(GPath("C:/Windows"))  # 0
+			len(GPath("C:/"))         # 0
 			```
 		"""
 		return len(self._parts)
