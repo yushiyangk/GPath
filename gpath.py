@@ -323,7 +323,6 @@ _validator_of_type: Final = {
 }
 
 
-@functools.total_ordering
 class GPath(Hashable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
@@ -968,29 +967,6 @@ class GPath(Hashable):
 		if not isinstance(other, GPath):
 			other = GPath(other, encoding=self._encoding)
 		return self._tuple == other._tuple
-
-
-	def __lt__(self, other: GPathLike) -> bool:
-		"""
-			Check if `self` should be collated before `other` by comparing them in component-wise lexicographical order.
-
-			Relative paths come before (are less than) absolute paths, and non-parent relative paths come before (are less than) parent-relative paths. Between two parent relative paths, the path with the lower parent level comes first (is lesser).
-
-			Usage: <code><var>self</var> < <var>other</var></code>
-
-			Examples
-			--------
-			```python
-			GPath("") < GPath("..")       # True
-			GPath("..") < GPath("../..")  # True
-			GPath("../..") < GPath("/")   # True
-			GPath("/") < GPath("C:/")     # True
-			GPath("") < GPath("usr")      # True
-			```
-		"""
-		if not isinstance(other, GPath):
-			other = GPath(other, encoding=self._encoding)
-		return self._order < other._order
 
 
 	def __bool__(self) -> bool:
