@@ -4,16 +4,19 @@
 
 from __future__ import annotations
 
+import enum
 import functools
 import os
+import re
 import sys
 from collections.abc import Hashable, Iterable, Iterator, Sequence
+from enum import auto, IntEnum, IntFlag
 #from typing import Any, ClassVar, Final
 
 
 # Type hinting prior to 3.10
 # Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, Callable, ClassVar, Collection, Generator, Optional, Union
 if sys.version_info >= (3, 8):
 	from typing import Final
 else:
@@ -32,12 +35,285 @@ __version__ = '0.3'
 __all__ = ['GPath', 'GPathLike']
 
 
+@enum.unique
+class PathType(IntEnum):
+	GENERIC = 0
+	POSIX = auto()
+	POSIX_HOME = auto()
+	POSIX_PORTABLE = auto()
+	WINDOWS_NT = auto()
+	UNC = auto()
+
+	@staticmethod
+	def from_str(name: str) -> PathType:
+		return _path_type_of_str[name]
+
+_path_type_of_canonical_str: Final = {
+	'generic': PathType.GENERIC,
+	'posix': PathType.POSIX,
+	'posix-home': PathType.POSIX_HOME,
+	'posix-portable': PathType.POSIX_PORTABLE,
+	'windows-nt': PathType.WINDOWS_NT,
+	'unc': PathType.UNC,
+}
+path_types: Final = list(_path_type_of_canonical_str.keys())
+_path_type_of_str: Final = _path_type_of_canonical_str.update({
+	'': PathType.GENERIC,
+	'posix': PathType.POSIX,
+	'linux': PathType.POSIX,
+	'macos': PathType.POSIX,
+	'osx': PathType.POSIX,
+	'linux-home': PathType.POSIX_HOME,
+	'macos-home': PathType.POSIX_HOME,
+	'osx-home': PathType.POSIX_HOME,
+	'home': PathType.POSIX_HOME,
+	'portable': PathType.POSIX_PORTABLE,
+	'win': PathType.WINDOWS_NT,
+	'windows': PathType.WINDOWS_NT,
+	'nt': PathType.WINDOWS_NT,
+})
+
+class _PathValidity(IntFlag):
+	NONE = 0
+	POSIX = auto()
+	POSIX_HOME = auto()
+	POSIX_PORTABLE = auto()
+	WINDOWS_NT = auto()
+	UNC = auto()
+	#MSDOS = auto()
+	#NT_API = auto()
+	#NT_OBJECT = auto()
+	#WIN32_FILE = auto()
+	#WIN32_DEVICE = auto()
+	#REGISTRY = auto()
+
+	ALL = ~NONE
+
+	LINUX = POSIX
+	MACOS = POSIX
+	OSX = MACOS
+	UNIX = POSIX
+	OS2 = WINDOWS_NT
+
+
 _LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
-_LOCAL_DEVICE_SEPARATOR: Final = ":"
 _LOCAL_ROOT_INDICATOR: Final = _LOCAL_SEPARATOR
 _LOCAL_PLAIN_ROOT_INDICATOR: Final = os.sep  # Windows does not accept a single '/' as device root
 _LOCAL_CURRENT_INDICATOR: Final = os.curdir
 _LOCAL_PARENT_INDICATOR: Final = os.pardir
+
+
+_COMMON_CURRENT_INDICATOR: Final = "."
+_COMMON_PARENT_INDICATOR: Final = ".."
+
+_POSIX_SEPARATOR: Final = "/"
+
+# https://web.archive.org/web/20230319003310/https://learn.microsoft.com/en-gb/windows/win32/fileio/naming-a-file
+# https://web.archive.org/web/20230411102940/https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats
+# https://web.archive.org/web/20230422040824/https://googleprojectzero.blogspot.com/2016/02/the-definitive-guide-on-win32-to-nt.html
+_MSDOS_SEPARATOR: Final = "\\"
+# https://web.archive.org/web/20230504144810/https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-even/c1550f98-a1ce-426a-9991-7509e7c3787c
+_NT_OBJECT_PREFIX: Final = "\\??\\"
+_NT_API_SEPARATOR: Final = _MSDOS_SEPARATOR
+_WIN32_FILE_PREFIX: Final = "\\\\?\\"
+_WIN32_DEVICE_PREFIX: Final = "\\\\.\\"
+_WIN32_API_SEPARATOR = _MSDOS_SEPARATOR
+_UNC_PREFIXES: Final = ("\\\\", "//")
+
+POSIX_PORTABLE_CHARS: Final = set([
+	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+	"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "_", "-"
+])
+WINDOWS_NT_FORBIDDEN_CHARS: Final = set([
+	"\x00", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09", "\x0a", "\x0b", "\x0c", "\x0d", "\x0e", "\x0f",
+	"\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17", "\x18", "\x19", "\x1a", "\x1b", "\x1c", "\x1d", "\x1e", "\x1f",
+	"0x7f", '"', "*", "/", ":", "<", ">", "?", "\\", "|"
+])
+WINDOWS_NT_FORBIDDEN_FILENAMES: Final = set([
+	"COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+	"LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+	"CON", "PRN", "AUX", "NUL"
+])
+#MSDOS_FORBIDDEN_CHARS: Final = WINDOWS_NT_FORBIDDEN_CHARS | set(["+", ",", ".", ";", "=", "[", "]"])
+#MSDOS_FORBIDDEN_COMPONENTS: Final = set([
+#	"$IDLE$", "AUX", "COM1", "COM2", "COM3", "COM4", "CON", "CONFIG$", "CLOCK$", "KEYBD$", "LPT1", "LPT2", "LPT3", "LPT4", "LST", "NUL", "PRN", "SCREEN$"
+#])
+
+
+def _split_relative(
+	path: str,
+	delimiters: Union[str, Collection[str]]=_LOCAL_SEPARATOR,
+	collapse: bool=True
+) -> list[str]:
+	if path == "":
+		return [path]
+
+	if delimiters == "" or len(delimiters) == 0:
+		return [path]
+
+	if isinstance(delimiters, Iterable):
+		delimiter_iter = iter(delimiters)
+		delimiter = next(delimiter_iter)
+		for d in delimiter_iter:
+			path = path.replace(d, delimiter)
+
+	if collapse:
+		# Assumes len(delimiter) == 1
+		new_path = delimiter
+		for c in path:
+			if c == delimiter and new_path[-1] == delimiter:
+				pass
+			else:
+				new_path += c
+		path = new_path[1:]
+
+	return path.split(delimiter)
+
+
+def _normalise_relative(
+	parts: Sequence[str],
+	current_dirs: Collection[str]=_COMMON_CURRENT_INDICATOR,
+	parent_dirs: Collection[str]=_COMMON_PARENT_INDICATOR,
+):
+	output = []
+	for part in parts:
+		if part == "":
+			pass
+		elif part == current_dirs:
+			pass
+		elif part == parent_dirs:
+			if len(output) > 0 and output[-1] != parent_dirs:
+				output.pop()
+			else:
+				output.append(part)
+		else:
+			output.append(part)
+	return output
+
+
+def _check_windows_nt_component(components: Sequence[str]) -> Generator[bool, None, None]:
+	for component in components:
+		i = len(component) - 1
+		while component[i] in [" ", "."]:
+			i -= 1
+		component = component[:(i + 1)]
+		tokens = component.split(".")
+		for fn in WINDOWS_NT_FORBIDDEN_FILENAMES:
+			if tokens[0] == fn:
+				yield True
+		yield False
+
+
+class _PathValidator:
+	def __init__(self,
+		roots: Iterable[str]=[],
+		separators: Iterable[str]=[],
+		namespace_separators: Iterable[str]=[],
+		current_indicators: Iterable[str]=[_COMMON_CURRENT_INDICATOR],
+		parent_indicators: Iterable[str]=[_COMMON_PARENT_INDICATOR],
+		allow_root: bool=True,
+		force_root: bool=False,
+		allow_namespace: bool=True,
+		force_namespace: bool=False,
+		permitted_chars: Optional[Iterable[str]]=None,
+		forbidden_chars: Iterable[str]=[],
+		forbidden_components: Iterable[str]=[],
+		forbidden_component_checkers: Iterable[Callable[[bool, Sequence[str]], Sequence[bool]]]=[lambda r, p: [False for c in p]],
+		permitted_namespaces: Optional[Iterable[str]]=None,
+		forbidden_namespaces: Iterable[str]=[],
+		forbidden_namespace_patterns: Iterable[Union[str, re.Pattern]]=[],
+		placeholders: Iterable[str]=[],
+		placeholder_patterns: Iterable[Union[str, re.Pattern]]=[],
+		root_placeholders: Iterable[str]=[],
+		root_placeholder_patterns: Iterable[Union[str, re.Pattern]]=[],
+	):
+		self.separators: list[str] = list(separators)
+		self.roots: list[str] = list(roots)
+		self.namespace_separators: list[str] = list(namespace_separators)
+		self.current_indicators: list[str] = list(current_indicators)
+		self.parent_indicators: list[str] = list(parent_indicators)
+		self.allow_root: bool = allow_root
+		self.force_root: bool = force_root
+		self.allow_namespace: bool = allow_namespace
+		self.force_namespace: bool = force_namespace
+		self.permitted_chars: Optional[set[str]] = set(permitted_chars) if permitted_chars is not None else None
+		self.forbidden_chars: set[str] = set(forbidden_chars)
+		self.forbidden_components: set[str] = set(forbidden_components)
+		self.forbidden_component_checkers: list[Callable[[bool, Sequence[str]], Sequence[bool]]] = list(forbidden_component_checkers)
+		self.permitted_namespaces: Optional[set[str]] = set(permitted_namespaces) if permitted_namespaces is not None else None
+		self.forbidden_namespaces: set[str] = set(forbidden_namespaces)
+		self.forbidden_namespace_patterns: list[re.Pattern] = [re.compile(p) for p in forbidden_namespace_patterns]
+		self.placeholders: set[str] = set(placeholders)
+		self.placeholder_pattern: list[re.Pattern] = [re.compile(p) for p in placeholder_patterns]
+		self.root_placeholders: set[str] = set(root_placeholders)
+		self.root_placeholder_pattern: list[re.Pattern] = [re.compile(p) for p in root_placeholder_patterns]
+
+
+class _Validators:
+	GENERIC: Final = _PathValidator()
+
+	POSIX: Final = _PathValidator(
+		roots=["/"],
+		separators=["/"],
+		allow_namespace=False,
+		forbidden_chars=["/", "\0"],
+	)
+
+	POSIX_HOME: Final = _PathValidator(
+		roots=["~"],
+		separators=["/"],
+		namespace_separators=["/"],
+		forbidden_chars=["/", "\0"],
+	)
+
+	POSIX_PORTABLE: Final = _PathValidator(
+		roots=["/"],
+		separators=["/"],
+		allow_namespace=False,
+		permitted_chars=POSIX_PORTABLE_CHARS,
+	)
+
+	#MSDOS: Final = _PathTypeData(
+	#	roots=["\\"],
+	#	forbidden_chars=MSDOS_FORBIDDEN_CHARS,
+	#	forbidden_component_checkers=[
+	#		lambda r, p: [False if i != 1 else (r == True and len(s) >= 2 and s[0].upper() == "DEV" and s[1] in MSDOS_FORBIDDEN_COMPONENTS) for i, c in enumerate(p)]
+	#	],
+	#	forbidden_namespace_patterns=[r'^..']
+	#)
+
+	WINDOWS_NT: Final = _PathValidator(
+		roots=["\\", "/"],
+		separators=["\\", "/"],
+		namespace_separators=[":"],
+		forbidden_chars=WINDOWS_NT_FORBIDDEN_CHARS,
+		forbidden_component_checkers=[lambda r, p: [v for v in _check_windows_nt_component(p)]],
+		forbidden_namespace_patterns=[r'^..'],
+	)
+
+	UNC: Final = _PathValidator(
+		roots=["\\\\", "//"],
+		separators=["\\", "/"],
+		namespace_separators=["\\", "/"],
+		force_namespace=True,
+		forbidden_chars=WINDOWS_NT_FORBIDDEN_CHARS,
+		forbidden_component_checkers=[lambda r, p: [v for v in _check_windows_nt_component(p)]],
+		forbidden_namespace_patterns=[r'^..'],
+	)
+
+	@staticmethod
+	def from_type(type: PathType) -> _PathValidator:
+		return _validator_of_type[type]
+
+_validator_of_type: Final = {
+	PathType.GENERIC: _Validators.GENERIC,
+	PathType.POSIX: _Validators.POSIX,
+	PathType.POSIX_HOME: _Validators.POSIX_HOME,
+	PathType.POSIX_PORTABLE: _Validators.POSIX_PORTABLE,
+	PathType.WINDOWS_NT: _Validators.WINDOWS_NT,
+	PathType.UNC: _Validators.UNC,
+}
 
 
 @functools.total_ordering
@@ -45,29 +321,36 @@ class GPath(Hashable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
 
-		The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform.
+		The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform. Since GPath objects are immutable, all operations return a new instance.
 
-		The path is always stored in a normalised state, and all operations return a new instance.
+		The path is always stored in a normalised state, and is always treated as case sensitive.
 
-		For display, the path can be rendered as a string using <code>str(<var>g</var>)</code>. To maximise cross-platform compatibility, the path is always treated as case sensitive, and will be rendered with `/` as the path separator if possible. If the GPath object represents a viable real path on the local system, it will always be rendered in a format that is meaningful to the local system.
+		The path can be rendered as a string using <code>str(<var>g</var>)</code>, which will use `/` as the path separator if possible to maximise cross-platform compatibility.
+
+		If the GPath will be used on a specific operating system,
+
+		If the GPath is to be used on the local system, use <code><var>g</var>.to_local()</code> instead, which will render object represents a viable real path on the local system, it will always be rendered in a format that is meaningful to the local system.
 	"""
 
 	__slots__ = (
 		'_parts',
-		'_device',
-		'_absolute',
+		'_namespace',
+		'_root',
 		'_parent_level',
+		'_propagate_encoding',
+		'_target_type',
+		'_root_validity',
+		'_part_validities',
 	)
 
 	_separator: ClassVar[str] = _LOCAL_SEPARATOR
-	_device_separator: ClassVar[str] = _LOCAL_DEVICE_SEPARATOR
 	_root_indicator: ClassVar[str] = _LOCAL_ROOT_INDICATOR
 	_plain_root_indicator: ClassVar[str] = _LOCAL_PLAIN_ROOT_INDICATOR
 	_current_indicator: ClassVar[str] = _LOCAL_CURRENT_INDICATOR
 	_parent_indicator: ClassVar[str] = _LOCAL_PARENT_INDICATOR
 
 
-	def __init__(self, path: Union[str, os.PathLike, GPath, None]=""):
+	def __init__(self, path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: str='utf-8'):
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -75,6 +358,8 @@ class GPath(Hashable):
 			----------
 			`path`
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
+			`encoding`
+			: if `path` is a `bytes`-like object, name of a standard Python text encoding (as listed in the `codecs` module in the standard library) that should be use to decode it; otherwise, this parameter is ignored
 
 			Raises
 			------
@@ -90,42 +375,105 @@ class GPath(Hashable):
 		"""
 
 		self._parts: tuple[str, ...] = tuple()  # root- or parent- relative path
-		self._device: str = ""
-		self._absolute: bool = False
+		self._namespace: str = ""
+		self._root: bool = False
 		self._parent_level: int = 0
 
-		if path is not None and path != "":
-			if isinstance(path, GPath):
-				path._validate()
-				self._parts = path._parts
-				self._device = path._device
-				self._absolute = path._absolute
-				self._parent_level = path._parent_level
+		self._propagate_encoding: Union[str, None] = None
+		self._target_type: PathType = PathType.GENERIC
+		self._root_validity: _PathValidity = _PathValidity.NONE
+		self._part_validities: tuple[_PathValidity, ...] = tuple()
 
-			else:
-				(device, path) = os.path.splitdrive(path)
+		if path is None or path == "":
+			return
 
-				if len(device) == 2 and device[1] == ":":
-					device = device[0]
-				self._device = device
+		if isinstance(path, GPath):
+			path._validate()
+			self._parts = path._parts
+			self._namespace = path._namespace
+			self._root = path._root
+			self._parent_level = path._parent_level
+			self._propagate_encoding = path._propagate_encoding
+			self._root_validity = path._root_validity
+			self._part_validities = path._part_validities
+			return
 
-				# Remove redundant '.'s and '..'s and use OS-default path separators
-				path = os.path.normpath(path)  # sets empty path to '.' and removes trailing slash
-				if path == os.curdir:
-					path = ""
-				self._absolute = os.path.isabs(path)
+		path = os.fspath(path)
 
-				parts = path.split(os.sep)  # os.path.normpath previously rewrote the path to use os.sep
-				if len(parts) > 0 and parts[0] == "":  # First element is '' if root
-					parts = parts[1:]
-				if len(parts) > 0 and parts[-1] == "":  # Last element is '' if there is a trailing slash, which should only happen when the path is exactly root ('/')
-					parts = parts[:-1]
+		if isinstance(path, bytes):
+			self._propagate_encoding = encoding
+			path = path.decode(encoding)
 
-				dotdot = 0
-				while dotdot < len(parts) and parts[dotdot] == GPath._parent_indicator:
-					dotdot += 1
-				self._parts = tuple(parts[dotdot:])
-				self._parent_level = dotdot
+		# path is a str
+
+		#if path.startswith(_WIN32_FILE_PREFIX):
+		#	self._validities = _PathValidity.WIN32_FILE
+		#	self._parts = tuple(_split_path(path[len(_WIN32_FILE_PREFIX):], delimiter=_WIN32_API_SEPARATOR, collapse=False))
+		#	self._root = _WIN32_FILE_PREFIX
+		#	return
+
+		#if path.startswith(_WIN32_DEVICE_PREFIX):
+		#	self._validities = _PathValidity.WIN32_DEVICE
+		#	parts = _split_path(path[len(_WIN32_DEVICE_PREFIX):], delimiter=_WIN32_API_SEPARATOR)
+		#	self._parts = tuple(_normalise_relative(parts))
+		#	self._root = _WIN32_DEVICE_PREFIX
+		#	return
+
+		#if path.startswith(_NT_OBJECT_PREFIX):
+		#	self._validities = _PathValidity.NT_OBJECT | _PathValidity.NT_API
+		#	parts = _split_path(path[len(_NT_OBJECT_PREFIX):], delimiter=_NT_API_SEPARATOR)
+		#	self._parts = tuple(_normalise_relative(parts))
+		#	self._root = _NT_OBJECT_PREFIX
+		#	return
+
+		# path is POSIX, POSIX_PORTABLE, MSDOS, WINDOWS_NT, UNC or NT_API
+		#root_validity = _PathValidity.POSIX | _PathValidity.POSIX_HOME | _PathValidity.POSIX_PORTABLE | _PathValidity.MSDOS | _PathValidity.WINDOWS_NT | _PathValidity.UNC | _PathValidity.NT_API
+		root_validity = _PathValidity.POSIX | _PathValidity.POSIX_HOME | _PathValidity.POSIX_PORTABLE | _PathValidity.WINDOWS_NT | _PathValidity.UNC
+
+		if path.startswith(_Validators.UNC.roots[0]):
+			root_validity = _PathValidity.UNC
+			self._root = True
+			parts = _split_relative(path[len(_Validators.UNC.roots[0]):], delimiters=_Validators.UNC.separators)
+			if len(parts) < 2:
+				root_validity &= ~_PathValidity.UNC
+			self._namespace = _Validators.UNC.separators[0].join(parts[:2])
+			self._parts = tuple(parts[2:])
+			return
+
+		if len(path) >= 2 and path[1] in _Validators.WINDOWS_NT.namespace_separators:
+			#validities &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC & ~_PathValidity.NT_API
+			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC
+			self._namespace = path[0]
+			deviceless_path = path[2:]
+		else:
+			deviceless_path = path
+
+		if deviceless_path.startswith(_MSDOS_SEPARATOR):
+			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
+			self._root = True
+
+		if deviceless_path.startswith(_POSIX_SEPARATOR):
+			#validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
+			self._root = True
+
+		if self._root:
+			rootless_path = deviceless_path[1:]
+		else:
+			rootless_path = deviceless_path
+
+		if _MSDOS_SEPARATOR in rootless_path:
+			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
+		#if _POSIX_SEPARATOR in rootless_path:
+		#	validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
+
+		parts = _split_relative(rootless_path, delimiters=[_POSIX_SEPARATOR, _MSDOS_SEPARATOR])
+		parts = _normalise_relative(parts)
+		parent_level = 0
+		while parent_level < len(parts) and parts[parent_level] == _COMMON_PARENT_INDICATOR:
+			parent_level += 1
+		self._parts = tuple(parts[parent_level:])
+		if self._root == False:
+			self._parent_level = parent_level
 
 
 	@property
@@ -201,7 +549,7 @@ class GPath(Hashable):
 			GPath("../../Documents").device  # ""
 			```
 		"""
-		return self._device
+		return self._namespace
 
 	@property
 	def absolute(self) -> bool:
@@ -217,7 +565,7 @@ class GPath(Hashable):
 			GPath("../../Documents").absolute  # False
 			```
 		"""
-		return self._absolute
+		return self._root
 
 	@property
 	def root(self) -> bool:
@@ -234,7 +582,7 @@ class GPath(Hashable):
 			GPath("../../Documents").root  # False
 			```
 		"""
-		return self._absolute and len(self._parts) == 0
+		return self._root and len(self._parts) == 0
 
 
 	@staticmethod
@@ -284,21 +632,21 @@ class GPath(Hashable):
 		else:
 			path2 = GPath(path2)
 
-		if path1._device != path2._device:
+		if path1._namespace != path2._namespace:
 			return None
-		if path1._absolute != path2._absolute:
+		if path1._root != path2._root:
 			return None
 
 		if allow_parents:
 			allow_current = True
 
 		parts = []
-		if path1._absolute:
+		if path1._root:
 			common_path = GPath()
 			for part1, part2 in zip(path1._parts, path2._parts):
 				if part1 == part2:
 					parts.append(part1)
-			common_path._absolute = True
+			common_path._root = True
 			# dotdot must be 0
 		else:
 			if path1._parent_level != path2._parent_level:
@@ -314,7 +662,7 @@ class GPath(Hashable):
 					if part1 == part2:
 						parts.append(part1)
 
-		common_path._device = path1._device
+		common_path._namespace = path1._namespace
 		common_path._parts = tuple(parts)
 
 		if not allow_current and not bool(common_path):
@@ -530,7 +878,7 @@ class GPath(Hashable):
 		if not isinstance(origin, GPath):
 			origin = GPath(origin)
 
-		if origin._absolute:
+		if origin._root:
 			common = GPath.find_common(self, origin)
 			if common is None:
 				return None
@@ -570,7 +918,7 @@ class GPath(Hashable):
 
 			Usage: <code>hash(<var>g</var>)</code>
 		"""
-		return hash((tuple(self._parts), self._device, self._absolute, self._parent_level, GPath._separator, GPath._current_indicator, GPath._parent_indicator))
+		return hash((tuple(self._parts), self._namespace, self._root, self._parent_level, GPath._separator, GPath._current_indicator, GPath._parent_indicator))
 
 
 	def __eq__(self, other: Any) -> bool:
@@ -634,7 +982,7 @@ class GPath(Hashable):
 			bool(GPath(""))     # False
 			```
 		"""
-		return self._absolute or self._device != "" or self._parent_level != 0 or len(self._parts) > 0
+		return self._root or self._namespace != "" or self._parent_level != 0 or len(self._parts) > 0
 
 
 	def __str__(self) -> str:
@@ -644,10 +992,10 @@ class GPath(Hashable):
 			Usage: <code>str(<var>g</var>)</code>
 		"""
 		if bool(self):
-			if self.root and self._device == "":
+			if self.root and self._namespace == "":
 				return GPath._plain_root_indicator
 			else:
-				return (self._device + GPath._device_separator if self._device != "" else "") + (GPath._root_indicator if self._absolute else "") + GPath._separator.join(self.relative_parts)
+				return (self._namespace + _Validators.WINDOWS_NT.namespace_separators[0] if self._namespace != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
 		else:
 			return GPath._current_indicator
 
@@ -766,16 +1114,16 @@ class GPath(Hashable):
 			other = GPath(other)
 
 		new_path = GPath(self)
-		if other._absolute:
+		if other._root:
 			new_path._parts = other._parts
-			new_path._absolute = other._absolute
+			new_path._root = other._root
 			new_path._parent_level = other._parent_level
 		else:
 			new_parts = [part for part in self._parts]
 			for i in range(other._parent_level):
 				if len(new_parts) > 0:
 					new_parts.pop()
-				elif not new_path._absolute:
+				elif not new_path._root:
 					new_path._parent_level += 1
 				else:
 					pass  # parent of directory of root is still root
@@ -783,8 +1131,8 @@ class GPath(Hashable):
 			new_parts.extend(other._parts)
 			new_path._parts = tuple(new_parts)
 
-		if other._device != "":
-			new_path._device = other._device
+		if other._namespace != "":
+			new_path._namespace = other._namespace
 
 		return new_path
 
@@ -814,7 +1162,7 @@ class GPath(Hashable):
 		for i in range(n):
 			if len(new_parts) > 0:
 				new_parts.pop()
-			elif not new_path._absolute:
+			elif not new_path._root:
 				new_path._parent_level += 1
 			else:
 				pass  # removing components from root should still give root
@@ -880,7 +1228,7 @@ class GPath(Hashable):
 		if n < 0:
 			return self.__rshift__(-1 * n)
 		new_path = GPath(self)
-		if not new_path._absolute:
+		if not new_path._root:
 			new_path._parent_level = max(new_path._parent_level - n, 0)
 		return new_path
 
@@ -907,7 +1255,7 @@ class GPath(Hashable):
 		if n < 0:
 			return self.__lshift__(-1 * n)
 		new_path = GPath(self)
-		if not new_path._absolute:
+		if not new_path._root:
 			new_path._parent_level += n
 		return new_path
 
@@ -916,8 +1264,8 @@ class GPath(Hashable):
 	def _tuple(self) -> tuple:
 		# Get a tuple of all fields
 		return (
-			self._absolute,
-			self._device,
+			self._root,
+			self._namespace,
 			self._parent_level,
 			self._parts,
 		)
@@ -927,8 +1275,8 @@ class GPath(Hashable):
 	def _order(self) -> tuple:
 		# Get a tuple that represents the ordering of the class
 		return (
-			self._absolute,  # relative before absolute
-			self._device,  # no device before devices
+			self._root,  # relative before absolute
+			self._namespace,  # no device before devices
 			self._parent_level,  # no parent before low parent before high parent
 			self._parts  # empty before few components before many components
 		)
@@ -938,12 +1286,12 @@ class GPath(Hashable):
 		# Check if self is in a valid state
 		if self._parent_level < 0:
 			raise ValueError(f"invalid GPath, _parent cannot be negative: {repr(self)}")
-		if self._absolute:
+		if self._root:
 			if self._parent_level != 0:
 				raise ValueError(f"invalid GPath, _parent must be 0 when root is True: {repr(self)}")
 		return True
 
 
 
-GPathLike = Union[GPath, str, os.PathLike]
+GPathLike = Union[GPath, str, bytes, os.PathLike]
 """Union type of GPath-like objects that can be used as the argument for most GPath methods."""
