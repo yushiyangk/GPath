@@ -29,9 +29,6 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
-__version__ = '0.3'
-
-
 __all__ = ['GPath', 'GPathLike']
 
 

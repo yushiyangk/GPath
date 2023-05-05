@@ -75,6 +75,10 @@ Later, to deactivate the venv, run `deactivate`.
 
 Run `pip install -r requirements.dev.txt`.
 
+### Install
+
+To install the package locally (in the venv) for development, run `pip install -e `.
+
 ### Tasks
 
 For unit tests, run `pytest`.
@@ -97,7 +101,7 @@ The documentation is generated in `docs/html/`, using template files in `docs/te
 
 #### Packaging
 
-Before packaging, check the package config by running `pyroma .` or `tox r -m config`.
+Before packaging, check the package metadata by running `pyroma .` or `tox r -m metadata`.
 
 To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`. Run `twine check dist/*` to check that the packages were generated properly. Alternatively, run `tox r -m package` to do these steps automatically.
 

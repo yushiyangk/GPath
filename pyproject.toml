@@ -35,7 +35,7 @@ dependencies = []
 dev = ["pytest ~= 7.3.1", "coverage ~= 7.2.3", "pdoc ~= 13.1.1", "pyroma ~= 4.2", "build ~= 0.10.0", "tox ~= 4.5.1", "tox-extras >= 0.0.1"]
 test = ["pytest ~= 7.3.1", "coverage ~= 7.2.3"]
 docs = ["pdoc ~= 13.1.1"]
-config = ["pyroma ~= 4.2"]
+metadata = ["pyroma ~= 4.2"]
 package = ["build ~= 0.10.0"]
 packagetest = ["twine ~= 4.0.2"]
 ci = ["tox ~= 4.5.1", "tox-extras >= 0.0.1"]
@@ -50,12 +50,13 @@ Issues = "https://github.com/yushiyangk/GPath/issues"
 [tool.pytest.ini_options]
 addopts = "tests"
 
-[tool.coverage.report]
-include = ["gpath.py"]
+[tool.coverage.run]
+source_pkgs = ["gpath"]
 
-[tool.setuptools]
-packages = []
-py-modules = ["gpath"]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+namespaces = false
 
 [tool.setuptools.dynamic]
 version = {attr = "gpath.__version__"}

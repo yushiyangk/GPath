@@ -13,7 +13,7 @@ __pycache__/
 
 # setuptools and build
 /dist/
-/*.egg-info/
+*.egg-info/
 
 # tox
 /.tox/
