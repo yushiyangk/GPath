@@ -35,6 +35,9 @@ __version__ = '0.3'
 __all__ = ['GPath', 'GPathLike']
 
 
+DEFAULT_ENCODING: Final = 'utf-8'
+
+
 @enum.unique
 class PathType(IntEnum):
 	GENERIC = 0
@@ -337,7 +340,7 @@ class GPath(Hashable):
 		'_namespace',
 		'_root',
 		'_parent_level',
-		'_propagate_encoding',
+		'_encoding',
 		'_target_type',
 		'_root_validity',
 		'_part_validities',
@@ -350,7 +353,7 @@ class GPath(Hashable):
 	_parent_indicator: ClassVar[str] = _LOCAL_PARENT_INDICATOR
 
 
-	def __init__(self, path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: str='utf-8'):
+	def __init__(self, path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None):
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -358,8 +361,9 @@ class GPath(Hashable):
 			----------
 			`path`
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
+
 			`encoding`
-			: if `path` is a `bytes`-like object, name of a standard Python text encoding (as listed in the `codecs` module in the standard library) that should be use to decode it; otherwise, this parameter is ignored
+			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf-8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
 
 			Raises
 			------
@@ -379,7 +383,7 @@ class GPath(Hashable):
 		self._root: bool = False
 		self._parent_level: int = 0
 
-		self._propagate_encoding: Union[str, None] = None
+		self._encoding: Optional[str] = encoding
 		self._target_type: PathType = PathType.GENERIC
 		self._root_validity: _PathValidity = _PathValidity.NONE
 		self._part_validities: tuple[_PathValidity, ...] = tuple()
@@ -393,7 +397,7 @@ class GPath(Hashable):
 			self._namespace = path._namespace
 			self._root = path._root
 			self._parent_level = path._parent_level
-			self._propagate_encoding = path._propagate_encoding
+			self._encoding = path._encoding if encoding is None else encoding
 			self._root_validity = path._root_validity
 			self._part_validities = path._part_validities
 			return
@@ -401,8 +405,10 @@ class GPath(Hashable):
 		path = os.fspath(path)
 
 		if isinstance(path, bytes):
-			self._propagate_encoding = encoding
-			path = path.decode(encoding)
+			if self._encoding is None:
+				path = path.decode(DEFAULT_ENCODING)
+			else:
+				path = path.decode(self._encoding)
 
 		# path is a str
 
@@ -586,7 +592,7 @@ class GPath(Hashable):
 
 
 	@staticmethod
-	def partition(*paths: Union[Iterable[GPathLike], GPathLike], allow_current: bool=True, allow_parents: bool=False) -> dict[GPath, list[GPath]]:
+	def partition(*paths: Union[Iterable[GPathLike], GPathLike], allow_current: bool=True, allow_parents: bool=False, encoding: str='utf-8') -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
@@ -596,7 +602,7 @@ class GPath(Hashable):
 
 			Parameters
 			----------
-			`paths: Iterable[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
+			`paths: Iterable[GPath | str | bytes | os.PathLike]` or `*paths: GPath | str | bytes | os.PathLike`
 			: the paths to be partitioned, which can be given as either a list-like object or as variadic arguments
 
 			`allow_current`
@@ -604,6 +610,9 @@ class GPath(Hashable):
 
 			`allow_parents`
 			: whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `common_with()`). **Warning**: when set to True, the output lists for each partition are invalidated, and explicitly set to empty. This is because it is not possible in general to obtain a relative path from the base path to its members if the base path is a parent directory of a higher level than the member (see `relpath_from()`). This  option should be True if and only if the list of members in each partition are not of interest; in most cases False is more appropriate.
+
+			`encoding`
+			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
 
 			Returns
 			-------
@@ -632,7 +641,7 @@ class GPath(Hashable):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
-		gpaths = [path if isinstance(path, GPath) else GPath(path) for path in flattened_paths]
+		gpaths = [path if isinstance(path, GPath) else GPath(path, encoding=encoding) for path in flattened_paths]
 
 		partition_map = {}
 		if len(gpaths) > 0:
@@ -666,14 +675,17 @@ class GPath(Hashable):
 
 
 	@staticmethod
-	def join(*paths: Union[Sequence[GPathLike], GPathLike]) -> GPath:
+	def join(*paths: Union[Sequence[GPathLike], GPathLike], encoding: str='utf-8') -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
 			Parameters
 			----------
-			`paths`: `Sequence[GPath | str | os.PathLike]` or `*paths: GPath | str | os.PathLike`
+			`paths`: `Sequence[GPath | str | bytes | os.PathLike]` or `*paths: GPath | str | bytes | os.PathLike`
 			: the paths to be combined, which can be given as either a list-like object or as variadic arguments
+
+			`encoding`
+			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
 
 			Returns
 			-------
@@ -699,11 +711,11 @@ class GPath(Hashable):
 				flattened_paths.extend(path_or_list)
 
 		if len(flattened_paths) == 0:
-			return GPath()
+			return GPath(encoding=encoding)
 
 		combined_path = flattened_paths[0]
 		if not isinstance(combined_path, GPath):
-			combined_path = GPath(combined_path)
+			combined_path = GPath(combined_path, encoding=encoding)
 		for path in flattened_paths[1:]:
 			combined_path = combined_path + path
 
@@ -753,7 +765,7 @@ class GPath(Hashable):
 		if isinstance(other, GPath):
 			other._validate()
 		else:
-			other = GPath(other)
+			other = GPath(other, encoding=self._encoding)
 
 		if self._namespace != other._namespace:
 			return None
@@ -765,27 +777,23 @@ class GPath(Hashable):
 
 		parts = []
 		if self._root:
-			common_path = GPath()
+			common_path = GPath(self)
 			for part1, part2 in zip(self._parts, other._parts):
 				if part1 == part2:
 					parts.append(part1)
-			common_path._root = True
-			# dotdot must be 0
 		else:
 			if self._parent_level != other._parent_level:
 				if not allow_parents:
 					return None
 
-				common_path = GPath()
+				common_path = GPath(self)
 				common_path._parent_level = max(self._parent_level, other._parent_level)
 			else:
-				common_path = GPath()
-				common_path._parent_level = self._parent_level
+				common_path = GPath(self)
 				for part1, part2 in zip(self._parts, other._parts):
 					if part1 == part2:
 						parts.append(part1)
 
-		common_path._namespace = self._namespace
 		common_path._parts = tuple(parts)
 
 		if not allow_current and not bool(common_path):
@@ -828,13 +836,16 @@ class GPath(Hashable):
 			```
 		"""
 		if not isinstance(base, GPath):
-			base = GPath(base)
+			base = GPath(base, encoding=self._encoding)
 
 		if self.common_with(base, allow_current=True, allow_parents=False) is not None and self in base:
-			# If self._dotdot > base._dotdot, self is not in base, whereas if self._dotdot < base._dotdot, path from base to self's parent cannot be known
+			# If self._parent_level > base._parent_level, self is not in base, whereas if self._parent_level < base._parent_level, path from base to self's parent cannot be known
 			base_length = len(base._parts)
-			new_path = GPath()
+			new_path = GPath(self)
 			new_path._parts = self._parts[base_length:]  # () when self == base
+			new_path._namespace = ""
+			new_path._root = False
+			new_path._parent_level = 0
 			return new_path
 		else:
 			return None
@@ -875,16 +886,18 @@ class GPath(Hashable):
 		"""
 		self._validate()
 		if not isinstance(origin, GPath):
-			origin = GPath(origin)
+			origin = GPath(origin, encoding=self._encoding)
 
 		if origin._root:
 			common = self.common_with(origin)
 			if common is None:
 				return None
 
-			new_path = GPath()
+			new_path = GPath(self)
 			new_path._parent_level = len(origin) - len(common)
 			new_path._parts = self._parts[len(common):]
+			new_path._namespace = ""
+			new_path._root = False
 			return new_path
 
 		else:
@@ -897,7 +910,9 @@ class GPath(Hashable):
 			# common._dotdot == self._dotdot
 			# origin._dotdot <= self._dotdot
 
-			new_path = GPath()
+			new_path = GPath(self)
+			new_path._namespace = ""
+			new_path._root = False
 			if len(common) == 0:
 				if origin._parent_level == self._parent_level:
 					new_path._parent_level = len(origin)
@@ -917,7 +932,7 @@ class GPath(Hashable):
 
 			Usage: <code>hash(<var>g</var>)</code>
 		"""
-		return hash((tuple(self._parts), self._namespace, self._root, self._parent_level, GPath._separator, GPath._current_indicator, GPath._parent_indicator))
+		return hash((tuple(self._parts), self._namespace, self._root, self._parent_level))
 
 
 	def __eq__(self, other: GPathLike) -> bool:
@@ -937,7 +952,7 @@ class GPath(Hashable):
 			```
 		"""
 		if not isinstance(other, GPath):
-			other = GPath(other)
+			other = GPath(other, encoding=self._encoding)
 		return self._tuple == other._tuple
 
 
@@ -960,7 +975,7 @@ class GPath(Hashable):
 			```
 		"""
 		if not isinstance(other, GPath):
-			other = GPath(other)
+			other = GPath(other, encoding=self._encoding)
 		return self._order < other._order
 
 
@@ -1003,10 +1018,15 @@ class GPath(Hashable):
 
 			Usage: <code>repr(<var>g</var>)</code>
 		"""
-		if bool(self):
-			return f"GPath({repr(str(self))})"
+		if self._encoding is None:
+			encoding_repr = ""
 		else:
-			return f"GPath({repr('')})"
+			encoding_repr = f", encoding={repr(self._encoding)}"
+
+		if bool(self):
+			return f"GPath({repr(str(self))}{encoding_repr})"
+		else:
+			return f"GPath({repr('')}{encoding_repr})"
 
 
 	def __len__(self) -> int:
@@ -1075,7 +1095,7 @@ class GPath(Hashable):
 			```
 		"""
 		if not isinstance(other, GPath):
-			other = GPath(other)
+			other = GPath(other, encoding=self._encoding)
 
 		common_path = self.common_with(other, allow_current=True, allow_parents=True)
 		return common_path is not None and common_path == self
@@ -1108,7 +1128,7 @@ class GPath(Hashable):
 		if isinstance(other, GPath):
 			other._validate
 		else:
-			other = GPath(other)
+			other = GPath(other, encoding=self._encoding)
 
 		new_path = GPath(self)
 		if other._root:
