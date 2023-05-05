@@ -49,37 +49,31 @@ class PathType(IntEnum):
 
 	@staticmethod
 	def from_str(name: str) -> PathType:
-		return _path_type_of_str[name]
+		return path_types[name]
 
-_path_type_of_canonical_str: Final = {
+canonical_path_types: dict[str, PathType] = {
 	'generic': PathType.GENERIC,
 	'posix': PathType.POSIX,
-	'posix-home': PathType.POSIX_HOME,
 	'posix-portable': PathType.POSIX_PORTABLE,
 	'windows-nt': PathType.WINDOWS_NT,
 	'unc': PathType.UNC,
 }
-path_types: Final = list(_path_type_of_canonical_str.keys())
-_path_type_of_str: Final = _path_type_of_canonical_str.update({
+path_types: dict[str, PathType] = {
+	**canonical_path_types,
 	'': PathType.GENERIC,
 	'posix': PathType.POSIX,
 	'linux': PathType.POSIX,
 	'macos': PathType.POSIX,
 	'osx': PathType.POSIX,
-	'linux-home': PathType.POSIX_HOME,
-	'macos-home': PathType.POSIX_HOME,
-	'osx-home': PathType.POSIX_HOME,
-	'home': PathType.POSIX_HOME,
 	'portable': PathType.POSIX_PORTABLE,
 	'win': PathType.WINDOWS_NT,
 	'windows': PathType.WINDOWS_NT,
 	'nt': PathType.WINDOWS_NT,
-})
+}
 
 class _PathValidity(IntFlag):
 	NONE = 0
 	POSIX = auto()
-	POSIX_HOME = auto()
 	POSIX_PORTABLE = auto()
 	WINDOWS_NT = auto()
 	UNC = auto()
@@ -106,6 +100,7 @@ _LOCAL_CURRENT_INDICATOR: Final = os.curdir
 _LOCAL_PARENT_INDICATOR: Final = os.pardir
 
 
+_COMMON_DRIVE_POSTFIX: Final = ":"
 _COMMON_CURRENT_INDICATOR: Final = "."
 _COMMON_PARENT_INDICATOR: Final = ".."
 
@@ -213,44 +208,56 @@ class _PathValidator:
 		roots: Iterable[str]=[],
 		separators: Iterable[str]=[],
 		namespace_separators: Iterable[str]=[],
+		drive_postfixes: Iterable[str]=[_COMMON_DRIVE_POSTFIX],
 		current_indicators: Iterable[str]=[_COMMON_CURRENT_INDICATOR],
 		parent_indicators: Iterable[str]=[_COMMON_PARENT_INDICATOR],
-		allow_root: bool=True,
+		allow_root: bool=False,
 		force_root: bool=False,
-		allow_namespace: bool=True,
+		allow_namespace: bool=False,
 		force_namespace: bool=False,
+		allow_drive: bool=False,
+		force_drive: bool=False,
+		allow_anchor: bool=False,
+		force_anchor: bool=False,
 		permitted_chars: Optional[Iterable[str]]=None,
 		forbidden_chars: Iterable[str]=[],
 		forbidden_components: Iterable[str]=[],
-		forbidden_component_checkers: Iterable[Callable[[bool, Sequence[str]], Sequence[bool]]]=[lambda r, p: [False for c in p]],
-		permitted_namespaces: Optional[Iterable[str]]=None,
-		forbidden_namespaces: Iterable[str]=[],
-		forbidden_namespace_patterns: Iterable[Union[str, re.Pattern]]=[],
-		placeholders: Iterable[str]=[],
-		placeholder_patterns: Iterable[Union[str, re.Pattern]]=[],
-		root_placeholders: Iterable[str]=[],
-		root_placeholder_patterns: Iterable[Union[str, re.Pattern]]=[],
+		forbidden_component_patterns: Iterable[Union[str, re.Pattern]]=[],
+		forbidden_checkers: Iterable[Callable[[GPath], Sequence[bool]]]=[],
+		permitted_namespace_chars: Optional[Iterable[str]]=None,
+		forbidden_namespace_chars: Iterable[str]=[],
+		forbidden_namespace_components: Iterable[str]=[],
+		forbidden_namespace_component_patterns: Iterable[Union[str, re.Pattern]]=[],
+		forbidden_namespace_checkers: Iterable[Callable[[GPath], Sequence[bool]]]=[],
+		anchors: Iterable[str]=[],
+		anchor_patterns: Iterable[Union[str, re.Pattern]]=[],
 	):
-		self.separators: list[str] = list(separators)
 		self.roots: list[str] = list(roots)
+		self.separators: list[str] = list(separators)
 		self.namespace_separators: list[str] = list(namespace_separators)
+		self.drive_postfixes: list[str] = list(drive_postfixes)
 		self.current_indicators: list[str] = list(current_indicators)
 		self.parent_indicators: list[str] = list(parent_indicators)
 		self.allow_root: bool = allow_root
 		self.force_root: bool = force_root
 		self.allow_namespace: bool = allow_namespace
 		self.force_namespace: bool = force_namespace
+		self.allow_drive: bool = allow_drive
+		self.force_drive: bool = force_drive
+		self.allow_anchor: bool = allow_anchor
+		self.force_anchor: bool = force_anchor
 		self.permitted_chars: Optional[set[str]] = set(permitted_chars) if permitted_chars is not None else None
 		self.forbidden_chars: set[str] = set(forbidden_chars)
 		self.forbidden_components: set[str] = set(forbidden_components)
-		self.forbidden_component_checkers: list[Callable[[bool, Sequence[str]], Sequence[bool]]] = list(forbidden_component_checkers)
-		self.permitted_namespaces: Optional[set[str]] = set(permitted_namespaces) if permitted_namespaces is not None else None
-		self.forbidden_namespaces: set[str] = set(forbidden_namespaces)
-		self.forbidden_namespace_patterns: list[re.Pattern] = [re.compile(p) for p in forbidden_namespace_patterns]
-		self.placeholders: set[str] = set(placeholders)
-		self.placeholder_pattern: list[re.Pattern] = [re.compile(p) for p in placeholder_patterns]
-		self.root_placeholders: set[str] = set(root_placeholders)
-		self.root_placeholder_pattern: list[re.Pattern] = [re.compile(p) for p in root_placeholder_patterns]
+		self.forbidden_component_patterns: list[re.Pattern] = [re.compile(p) for p in forbidden_component_patterns]
+		self.forbidden_checkers: list[Callable[[GPath], Sequence[bool]]] = list(forbidden_checkers)
+		self.permitted_namespace_chars: Optional[set[str]] = set(permitted_namespace_chars) if permitted_namespace_chars is not None else None
+		self.forbidden_namespace_chars: set[str] = set(forbidden_namespace_chars)
+		self.forbidden_namespace_components: set[str] = set(forbidden_namespace_components)
+		self.forbidden_namespace_component_patterns: list[re.Pattern] = [re.compile(p) for p in forbidden_namespace_component_patterns]
+		self.forbidden_namespace_checkers: list[Callable[[GPath], Sequence[bool]]] = list(forbidden_namespace_checkers)
+		self.anchors: set[str] = set(anchors)
+		self.anchor_patterns: list[re.Pattern] = [re.compile(p) for p in anchor_patterns]
 
 
 class _Validators:
@@ -259,21 +266,16 @@ class _Validators:
 	POSIX: Final = _PathValidator(
 		roots=["/"],
 		separators=["/"],
-		allow_namespace=False,
+		allow_root=True,
+		allow_anchor=True,
 		forbidden_chars=["/", "\0"],
-	)
-
-	POSIX_HOME: Final = _PathValidator(
-		roots=["~"],
-		separators=["/"],
-		namespace_separators=["/"],
-		forbidden_chars=["/", "\0"],
+		anchor_patterns=[r'^~[^/]*'],
 	)
 
 	POSIX_PORTABLE: Final = _PathValidator(
 		roots=["/"],
 		separators=["/"],
-		allow_namespace=False,
+		allow_root=True,
 		permitted_chars=POSIX_PORTABLE_CHARS,
 	)
 
@@ -289,20 +291,23 @@ class _Validators:
 	WINDOWS_NT: Final = _PathValidator(
 		roots=["\\", "/"],
 		separators=["\\", "/"],
-		namespace_separators=[":"],
+		drive_postfixes=[":"],
+		allow_root=True,
+		allow_drive=True,
 		forbidden_chars=WINDOWS_NT_FORBIDDEN_CHARS,
-		forbidden_component_checkers=[lambda r, p: [v for v in _check_windows_nt_component(p)]],
-		forbidden_namespace_patterns=[r'^..'],
+		forbidden_checkers=[lambda g: [v for v in _check_windows_nt_component(g._parts)]],
 	)
 
 	UNC: Final = _PathValidator(
 		roots=["\\\\", "//"],
 		separators=["\\", "/"],
 		namespace_separators=["\\", "/"],
+		allow_root=True,
+		force_root=True,
+		allow_namespace=True,
 		force_namespace=True,
 		forbidden_chars=WINDOWS_NT_FORBIDDEN_CHARS,
-		forbidden_component_checkers=[lambda r, p: [v for v in _check_windows_nt_component(p)]],
-		forbidden_namespace_patterns=[r'^..'],
+		forbidden_checkers=[lambda g: [v for v in _check_windows_nt_component(g._parts)]],
 	)
 
 	@staticmethod
@@ -312,7 +317,6 @@ class _Validators:
 _validator_of_type: Final = {
 	PathType.GENERIC: _Validators.GENERIC,
 	PathType.POSIX: _Validators.POSIX,
-	PathType.POSIX_HOME: _Validators.POSIX_HOME,
 	PathType.POSIX_PORTABLE: _Validators.POSIX_PORTABLE,
 	PathType.WINDOWS_NT: _Validators.WINDOWS_NT,
 	PathType.UNC: _Validators.UNC,
@@ -339,11 +343,14 @@ class GPath(Hashable):
 		'_parts',
 		'_namespace',
 		'_root',
+		'_drive',
+		'_anchor',
 		'_parent_level',
 		'_encoding',
 		'_target_type',
 		'_root_validity',
 		'_part_validities',
+		'_namespace_validities',
 	)
 
 	_separator: ClassVar[str] = _LOCAL_SEPARATOR
@@ -379,14 +386,17 @@ class GPath(Hashable):
 		"""
 
 		self._parts: tuple[str, ...] = tuple()  # root- or parent- relative path
-		self._namespace: str = ""
+		self._namespace: tuple[str, ...] = tuple()
 		self._root: bool = False
+		self._drive: str = ""
+		self._anchor: str = ""
 		self._parent_level: int = 0
 
 		self._encoding: Optional[str] = encoding
 		self._target_type: PathType = PathType.GENERIC
 		self._root_validity: _PathValidity = _PathValidity.NONE
 		self._part_validities: tuple[_PathValidity, ...] = tuple()
+		self._namespace_validities: tuple[_PathValidity, ...] = tuple()
 
 		if path is None or path == "":
 			return
@@ -396,10 +406,14 @@ class GPath(Hashable):
 			self._parts = path._parts
 			self._namespace = path._namespace
 			self._root = path._root
+			self._drive = path._drive
+			self._anchor = path._anchor
 			self._parent_level = path._parent_level
+
 			self._encoding = path._encoding if encoding is None else encoding
 			self._root_validity = path._root_validity
 			self._part_validities = path._part_validities
+			self._namespace_validities = path._namespace_validities
 			return
 
 		path = os.fspath(path)
@@ -433,8 +447,8 @@ class GPath(Hashable):
 		#	return
 
 		# path is POSIX, POSIX_PORTABLE, MSDOS, WINDOWS_NT, UNC or NT_API
-		#root_validity = _PathValidity.POSIX | _PathValidity.POSIX_HOME | _PathValidity.POSIX_PORTABLE | _PathValidity.MSDOS | _PathValidity.WINDOWS_NT | _PathValidity.UNC | _PathValidity.NT_API
-		root_validity = _PathValidity.POSIX | _PathValidity.POSIX_HOME | _PathValidity.POSIX_PORTABLE | _PathValidity.WINDOWS_NT | _PathValidity.UNC
+		#root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.MSDOS | _PathValidity.WINDOWS_NT | _PathValidity.UNC | _PathValidity.NT_API
+		root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.WINDOWS_NT | _PathValidity.UNC
 
 		if path.startswith(_Validators.UNC.roots[0]):
 			root_validity = _PathValidity.UNC
@@ -442,14 +456,14 @@ class GPath(Hashable):
 			parts = _split_relative(path[len(_Validators.UNC.roots[0]):], delimiters=_Validators.UNC.separators)
 			if len(parts) < 2:
 				root_validity &= ~_PathValidity.UNC
-			self._namespace = _Validators.UNC.separators[0].join(parts[:2])
+			self._drive = _Validators.UNC.separators[0].join(parts[:2])
 			self._parts = tuple(parts[2:])
 			return
 
-		if len(path) >= 2 and path[1] in _Validators.WINDOWS_NT.namespace_separators:
+		if len(path) >= 2 and path[1] in _Validators.WINDOWS_NT.drive_postfixes:
 			#validities &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC & ~_PathValidity.NT_API
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC
-			self._namespace = path[0]
+			self._drive = path[0]
 			deviceless_path = path[2:]
 		else:
 			deviceless_path = path
@@ -543,7 +557,7 @@ class GPath(Hashable):
 		return self.parent_parts + list(self._parts)
 
 	@property
-	def device(self) -> str:
+	def drive(self) -> str:
 		"""
 			Read-only device name
 
@@ -555,7 +569,7 @@ class GPath(Hashable):
 			GPath("../../Documents").device  # ""
 			```
 		"""
-		return self._namespace
+		return self._drive
 
 	@property
 	def absolute(self) -> bool:
@@ -767,7 +781,7 @@ class GPath(Hashable):
 		else:
 			other = GPath(other, encoding=self._encoding)
 
-		if self._namespace != other._namespace:
+		if self._drive != other._drive:
 			return None
 		if self._root != other._root:
 			return None
@@ -843,7 +857,7 @@ class GPath(Hashable):
 			base_length = len(base._parts)
 			new_path = GPath(self)
 			new_path._parts = self._parts[base_length:]  # () when self == base
-			new_path._namespace = ""
+			new_path._drive = ""
 			new_path._root = False
 			new_path._parent_level = 0
 			return new_path
@@ -896,7 +910,7 @@ class GPath(Hashable):
 			new_path = GPath(self)
 			new_path._parent_level = len(origin) - len(common)
 			new_path._parts = self._parts[len(common):]
-			new_path._namespace = ""
+			new_path._drive = ""
 			new_path._root = False
 			return new_path
 
@@ -911,7 +925,7 @@ class GPath(Hashable):
 			# origin._dotdot <= self._dotdot
 
 			new_path = GPath(self)
-			new_path._namespace = ""
+			new_path._drive = ""
 			new_path._root = False
 			if len(common) == 0:
 				if origin._parent_level == self._parent_level:
@@ -932,7 +946,7 @@ class GPath(Hashable):
 
 			Usage: <code>hash(<var>g</var>)</code>
 		"""
-		return hash((tuple(self._parts), self._namespace, self._root, self._parent_level))
+		return hash(self._tuple)
 
 
 	def __eq__(self, other: GPathLike) -> bool:
@@ -994,7 +1008,7 @@ class GPath(Hashable):
 			bool(GPath(""))     # False
 			```
 		"""
-		return self._root or self._namespace != "" or self._parent_level != 0 or len(self._parts) > 0
+		return self._root or self._drive != "" or self._parent_level != 0 or len(self._parts) > 0
 
 
 	def __str__(self) -> str:
@@ -1004,10 +1018,10 @@ class GPath(Hashable):
 			Usage: <code>str(<var>g</var>)</code>
 		"""
 		if bool(self):
-			if self.root and self._namespace == "":
+			if self.root and self._drive == "":
 				return GPath._plain_root_indicator
 			else:
-				return (self._namespace + _Validators.WINDOWS_NT.namespace_separators[0] if self._namespace != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
+				return (self._drive + _Validators.WINDOWS_NT.drive_postfixes[0] if self._drive != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
 		else:
 			return GPath._current_indicator
 
@@ -1148,8 +1162,8 @@ class GPath(Hashable):
 			new_parts.extend(other._parts)
 			new_path._parts = tuple(new_parts)
 
-		if other._namespace != "":
-			new_path._namespace = other._namespace
+		if other._drive != "":
+			new_path._drive = other._drive
 
 		return new_path
 
@@ -1293,8 +1307,10 @@ class GPath(Hashable):
 		# Get a tuple of all fields
 		return (
 			self._root,
-			self._namespace,
+			self._drive,
 			self._parent_level,
+			self._anchor,
+			self._namespace,
 			self._parts,
 		)
 
@@ -1303,8 +1319,10 @@ class GPath(Hashable):
 	def _order(self) -> tuple:
 		# Get a tuple that represents the ordering of the class
 		return (
+			self._namespace,
 			self._root,  # relative before absolute
-			self._namespace,  # no device before devices
+			self._drive,  # no device before devices
+			self._anchor,
 			self._parent_level,  # no parent before low parent before high parent
 			self._parts  # empty before few components before many components
 		)

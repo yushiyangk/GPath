@@ -32,7 +32,7 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
-		('path', 'expected_parts', 'expected_namespace', 'expected_root', 'expected_parent_level'),
+		('path', 'expected_parts', 'expected_drive', 'expected_root', 'expected_parent_level'),
 		[
 			(None, tuple(), "", False, 0),
 			("", tuple(), "", False, 0),
@@ -62,12 +62,12 @@ class TestGPath:
 	def test_constructor_root(self,
 		path: Optional[str],
 		expected_parts: tuple[str, ...],
-		expected_namespace: str,
+		expected_drive: str,
 		expected_root: bool,
 		expected_parent_level: int,
 	):
 		"""
-			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`, for paths requiring special treatment.
+			Test constructor `__init__()` as well as property getters for `absolute`, `drive`, `named_parts` and `parent_level`, for paths requiring special treatment.
 		"""
 		if path is None:
 			gpath = GPath()
@@ -78,23 +78,23 @@ class TestGPath:
 			expected_parent_level = 0
 
 		assert gpath._parts == expected_parts
-		assert gpath._namespace == expected_namespace
+		assert gpath._drive == expected_drive
 		assert gpath._root == expected_root
 		assert gpath._parent_level == expected_parent_level
 
 		assert gpath.absolute == expected_root
-		assert gpath.device == expected_namespace
+		assert gpath.drive == expected_drive
 		assert gpath.named_parts == list(expected_parts)
 		assert gpath.parent_level == expected_parent_level
 
 		gpath_copy = GPath(gpath)
 		assert gpath_copy._parts == expected_parts
-		assert gpath_copy._namespace == expected_namespace
+		assert gpath_copy._drive == expected_drive
 		assert gpath_copy._root == expected_root
 		assert gpath_copy._parent_level == expected_parent_level
 
 		assert gpath_copy.absolute == expected_root
-		assert gpath_copy.device == expected_namespace
+		assert gpath_copy.drive == expected_drive
 		assert gpath_copy.named_parts == list(expected_parts)
 		assert gpath_copy.parent_level == expected_parent_level
 
@@ -130,7 +130,7 @@ class TestGPath:
 	)
 	@pytest.mark.parametrize('path_suffix', ["", "/", "//", "/.", "/./", "/././/"])
 	@pytest.mark.parametrize(
-		('path_prefix', 'expected_namespace', 'expected_root'),
+		('path_prefix', 'expected_drive', 'expected_root'),
 		[
 			("", "", False),
 			("/", "", True),
@@ -147,7 +147,7 @@ class TestGPath:
 		path_prefix: str,
 		path_suffix: str,
 		expected_parts: tuple[str, ...],
-		expected_namespace: str,
+		expected_drive: str,
 		expected_root: bool,
 		expected_parent_level: int,
 	):
@@ -159,24 +159,24 @@ class TestGPath:
 			expected_parent_level = 0
 
 		assert gpath._parts == expected_parts
-		assert gpath._namespace == expected_namespace
+		assert gpath._drive == expected_drive
 		assert gpath._root == expected_root
 		assert gpath._parent_level == expected_parent_level
 
 		assert gpath.absolute == expected_root
-		assert gpath.device == expected_namespace
+		assert gpath.drive == expected_drive
 		assert gpath.named_parts == list(expected_parts)
 		assert gpath.parent_level == expected_parent_level
 
 		gpath_copy = GPath(gpath)
 
 		assert gpath_copy._parts == expected_parts
-		assert gpath_copy._namespace == expected_namespace
+		assert gpath_copy._drive == expected_drive
 		assert gpath_copy._root == expected_root
 		assert gpath_copy._parent_level == expected_parent_level
 
 		assert gpath_copy.absolute == expected_root
-		assert gpath_copy.device == expected_namespace
+		assert gpath_copy.drive == expected_drive
 		assert gpath_copy.named_parts == list(expected_parts)
 		assert gpath_copy.parent_level == expected_parent_level
 
