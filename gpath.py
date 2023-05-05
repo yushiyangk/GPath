@@ -1091,7 +1091,7 @@ class GPath(Hashable):
 
 			If `other` has a device name, the returned path will have the same device name as `other`. Otherwise, the returned path will have the same device name as `self`. If neither has a device name, the returned path will not have a device name as well.
 
-			Alias: `__div__()`
+			Alias: `__truediv__()`
 
 			Usage: <code><var>self</var> + <var>other</var></code> or <code><var>self</var> / <var>other</var></code>
 
@@ -1197,7 +1197,7 @@ class GPath(Hashable):
 		return new_path
 
 
-	def __div__(self, other: GPathLike) -> GPath:
+	def __truediv__(self, other: GPathLike) -> GPath:
 		"""
 			Alias of `__add__()`.
 

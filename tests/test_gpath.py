@@ -847,6 +847,8 @@ class TestGPath:
 		"""
 		result = gpath1 + gpath2
 		assert result == expected_gpath
+		result = gpath1 / gpath2
+		assert result == expected_gpath
 
 
 	@pytest.mark.parametrize(
