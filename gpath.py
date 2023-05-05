@@ -586,98 +586,13 @@ class GPath(Hashable):
 
 
 	@staticmethod
-	def find_common(path1: GPathLike, path2: GPathLike, allow_current: bool=True, allow_parents: bool=False) -> Optional[GPath]:
-		"""
-			Find the longest common base path shared by the two paths, or return None if no such path exists.
-
-			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the `allow_current` and `allow_parents` options.
-
-			Parameters
-			----------
-			`path1`, `path2`
-			: the paths to compare
-
-			`allow_current`
-			: whether two non-parent relative paths that do not share any components should be considered to have a common base path, namely the imaginary current working directory. For instance, `GPath.find_common("some/rel/path", "another/rel/path")` will return `GPath("")` if set to True, or return None if set to False.
-
-			`allow_parents`
-			: whether two relative paths that are relative to different levels of parent directories should be considered to have a common base path, which is the highest level of parent directory between the two paths. For instance, `GPath.find_common("../rel/to/parent", "../../rel/to/grandparent")` will return `GPath("../..")` if set to True, or return None if set to False. **Warning**: when set to True, given a higher level of parent directory as output, it may not be possible to find the relative path to one of the inputs (see `relpath_from()`); in most cases False is more appropriate.
-
-			Returns
-			-------
-			`GPath`
-			: the longest common base path, which may be empty, if it exists
-
-			`None`
-			: otherwise
-
-			Raises
-			------
-			`ValueError` if either GPath is invalid
-
-			Examples
-			--------
-			```python
-			GPath.find_common("/usr/bin", "/usr/local/bin")               # GPath("/usr")
-			GPath.find_common("C:/Windows/System32", "C:/Program Files")  # GPath("C:/")
-			GPath.find_common("../Documents", "../Pictures")              # GPath("..")
-			```
-		"""
-		if isinstance(path1, GPath):
-			path1._validate()
-		else:
-			path1 = GPath(path1)
-		if isinstance(path2, GPath):
-			path2._validate()
-		else:
-			path2 = GPath(path2)
-
-		if path1._namespace != path2._namespace:
-			return None
-		if path1._root != path2._root:
-			return None
-
-		if allow_parents:
-			allow_current = True
-
-		parts = []
-		if path1._root:
-			common_path = GPath()
-			for part1, part2 in zip(path1._parts, path2._parts):
-				if part1 == part2:
-					parts.append(part1)
-			common_path._root = True
-			# dotdot must be 0
-		else:
-			if path1._parent_level != path2._parent_level:
-				if not allow_parents:
-					return None
-
-				common_path = GPath()
-				common_path._parent_level = max(path1._parent_level, path2._parent_level)
-			else:
-				common_path = GPath()
-				common_path._parent_level = path1._parent_level
-				for part1, part2 in zip(path1._parts, path2._parts):
-					if part1 == part2:
-						parts.append(part1)
-
-		common_path._namespace = path1._namespace
-		common_path._parts = tuple(parts)
-
-		if not allow_current and not bool(common_path):
-			if common_path != path1 or common_path != path2:
-				return None
-		return common_path
-
-	@staticmethod
 	def partition(*paths: Union[Iterable[GPathLike], GPathLike], allow_current: bool=True, allow_parents: bool=False) -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
 			For each partition, return a list of relative paths from the base path of that partition to each corresponding input path within that partition, unless `allow_parents` is True (see below). If the input collection is ordered, the output order is preserved within each partition. If the input collection contains duplicates, the corresponding output lists will as well.
 
-			The number of partitions is minimised by merging partitions as much as possible, so that each partition represents the highest possible level base path. Two partitions can no longer be merged when there is no common base path between them, as determined by `GPath.find_common()`. This method takes the same optional arguments as `GPath.find_common()`, with the same default values.
+			The number of partitions is minimised by merging partitions as much as possible, so that each partition represents the highest possible level base path. Two partitions can no longer be merged when there is no common base path between them, as determined by `common_with()`. This method takes the same optional arguments as `common_with()`, with the same default values.
 
 			Parameters
 			----------
@@ -685,10 +600,10 @@ class GPath(Hashable):
 			: the paths to be partitioned, which can be given as either a list-like object or as variadic arguments
 
 			`allow_current`
-			: whether non-parent relative paths with no shared components should be considered to have a common base path (see `GPath.find_common()`)
+			: whether non-parent relative paths with no shared components should be considered to have a common base path (see `common_with()`)
 
 			`allow_parents`
-			: whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `GPath.find_common()`). **Warning**: when set to True, the output lists for each partition are invalidated, and explicitly set to empty. This is because it is not possible in general to obtain a relative path from the base path to its members if the base path is a parent directory of a higher level than the member (see `relpath_from()`). This  option should be True if and only if the list of members in each partition are not of interest; in most cases False is more appropriate.
+			: whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `common_with()`). **Warning**: when set to True, the output lists for each partition are invalidated, and explicitly set to empty. This is because it is not possible in general to obtain a relative path from the base path to its members if the base path is a parent directory of a higher level than the member (see `relpath_from()`). This  option should be True if and only if the list of members in each partition are not of interest; in most cases False is more appropriate.
 
 			Returns
 			-------
@@ -729,7 +644,7 @@ class GPath(Hashable):
 		for path in gpaths[1:]:
 			partition_found = False
 			for partition in partition_map:
-				candidate_common = GPath.find_common(partition, path, allow_current=allow_current, allow_parents=allow_parents)
+				candidate_common = partition.common_with(path, allow_current=allow_current, allow_parents=allow_parents)
 				if candidate_common is not None:
 					partition_found = True
 					if candidate_common != partition:
@@ -795,6 +710,90 @@ class GPath(Hashable):
 		return combined_path
 
 
+	def common_with(self, other: GPathLike, allow_current: bool=True, allow_parents: bool=False) -> Optional[GPath]:
+		"""
+			Find the longest common base path shared between `self` and `other`, or return None if no such path exists.
+
+			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the `allow_current` and `allow_parents` options.
+
+			If using the default options of `allow_current=True` and `allow_parent=False`, the binary operator for bitwise-and can be used: `__and__()` (usage: <code><var>g1</var> & <var>g2</var></code>).
+
+			Parameters
+			----------
+			`other`
+			: the path to compare with
+
+			`allow_current`
+			: whether two non-parent relative paths that do not share any components should be considered to have a common base path, namely the imaginary current working directory. For instance, `GPath("some/rel/path").find_common("another/rel/path")` will return `GPath("")` if set to True, or return None if set to False.
+
+			`allow_parents`
+			: whether two relative paths that are relative to different levels of parent directories should be considered to have a common base path, which is the highest level of parent directory between the two paths. For instance, `GPath("../rel/to/parent").find_common("../../rel/to/grandparent")` will return `GPath("../..")` if set to True, or return None if set to False. **Warning**: when set to True, given a higher level of parent directory as output, it may not be possible to find the relative path to one of the inputs (see `relpath_from()`); in most cases False is more appropriate.
+
+			Returns
+			-------
+			`GPath`
+			: the longest common base path, which may be empty, if it exists
+
+			`None`
+			: otherwise
+
+			Raises
+			------
+			`ValueError` if either `self` or `other` is an invalid GPath
+
+			Examples
+			--------
+			```python
+			GPath("/usr/bin").find_common("/usr/local/bin")               # GPath("/usr")
+			GPath("C:/Windows/System32").find_common("C:/Program Files")  # GPath("C:/")
+			GPath("../Documents").find_common("../Pictures")              # GPath("..")
+			```
+		"""
+		self._validate()
+		if isinstance(other, GPath):
+			other._validate()
+		else:
+			other = GPath(other)
+
+		if self._namespace != other._namespace:
+			return None
+		if self._root != other._root:
+			return None
+
+		if allow_parents:
+			allow_current = True
+
+		parts = []
+		if self._root:
+			common_path = GPath()
+			for part1, part2 in zip(self._parts, other._parts):
+				if part1 == part2:
+					parts.append(part1)
+			common_path._root = True
+			# dotdot must be 0
+		else:
+			if self._parent_level != other._parent_level:
+				if not allow_parents:
+					return None
+
+				common_path = GPath()
+				common_path._parent_level = max(self._parent_level, other._parent_level)
+			else:
+				common_path = GPath()
+				common_path._parent_level = self._parent_level
+				for part1, part2 in zip(self._parts, other._parts):
+					if part1 == part2:
+						parts.append(part1)
+
+		common_path._namespace = self._namespace
+		common_path._parts = tuple(parts)
+
+		if not allow_current and not bool(common_path):
+			if common_path != self or common_path != other:
+				return None
+		return common_path
+
+
 	def subpath_from(self, base: GPathLike) -> Optional[GPath]:
 		"""
 			Find the relative subpath from `base` to `self` if possible and if `base` contains `self`, or return None otherwise.
@@ -831,7 +830,7 @@ class GPath(Hashable):
 		if not isinstance(base, GPath):
 			base = GPath(base)
 
-		if GPath.find_common(self, base, allow_current=True, allow_parents=False) is not None and self in base:
+		if self.common_with(base, allow_current=True, allow_parents=False) is not None and self in base:
 			# If self._dotdot > base._dotdot, self is not in base, whereas if self._dotdot < base._dotdot, path from base to self's parent cannot be known
 			base_length = len(base._parts)
 			new_path = GPath()
@@ -879,7 +878,7 @@ class GPath(Hashable):
 			origin = GPath(origin)
 
 		if origin._root:
-			common = GPath.find_common(self, origin)
+			common = self.common_with(origin)
 			if common is None:
 				return None
 
@@ -889,7 +888,7 @@ class GPath(Hashable):
 			return new_path
 
 		else:
-			common = GPath.find_common(self, origin, allow_current=True, allow_parents=True)
+			common = self.common_with(origin, allow_current=True, allow_parents=True)
 			if common is None:
 				return None
 			if common._parent_level > self._parent_level:
@@ -1080,7 +1079,7 @@ class GPath(Hashable):
 		if not isinstance(other, GPath):
 			other = GPath(other)
 
-		common_path = GPath.find_common(self, other, allow_current=True, allow_parents=True)
+		common_path = self.common_with(other, allow_current=True, allow_parents=True)
 		return common_path is not None and common_path == self
 
 
@@ -1201,8 +1200,19 @@ class GPath(Hashable):
 	def __div__(self, other: GPathLike) -> GPath:
 		"""
 			Alias of `__add__()`.
+
+			Usage: <code><var>self</var> + <var>other</var></code> or <code><var>self</var> / <var>other</var></code>
 		"""
 		return self.__add__(other)
+
+
+	def __and__(self, other: GPathLike) -> Union[GPath, None]:
+		"""
+			Equivalent to `self.common_with(other)`, using the default options of `common_with()`.
+
+			Usage: <code><var>g1</var> & <var>g2</var></code>
+		"""
+		return self.common_with(other)
 
 
 	def __lshift__(self, n: int) -> GPath:

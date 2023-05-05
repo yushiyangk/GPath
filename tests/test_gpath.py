@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import os
 
 import pytest
@@ -1094,7 +1095,7 @@ class TestGPath:
 			("C:/a", "C:/b", "C:/", "C:/", "C:/", "C:/"),
 		]
 	)
-	def test_find_common(self,
+	def test_common_with(self,
 		path1: str,
 		path2: str,
 		allow_current_expected: str,
@@ -1103,7 +1104,7 @@ class TestGPath:
 		no_common_expected: str
 	):
 		"""
-			Test `find_common()`.
+			Test `common_with()` and `__and__()`.
 		"""
 		assert allow_parents_expected == allow_current_parent_expected
 
@@ -1112,70 +1113,40 @@ class TestGPath:
 		else:
 			allow_current_expected_gpath = None
 
-		result = GPath.find_common(path1, path2)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(path2, path1)
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2))
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1))
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-
 		if allow_parents_expected is not None:
 			allow_parents_expected_gpath = GPath(allow_parents_expected)
 		else:
 			allow_parents_expected_gpath = None
-
-		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
 
 		if allow_current_parent_expected is not None:
 			allow_current_parent_expected_gpath = GPath(allow_current_parent_expected)
 		else:
 			allow_current_parent_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-
 		if no_common_expected is not None:
 			no_common_expected_gpath = GPath(no_common_expected)
 		else:
 			no_common_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
+		for lhs, rhs in itertools.chain(itertools.product([path1], [path2, GPath(path2)]), itertools.product([path2], [path1, GPath(path1)])):
+			gpath = GPath(lhs)
 
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
+			result = gpath.common_with(rhs)
+			assert result == allow_current_expected_gpath
+			result = gpath & rhs
+			assert result == allow_current_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=True, allow_parents=False)
+			assert result == allow_current_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=False, allow_parents=True)
+			assert result == allow_parents_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=True, allow_parents=True)
+			assert result == allow_current_parent_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=False, allow_parents=False)
+			assert result == no_common_expected_gpath
 
 
 
