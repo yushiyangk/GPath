@@ -4,23 +4,22 @@
 
 from __future__ import annotations
 
-import enum
-import functools
 import os
-import re
 import sys
-from collections.abc import Hashable, Iterable, Iterator, Sequence
-from enum import auto, IntEnum, IntFlag
-#from typing import Any, ClassVar, Final
+from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence
+from typing import Any, ClassVar, Generator, overload
+
+from . import _validators
+from ._types import PathType
+from ._validators import _PathValidator, _PathValidity
 
 
-# Type hinting prior to 3.10
-# Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
-from typing import overload, Any, Callable, ClassVar, Collection, Generator, Optional, Union
-if sys.version_info >= (3, 8):
-	from typing import Final
-else:
-	Final = Any
+from ._compat import Final, Optional, Union
+
+
+__all__ = ['GPath', 'GPathLike']
+
+
 if sys.version_info >= (3, 10):
 	def _is_gpathlike(obj: Any) -> bool:
 		return isinstance(obj, GPathLike)
@@ -29,65 +28,7 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
-__all__ = ['GPath', 'GPathLike']
-
-
 DEFAULT_ENCODING: Final = 'utf-8'
-
-
-@enum.unique
-class PathType(IntEnum):
-	GENERIC = 0
-	POSIX = auto()
-	POSIX_HOME = auto()
-	POSIX_PORTABLE = auto()
-	WINDOWS_NT = auto()
-	UNC = auto()
-
-	@staticmethod
-	def from_str(name: str) -> PathType:
-		return path_types[name]
-
-canonical_path_types: dict[str, PathType] = {
-	'generic': PathType.GENERIC,
-	'posix': PathType.POSIX,
-	'posix-portable': PathType.POSIX_PORTABLE,
-	'windows-nt': PathType.WINDOWS_NT,
-	'unc': PathType.UNC,
-}
-path_types: dict[str, PathType] = {
-	**canonical_path_types,
-	'': PathType.GENERIC,
-	'posix': PathType.POSIX,
-	'linux': PathType.POSIX,
-	'macos': PathType.POSIX,
-	'osx': PathType.POSIX,
-	'portable': PathType.POSIX_PORTABLE,
-	'win': PathType.WINDOWS_NT,
-	'windows': PathType.WINDOWS_NT,
-	'nt': PathType.WINDOWS_NT,
-}
-
-class _PathValidity(IntFlag):
-	NONE = 0
-	POSIX = auto()
-	POSIX_PORTABLE = auto()
-	WINDOWS_NT = auto()
-	UNC = auto()
-	#MSDOS = auto()
-	#NT_API = auto()
-	#NT_OBJECT = auto()
-	#WIN32_FILE = auto()
-	#WIN32_DEVICE = auto()
-	#REGISTRY = auto()
-
-	ALL = ~NONE
-
-	LINUX = POSIX
-	MACOS = POSIX
-	OSX = MACOS
-	UNIX = POSIX
-	OS2 = WINDOWS_NT
 
 
 _LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
@@ -95,45 +36,6 @@ _LOCAL_ROOT_INDICATOR: Final = _LOCAL_SEPARATOR
 _LOCAL_PLAIN_ROOT_INDICATOR: Final = os.sep  # Windows does not accept a single '/' as device root
 _LOCAL_CURRENT_INDICATOR: Final = os.curdir
 _LOCAL_PARENT_INDICATOR: Final = os.pardir
-
-
-_COMMON_DRIVE_POSTFIX: Final = ":"
-_COMMON_CURRENT_INDICATOR: Final = "."
-_COMMON_PARENT_INDICATOR: Final = ".."
-
-_POSIX_SEPARATOR: Final = "/"
-
-# https://web.archive.org/web/20230319003310/https://learn.microsoft.com/en-gb/windows/win32/fileio/naming-a-file
-# https://web.archive.org/web/20230411102940/https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats
-# https://web.archive.org/web/20230422040824/https://googleprojectzero.blogspot.com/2016/02/the-definitive-guide-on-win32-to-nt.html
-_MSDOS_SEPARATOR: Final = "\\"
-# https://web.archive.org/web/20230504144810/https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-even/c1550f98-a1ce-426a-9991-7509e7c3787c
-_NT_OBJECT_PREFIX: Final = "\\??\\"
-_NT_API_SEPARATOR: Final = _MSDOS_SEPARATOR
-_WIN32_FILE_PREFIX: Final = "\\\\?\\"
-_WIN32_DEVICE_PREFIX: Final = "\\\\.\\"
-_WIN32_API_SEPARATOR = _MSDOS_SEPARATOR
-_UNC_PREFIXES: Final = ("\\\\", "//")
-
-POSIX_PORTABLE_CHARS: Final = set([
-	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-	"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "_", "-"
-])
-WINDOWS_NT_FORBIDDEN_CHARS: Final = set([
-	"\x00", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09", "\x0a", "\x0b", "\x0c", "\x0d", "\x0e", "\x0f",
-	"\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17", "\x18", "\x19", "\x1a", "\x1b", "\x1c", "\x1d", "\x1e", "\x1f",
-	"0x7f", '"', "*", "/", ":", "<", ">", "?", "\\", "|"
-])
-WINDOWS_NT_FORBIDDEN_FILENAMES: Final = set([
-	"COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-	"LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-	"CON", "PRN", "AUX", "NUL"
-])
-#MSDOS_FORBIDDEN_CHARS: Final = WINDOWS_NT_FORBIDDEN_CHARS | set(["+", ",", ".", ";", "=", "[", "]"])
-#MSDOS_FORBIDDEN_COMPONENTS: Final = set([
-#	"$IDLE$", "AUX", "COM1", "COM2", "COM3", "COM4", "CON", "CONFIG$", "CLOCK$", "KEYBD$", "LPT1", "LPT2", "LPT3", "LPT4", "LST", "NUL", "PRN", "SCREEN$"
-#])
 
 
 def _split_relative(
@@ -168,8 +70,8 @@ def _split_relative(
 
 def _normalise_relative(
 	parts: Sequence[str],
-	current_dirs: Collection[str]=_COMMON_CURRENT_INDICATOR,
-	parent_dirs: Collection[str]=_COMMON_PARENT_INDICATOR,
+	current_dirs: Collection[str]=_validators._COMMON_CURRENT_INDICATOR,
+	parent_dirs: Collection[str]=_validators._COMMON_PARENT_INDICATOR,
 ):
 	output = []
 	for part in parts:
@@ -185,139 +87,6 @@ def _normalise_relative(
 		else:
 			output.append(part)
 	return output
-
-
-def _check_windows_nt_component(components: Sequence[str]) -> Generator[bool, None, None]:
-	for component in components:
-		i = len(component) - 1
-		while component[i] in [" ", "."]:
-			i -= 1
-		component = component[:(i + 1)]
-		tokens = component.split(".")
-		for fn in WINDOWS_NT_FORBIDDEN_FILENAMES:
-			if tokens[0] == fn:
-				yield True
-		yield False
-
-
-class _PathValidator:
-	def __init__(self,
-		roots: Iterable[str]=[],
-		separators: Iterable[str]=[],
-		namespace_separators: Iterable[str]=[],
-		drive_postfixes: Iterable[str]=[_COMMON_DRIVE_POSTFIX],
-		current_indicators: Iterable[str]=[_COMMON_CURRENT_INDICATOR],
-		parent_indicators: Iterable[str]=[_COMMON_PARENT_INDICATOR],
-		allow_root: bool=False,
-		force_root: bool=False,
-		allow_namespace: bool=False,
-		force_namespace: bool=False,
-		allow_drive: bool=False,
-		force_drive: bool=False,
-		allow_anchor: bool=False,
-		force_anchor: bool=False,
-		permitted_chars: Optional[Iterable[str]]=None,
-		forbidden_chars: Iterable[str]=[],
-		forbidden_components: Iterable[str]=[],
-		forbidden_component_patterns: Iterable[Union[str, re.Pattern]]=[],
-		forbidden_checkers: Iterable[Callable[[GPath], Sequence[bool]]]=[],
-		permitted_namespace_chars: Optional[Iterable[str]]=None,
-		forbidden_namespace_chars: Iterable[str]=[],
-		forbidden_namespace_components: Iterable[str]=[],
-		forbidden_namespace_component_patterns: Iterable[Union[str, re.Pattern]]=[],
-		forbidden_namespace_checkers: Iterable[Callable[[GPath], Sequence[bool]]]=[],
-		anchors: Iterable[str]=[],
-		anchor_patterns: Iterable[Union[str, re.Pattern]]=[],
-	):
-		self.roots: list[str] = list(roots)
-		self.separators: list[str] = list(separators)
-		self.namespace_separators: list[str] = list(namespace_separators)
-		self.drive_postfixes: list[str] = list(drive_postfixes)
-		self.current_indicators: list[str] = list(current_indicators)
-		self.parent_indicators: list[str] = list(parent_indicators)
-		self.allow_root: bool = allow_root
-		self.force_root: bool = force_root
-		self.allow_namespace: bool = allow_namespace
-		self.force_namespace: bool = force_namespace
-		self.allow_drive: bool = allow_drive
-		self.force_drive: bool = force_drive
-		self.allow_anchor: bool = allow_anchor
-		self.force_anchor: bool = force_anchor
-		self.permitted_chars: Optional[set[str]] = set(permitted_chars) if permitted_chars is not None else None
-		self.forbidden_chars: set[str] = set(forbidden_chars)
-		self.forbidden_components: set[str] = set(forbidden_components)
-		self.forbidden_component_patterns: list[re.Pattern] = [re.compile(p) for p in forbidden_component_patterns]
-		self.forbidden_checkers: list[Callable[[GPath], Sequence[bool]]] = list(forbidden_checkers)
-		self.permitted_namespace_chars: Optional[set[str]] = set(permitted_namespace_chars) if permitted_namespace_chars is not None else None
-		self.forbidden_namespace_chars: set[str] = set(forbidden_namespace_chars)
-		self.forbidden_namespace_components: set[str] = set(forbidden_namespace_components)
-		self.forbidden_namespace_component_patterns: list[re.Pattern] = [re.compile(p) for p in forbidden_namespace_component_patterns]
-		self.forbidden_namespace_checkers: list[Callable[[GPath], Sequence[bool]]] = list(forbidden_namespace_checkers)
-		self.anchors: set[str] = set(anchors)
-		self.anchor_patterns: list[re.Pattern] = [re.compile(p) for p in anchor_patterns]
-
-
-class _Validators:
-	GENERIC: Final = _PathValidator()
-
-	POSIX: Final = _PathValidator(
-		roots=["/"],
-		separators=["/"],
-		allow_root=True,
-		allow_anchor=True,
-		forbidden_chars=["/", "\0"],
-		anchor_patterns=[r'^~[^/]*'],
-	)
-
-	POSIX_PORTABLE: Final = _PathValidator(
-		roots=["/"],
-		separators=["/"],
-		allow_root=True,
-		permitted_chars=POSIX_PORTABLE_CHARS,
-	)
-
-	#MSDOS: Final = _PathTypeData(
-	#	roots=["\\"],
-	#	forbidden_chars=MSDOS_FORBIDDEN_CHARS,
-	#	forbidden_component_checkers=[
-	#		lambda r, p: [False if i != 1 else (r == True and len(s) >= 2 and s[0].upper() == "DEV" and s[1] in MSDOS_FORBIDDEN_COMPONENTS) for i, c in enumerate(p)]
-	#	],
-	#	forbidden_namespace_patterns=[r'^..']
-	#)
-
-	WINDOWS_NT: Final = _PathValidator(
-		roots=["\\", "/"],
-		separators=["\\", "/"],
-		drive_postfixes=[":"],
-		allow_root=True,
-		allow_drive=True,
-		forbidden_chars=WINDOWS_NT_FORBIDDEN_CHARS,
-		forbidden_checkers=[lambda g: [v for v in _check_windows_nt_component(g._parts)]],
-	)
-
-	UNC: Final = _PathValidator(
-		roots=["\\\\", "//"],
-		separators=["\\", "/"],
-		namespace_separators=["\\", "/"],
-		allow_root=True,
-		force_root=True,
-		allow_namespace=True,
-		force_namespace=True,
-		forbidden_chars=WINDOWS_NT_FORBIDDEN_CHARS,
-		forbidden_checkers=[lambda g: [v for v in _check_windows_nt_component(g._parts)]],
-	)
-
-	@staticmethod
-	def from_type(type: PathType) -> _PathValidator:
-		return _validator_of_type[type]
-
-_validator_of_type: Final = {
-	PathType.GENERIC: _Validators.GENERIC,
-	PathType.POSIX: _Validators.POSIX,
-	PathType.POSIX_PORTABLE: _Validators.POSIX_PORTABLE,
-	PathType.WINDOWS_NT: _Validators.WINDOWS_NT,
-	PathType.UNC: _Validators.UNC,
-}
 
 
 class GPath(Hashable):
@@ -446,17 +215,17 @@ class GPath(Hashable):
 		#root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.MSDOS | _PathValidity.WINDOWS_NT | _PathValidity.UNC | _PathValidity.NT_API
 		root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.WINDOWS_NT | _PathValidity.UNC
 
-		if path.startswith(_Validators.UNC.roots[0]):
+		if path.startswith(_validators._unc_validator.roots[0]):
 			root_validity = _PathValidity.UNC
 			self._root = True
-			parts = _split_relative(path[len(_Validators.UNC.roots[0]):], delimiters=_Validators.UNC.separators)
+			parts = _split_relative(path[len(_validators._unc_validator.roots[0]):], delimiters=_validators._unc_validator.separators)
 			if len(parts) < 2:
 				root_validity &= ~_PathValidity.UNC
-			self._drive = _Validators.UNC.separators[0].join(parts[:2])
+			self._drive = _validators._unc_validator.separators[0].join(parts[:2])
 			self._parts = tuple(parts[2:])
 			return
 
-		if len(path) >= 2 and path[1] in _Validators.WINDOWS_NT.drive_postfixes:
+		if len(path) >= 2 and path[1] in _validators._windows_nt_validator.drive_postfixes:
 			#validities &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC & ~_PathValidity.NT_API
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC
 			self._drive = path[0]
@@ -464,11 +233,11 @@ class GPath(Hashable):
 		else:
 			deviceless_path = path
 
-		if deviceless_path.startswith(_MSDOS_SEPARATOR):
+		if deviceless_path.startswith(_validators._windows_nt_validator.roots[0]):
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
 			self._root = True
 
-		if deviceless_path.startswith(_POSIX_SEPARATOR):
+		if deviceless_path.startswith(_validators._posix_validator.roots[0]):
 			#validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
 			self._root = True
 
@@ -477,15 +246,15 @@ class GPath(Hashable):
 		else:
 			rootless_path = deviceless_path
 
-		if _MSDOS_SEPARATOR in rootless_path:
+		if _validators._windows_nt_validator.separators[0] in rootless_path:
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
 		#if _POSIX_SEPARATOR in rootless_path:
 		#	validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
 
-		parts = _split_relative(rootless_path, delimiters=[_POSIX_SEPARATOR, _MSDOS_SEPARATOR])
+		parts = _split_relative(rootless_path, delimiters=(set(_validators._windows_nt_validator.separators) | set(_validators._posix_validator.separators)))
 		parts = _normalise_relative(parts)
 		parent_level = 0
-		while parent_level < len(parts) and parts[parent_level] == _COMMON_PARENT_INDICATOR:
+		while parent_level < len(parts) and parts[parent_level] == _validators._COMMON_PARENT_INDICATOR:
 			parent_level += 1
 		self._parts = tuple(parts[parent_level:])
 		if self._root == False:
@@ -1006,7 +775,7 @@ class GPath(Hashable):
 			if self.root and self._drive == "":
 				return GPath._plain_root_indicator
 			else:
-				return (self._drive + _Validators.WINDOWS_NT.drive_postfixes[0] if self._drive != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
+				return (self._drive + _validators._windows_nt_validator.drive_postfixes[0] if self._drive != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
 		else:
 			return GPath._current_indicator
 
@@ -1323,6 +1092,9 @@ class GPath(Hashable):
 		return True
 
 
+GenericPath = GPath
+"""Alias of `GPath`."""
+
 
 GPathLike = Union[GPath, str, bytes, os.PathLike]
-"""Union type of GPath-like objects that can be used as the argument for most GPath methods."""
+"""Union type of GPath-like objects that can be used as the argument for most `GPath` methods."""
