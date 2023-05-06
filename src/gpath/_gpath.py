@@ -377,7 +377,7 @@ class GPath(Hashable):
 	def partition(*paths: GPathLike, **kwargs) -> dict[GPath, list[GPath]]:
 		...
 	@staticmethod
-	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: str='utf-8') -> dict[GPath, list[GPath]]:
+	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: Optional[str]=None) -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
@@ -466,7 +466,7 @@ class GPath(Hashable):
 	def join(*paths: GPathLike, **kwargs) -> GPath:
 		...
 	@staticmethod
-	def join(*paths, encoding: str='utf-8') -> GPath:
+	def join(*paths, encoding: Optional[str]=None) -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
