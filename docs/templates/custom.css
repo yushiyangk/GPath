@@ -1,5 +1,6 @@
 .pdoc .attribution {
 	font-size: small;
+	display: none;
 }
 
 .pdoc .attribution img {

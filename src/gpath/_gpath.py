@@ -10,14 +10,14 @@ from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence
 from typing import Any, ClassVar, Generator, overload
 
 from . import _validators
-from ._types import PathType
+from .pathtype import PathType
 from ._validators import _PathValidator, _PathValidity
 
 
 from ._compat import Final, Optional, Union
 
 
-__all__ = ['GPath', 'GPathLike']
+__all__ = ('GPath', 'GPathLike')
 
 
 if sys.version_info >= (3, 10):
@@ -28,7 +28,7 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
-DEFAULT_ENCODING: Final = 'utf-8'
+_DEFAULT_ENCODING: Final = 'utf-8'
 
 
 _LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
@@ -185,7 +185,7 @@ class GPath(Hashable):
 
 		if isinstance(path, bytes):
 			if self._encoding is None:
-				path = path.decode(DEFAULT_ENCODING)
+				path = path.decode(_DEFAULT_ENCODING)
 			else:
 				path = path.decode(self._encoding)
 

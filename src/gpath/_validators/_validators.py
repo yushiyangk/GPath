@@ -1,7 +1,7 @@
 from ._common import _GenericValidator, _PathValidator
 from ._posix import _PosixPortableValidator, _PosixValidator
 from ._windows import _UNCValidator, _WindowsNTValidator
-from .._types import PathType
+from ..pathtype import PathType
 
 from .._compat import Final
 
