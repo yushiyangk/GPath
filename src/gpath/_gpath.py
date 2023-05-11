@@ -23,11 +23,10 @@ if sys.version_info >= (3, 10):
 		return isinstance(obj, GPathLike)
 else:
 	def _is_gpathlike(obj: Any) -> bool:
-		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
+		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, bytes) or isinstance(obj, os.PathLike)
 
 
-DEFAULT_ENCODING: Final = 'utf-8'
-
+DEFAULT_ENCODING: Final = 'utf_8'
 
 
 def _split_relative(
@@ -85,9 +84,9 @@ class GPath(Hashable, Sized, Iterable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
 
-		The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform. Since GPath objects are immutable, all operations return a new instance.
+		The path can be manipulated on a system that is different from where it originated, notably including systems with a different operating system, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform.
 
-		The path is always stored in a normalised state, and is always treated as case sensitive.
+		Since GPath objects are immutable, all operations return a new instance. The path is always stored in a normalised state, and is always treated as case sensitive.
 
 		The path can be rendered as a string using <code>str(<var>g</var>)</code>, which will use `/` as the path separator if possible to maximise cross-platform compatibility.
 	"""
@@ -111,7 +110,7 @@ class GPath(Hashable, Sized, Iterable):
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
 			`​encoding`
-			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf-8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
+			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
 
 			Raises
 			------
@@ -216,7 +215,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def parent_parts(self) -> list[str]:
 		"""
-			Read-only path components representing a parent directory that it is relative to, if any, with a copy of `parent_indicator` for each level of parent directory
+			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory
 
 			Examples
 			--------
@@ -230,7 +229,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def relative_parts(self) -> list[str]:
 		"""
-			Read-only relative components of the path, not including the filesystem root or drive name, with a copy of `parent_indicator` for each level of parent directory
+			Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory
 
 			Examples
 			--------
@@ -294,17 +293,19 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def encoding(self) -> Union[str, None]:
 		"""
-			Read-only encoding used to decode other paths that are given as bytes-like objects
+			Read-only encoding used to decode other paths that are given as bytes-like objects, or None if the default should be used
 		"""
 		return self._encoding
 
 
-	@overload
-	def partition(paths: Iterable[GPathLike], **kwargs) -> dict[GPath, list[GPath]]:
-		...
-	@overload
-	def partition(*paths: GPathLike, **kwargs) -> dict[GPath, list[GPath]]:
-		...
+	#@overload
+	#@staticmethod
+	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#	...
+	#@overload
+	#@staticmethod
+	#def partition(*paths: GPathLike, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#	...
 	@staticmethod
 	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: Optional[str]=None) -> dict[GPath, list[GPath]]:
 		"""
@@ -388,12 +389,14 @@ class GPath(Hashable, Sized, Iterable):
 		return partition_map
 
 
-	@overload
-	def join(paths: Iterable[GPathLike], **kwargs) -> GPath:
-		...
-	@overload
-	def join(*paths: GPathLike, **kwargs) -> GPath:
-		...
+	#@overload
+	#@staticmethod
+	#def join(paths: Iterable[GPathLike], /, *, encoding) -> GPath:
+	#	...
+	#@overload
+	#@staticmethod
+	#def join(*paths: GPathLike, encoding) -> GPath:
+	#	...
 	@staticmethod
 	def join(*paths, encoding: Optional[str]=None) -> GPath:
 		"""

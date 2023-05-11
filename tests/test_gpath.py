@@ -78,22 +78,56 @@ class TestGPath:
 		assert gpath._drive == expected_drive
 		assert gpath._root == expected_root
 		assert gpath._parent_level == expected_parent_level
+		assert gpath._encoding == None
 
 		assert gpath.absolute == expected_root
 		assert gpath.drive == expected_drive
 		assert gpath.named_parts == list(expected_parts)
 		assert gpath.parent_level == expected_parent_level
+		assert gpath.encoding == None
 
 		gpath_copy = GPath(gpath)
 		assert gpath_copy._parts == expected_parts
 		assert gpath_copy._drive == expected_drive
 		assert gpath_copy._root == expected_root
 		assert gpath_copy._parent_level == expected_parent_level
+		assert gpath_copy._encoding == None
 
 		assert gpath_copy.absolute == expected_root
 		assert gpath_copy.drive == expected_drive
 		assert gpath_copy.named_parts == list(expected_parts)
 		assert gpath_copy.parent_level == expected_parent_level
+		assert gpath_copy.encoding == None
+
+		if path is not None:
+			gpath = GPath(path.encode('utf_8'))
+
+			assert gpath._parts == expected_parts
+			assert gpath._drive == expected_drive
+			assert gpath._root == expected_root
+			assert gpath._parent_level == expected_parent_level
+			assert gpath._encoding == None
+
+			assert gpath.absolute == expected_root
+			assert gpath.drive == expected_drive
+			assert gpath.named_parts == list(expected_parts)
+			assert gpath.parent_level == expected_parent_level
+			assert gpath.encoding == None
+
+			encoding = 'utf_32_be'
+			gpath = GPath(path.encode(encoding), encoding=encoding)
+
+			assert gpath._parts == expected_parts
+			assert gpath._drive == expected_drive
+			assert gpath._root == expected_root
+			assert gpath._parent_level == expected_parent_level
+			assert gpath._encoding == encoding
+
+			assert gpath.absolute == expected_root
+			assert gpath.drive == expected_drive
+			assert gpath.named_parts == list(expected_parts)
+			assert gpath.parent_level == expected_parent_level
+			assert gpath.encoding == encoding
 
 
 	@pytest.mark.parametrize(
@@ -176,6 +210,31 @@ class TestGPath:
 		assert gpath_copy.drive == expected_drive
 		assert gpath_copy.named_parts == list(expected_parts)
 		assert gpath_copy.parent_level == expected_parent_level
+
+		if path is not None:
+			gpath = GPath((path_prefix + path + path_suffix).encode('utf_8'))
+
+			assert gpath._parts == expected_parts
+			assert gpath._drive == expected_drive
+			assert gpath._root == expected_root
+			assert gpath._parent_level == expected_parent_level
+
+			assert gpath.absolute == expected_root
+			assert gpath.drive == expected_drive
+			assert gpath.named_parts == list(expected_parts)
+			assert gpath.parent_level == expected_parent_level
+
+			gpath = GPath((path_prefix + path + path_suffix).encode('utf_32_be'), encoding='utf_32_be')
+
+			assert gpath._parts == expected_parts
+			assert gpath._drive == expected_drive
+			assert gpath._root == expected_root
+			assert gpath._parent_level == expected_parent_level
+
+			assert gpath.absolute == expected_root
+			assert gpath.drive == expected_drive
+			assert gpath.named_parts == list(expected_parts)
+			assert gpath.parent_level == expected_parent_level
 
 
 	@pytest.mark.parametrize(
