@@ -297,6 +297,13 @@ class GPath(Hashable):
 		"""
 		return self._root and len(self._parts) == 0
 
+	@property
+	def encoding(self) -> Union[str, None]:
+		"""
+			Read-only encoding used to decode other paths that are given as bytes-like objects
+		"""
+		return self._encoding
+
 
 	@overload
 	def partition(paths: Iterable[GPathLike], **kwargs) -> dict[GPath, list[GPath]]:
