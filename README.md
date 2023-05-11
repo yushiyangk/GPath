@@ -1,6 +1,6 @@
 # GPath
 
-**GPath** is a Python package that provides a robust, generalised abstract file path that provides functions for common path manipulations independent from the local operating system.
+**GPath** is a Python package that provides a robust, generalised abstract file path that allows path manipulations independent from the local environment, maximising cross-platform compatibility.
 
 [![](https://img.shields.io/badge/PyPI--inactive?style=social&logo=pypi)](https://pypi.org/project/generic-path/) [![](https://img.shields.io/badge/GitHub--inactive?style=social&logo=github)](https://github.com/yushiyangk/GPath) [![](https://img.shields.io/badge/Documentation--inactive?style=social&logo=readthedocs)](https://gpath.gnayihs.uy/)
 
@@ -57,6 +57,20 @@ assert partitions == {
 
 Found a bug? Please [file an issue](https://github.com/yushiyangk/GPath/issues), or, better yet, [submit a pull request](https://github.com/yushiyangk/GPath/pulls).
 
+## Compatibility
+
+The default `GPath()` interface supports the vast majority of valid file paths on Windows, Linux and macOS (and other POSIX-like operating systems), with some limited caveats.
+
+### Linux, macOS and POSIX
+
+- any backslashes `\` in the path will be treated as path separators
+- if the second character of the path is a colon <code><var>x</var>:</code>, the first character <var>`x`</var> will be treated as a drive letter
+
+### Windows and MS-DOS
+
+- any trailing dots `.` and spaces ` ` will not be stripped
+- reserved MS-DOS device names (such as AUX, CLOCK$, COM0 through COM9, CON, LPT0 through LPT9, NUL, PRN) will be treated as normal file names
+
 ## Development
 
 Clone the repository with `git clone https://github.com/yushiyangk/GPath.git`.
@@ -74,6 +88,10 @@ Later, to deactivate the venv, run `deactivate`.
 ### Dependencies
 
 Run `pip install -r requirements.dev.txt`.
+
+### Install
+
+To install the package locally (in the venv) for development, run `pip install -e `.
 
 ### Tasks
 
@@ -97,12 +115,13 @@ The documentation is generated in `docs/html/`, using template files in `docs/te
 
 #### Packaging
 
-Before packaging, check the package config by running `pyroma .` or `tox r -m config`.
+Before packaging, check the package metadata by running `pyroma .` or `tox r -m metadata`.
 
 To generate sdist and wheel packages, delete `dist/` and `generic_path.egg-info/` if they exist, then run `python -m build`. Run `twine check dist/*` to check that the packages were generated properly. Alternatively, run `tox r -m package` to do these steps automatically.
 
 ### Config files
 
+- `MANIFEST.in` Additional files to include in published sdist package
 - `pyproject.toml` Package metadata, as well as configs for test and build tools
 - `requirements.dev.txt` Package dependencies for development, in pip format
 - `requirements.publish.txt` Package dependencies for publishing, in pip format
@@ -117,3 +136,7 @@ Sometimes, if gpath was installed using `pip install .`, pip might have difficul
 Can't uninstall 'gpath'. No files were found to uninstall.</code></pre>
 
 In this case, manually delete `build/` and `generic_path.egg-info/` if they exist, then run `pip uninstall generic-path` again. This should allow pip to successfully uninstall the package.
+
+#### Tox always fails with exit 1
+
+Delete the contents of `.tox/` and try again.

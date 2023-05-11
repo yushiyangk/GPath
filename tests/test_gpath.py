@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import itertools
+import os
+
 import pytest
 
 from gpath import GPath
 
-
-# Type hinting prior to 3.10
-# Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
-from typing import Optional, Union
+from gpath._compat import Optional, Union
 
 
 class TestGPath:
@@ -29,7 +29,7 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
-		('path', 'expected_parts', 'expected_device', 'expected_absolute', 'expected_parent'),
+		('path', 'expected_parts', 'expected_drive', 'expected_root', 'expected_parent_level'),
 		[
 			(None, tuple(), "", False, 0),
 			("", tuple(), "", False, 0),
@@ -44,57 +44,60 @@ class TestGPath:
 			("/./.", tuple(), "", True, 0),
 			("/.//", tuple(), "", True, 0),
 			("/./..", tuple(), "", True, 0),
-			("C:/", tuple(), "C:", True, 0),
-			("C:/.", tuple(), "C:", True, 0),
-			("c:/", tuple(), "c:", True, 0),
+			("C:/", tuple(), "C", True, 0),
+			("C:/.", tuple(), "C", True, 0),
+			("C:/./.", tuple(), "C", True, 0),
+			("C:/.//", tuple(), "C", True, 0),
+			("C:", tuple(), "C", False, 0),
+			("C:.", tuple(), "C", False, 0),
+			("C:./.", tuple(), "C", False, 0),
+			("C:.//", tuple(), "C", False, 0),
+			("c:/", tuple(), "c", True, 0),
+			("c:", tuple(), "c", False, 0),
 		]
 	)
 	def test_constructor_root(self,
 		path: Optional[str],
 		expected_parts: tuple[str, ...],
-		expected_device: str,
-		expected_absolute: bool,
-		expected_parent: int,
+		expected_drive: str,
+		expected_root: bool,
+		expected_parent_level: int,
 	):
 		"""
-			Test constructor `__init__()` as well as getters `is_absolute()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`, for paths requiring special treatment.
+			Test constructor `__init__()` as well as property getters for `absolute`, `drive`, `named_parts` and `parent_level`, for paths requiring special treatment.
 		"""
 		if path is None:
 			gpath = GPath()
 		else:
 			gpath = GPath(path)
 
-		if expected_absolute and expected_parent > 0:
-			expected_parent = 0
+		if expected_root and expected_parent_level > 0:
+			expected_parent_level = 0
 
 		assert gpath._parts == expected_parts
-		assert gpath._device == expected_device
-		assert gpath._absolute == expected_absolute
-		assert gpath._parent == expected_parent
+		assert gpath._drive == expected_drive
+		assert gpath._root == expected_root
+		assert gpath._parent_level == expected_parent_level
 
-		assert gpath.is_absolute() == expected_absolute
-		assert gpath.get_device() == expected_device
-		assert gpath.get_parent_level() == expected_parent
+		assert gpath.absolute == expected_root
+		assert gpath.drive == expected_drive
+		assert gpath.named_parts == list(expected_parts)
+		assert gpath.parent_level == expected_parent_level
 
 		gpath_copy = GPath(gpath)
 		assert gpath_copy._parts == expected_parts
-		assert gpath_copy._device == expected_device
-		assert gpath_copy._absolute == expected_absolute
-		assert gpath_copy._parent == expected_parent
+		assert gpath_copy._drive == expected_drive
+		assert gpath_copy._root == expected_root
+		assert gpath_copy._parent_level == expected_parent_level
 
-		assert gpath_copy.is_absolute() == expected_absolute
-		assert gpath_copy.get_device() == expected_device
-		assert gpath_copy.get_parent_level() == expected_parent
-
-		expected_parent_parts = []
-		for i in range(expected_parent):
-			expected_parent_parts.append("..")
-		assert gpath.get_parent_parts() == expected_parent_parts
-		assert gpath_copy.get_parent_parts() == expected_parent_parts
+		assert gpath_copy.absolute == expected_root
+		assert gpath_copy.drive == expected_drive
+		assert gpath_copy.named_parts == list(expected_parts)
+		assert gpath_copy.parent_level == expected_parent_level
 
 
 	@pytest.mark.parametrize(
-		('path', 'expected_parts', 'expected_parent'),
+		('path', 'expected_parts', 'expected_parent_level'),
 		[
 			("..", tuple(), 1),
 			("../..", tuple(), 2),
@@ -124,14 +127,16 @@ class TestGPath:
 	)
 	@pytest.mark.parametrize('path_suffix', ["", "/", "//", "/.", "/./", "/././/"])
 	@pytest.mark.parametrize(
-		('path_prefix', 'expected_device', 'expected_absolute'),
+		('path_prefix', 'expected_drive', 'expected_root'),
 		[
 			("", "", False),
 			("/", "", True),
 			#("//", "", True),
-			("C:/", "C:", True),
-			("c:/", "c:", True),
-			#("C:", "C:", False),
+			("C:/", "C", True),
+			("c:/", "c", True),
+			("C:", "C", False),
+			("1:", "1", False),
+			("::", ":", False),
 		]
 	)
 	def test_constructor(self,
@@ -139,74 +144,38 @@ class TestGPath:
 		path_prefix: str,
 		path_suffix: str,
 		expected_parts: tuple[str, ...],
-		expected_device: str,
-		expected_absolute: bool,
-		expected_parent: int,
+		expected_drive: str,
+		expected_root: bool,
+		expected_parent_level: int,
 	):
 		"""
-			Test constructor `__init__()` as well as getters `is_absolute()`, `get_device()`, `get_parent_parts()`, `get_parent_level()`, but not `get_parts()`.
+			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`.
 		"""
 		gpath = GPath(path_prefix + path + path_suffix)
-		if expected_absolute and expected_parent > 0:
-			expected_parent = 0
+		if expected_root and expected_parent_level > 0:
+			expected_parent_level = 0
 
 		assert gpath._parts == expected_parts
-		assert gpath._device == expected_device
-		assert gpath._absolute == expected_absolute
-		assert gpath._parent == expected_parent
+		assert gpath._drive == expected_drive
+		assert gpath._root == expected_root
+		assert gpath._parent_level == expected_parent_level
 
-		assert gpath.is_absolute() == expected_absolute
-		assert gpath.get_device() == expected_device
-		assert gpath.get_parent_level() == expected_parent
+		assert gpath.absolute == expected_root
+		assert gpath.drive == expected_drive
+		assert gpath.named_parts == list(expected_parts)
+		assert gpath.parent_level == expected_parent_level
 
 		gpath_copy = GPath(gpath)
 
 		assert gpath_copy._parts == expected_parts
-		assert gpath_copy._device == expected_device
-		assert gpath_copy._absolute == expected_absolute
-		assert gpath_copy._parent == expected_parent
+		assert gpath_copy._drive == expected_drive
+		assert gpath_copy._root == expected_root
+		assert gpath_copy._parent_level == expected_parent_level
 
-		assert gpath_copy.is_absolute() == expected_absolute
-		assert gpath_copy.get_device() == expected_device
-		assert gpath_copy.get_parent_level() == expected_parent
-
-		expected_parent_parts = []
-		for i in range(expected_parent):
-			expected_parent_parts.append("..")
-		assert gpath.get_parent_parts() == expected_parent_parts
-		assert gpath_copy.get_parent_parts() == expected_parent_parts
-
-
-	@pytest.mark.parametrize(
-		('gpath1', 'parts'),
-		[
-			("/", ["", ""]),
-			("/a", ["", "a"]),
-			("/a/b", ["", "a", "b"]),
-			("", ["."]),
-			("a", ["a"]),
-			("a/b", ["a", "b"]),
-			("..", [".."]),
-			("../a", ["..", "a"]),
-			("../a/b", ["..", "a", "b"]),
-			("../..", ["..", ".."]),
-			("../../a", ["..", "..", "a"]),
-			("../../a/b", ["..", "..", "a", "b"]),
-			("C:/", ["C:", ""]),
-			("C:/a", ["C:", "a"]),
-			("C:/a/b", ["C:", "a", "b"]),
-		],
-		indirect=['gpath1']
-	)
-	def test_get_parts_from_parts(self, gpath1: GPath, parts: list[str]):
-		"""
-			Test `get_parts()` and `from_parts()`.
-		"""
-		result = gpath1.get_parts()
-		assert result == parts
-
-		result = GPath.from_parts(parts)
-		assert result == gpath1
+		assert gpath_copy.absolute == expected_root
+		assert gpath_copy.drive == expected_drive
+		assert gpath_copy.named_parts == list(expected_parts)
+		assert gpath_copy.parent_level == expected_parent_level
 
 
 	@pytest.mark.parametrize(
@@ -216,19 +185,61 @@ class TestGPath:
 			("", False),
 			("..", False),
 			("C:/", True),
+			("C:", False),
+			("C:..", False),
 			("/a", False),
 			("a", False),
 			("../a", False),
 			("C:/a", False),
+			("C:a", False),
+			("C:../a", False),
 		],
 		indirect=['gpath1']
 	)
-	def test_is_root(self, gpath1: GPath, expected: bool):
+	def test_root(self, gpath1: GPath, expected: bool):
 		"""
-			Test `is_root()`.
+			Test property getter for `root`.
 		"""
-		result = gpath1.is_root()
+		result = gpath1.root
 		assert result == expected
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'expected_parent_parts', 'expected_relative_parts'),
+		[
+			("/", [], []),
+			("/a", [], ["a"]),
+			("/a/b", [], ["a", "b"]),
+			("", [], []),
+			("a", [], ["a"]),
+			("a/b", [], ["a", "b"]),
+			("..", [".."], [".."]),
+			("../a", [".."], ["..", "a"]),
+			("../a/b", [".."], ["..", "a", "b"]),
+			("../..", ["..", ".."], ["..", ".."]),
+			("../../a", ["..", ".."], ["..", "..", "a"]),
+			("../../a/b", ["..", ".."], ["..", "..", "a", "b"]),
+			("C:/", [], []),
+			("C:/a", [], ["a"]),
+			("C:/a/b", [], ["a", "b"]),
+			("C:", [], []),
+			("C:a", [], ["a"]),
+			("C:a/b", [], ["a", "b"]),
+			("C:..", [".."], [".."]),
+			("C:../a", [".."], ["..", "a"]),
+			("C:../a/b", [".."], ["..", "a", "b"]),
+			("C:../..", ["..", ".."], ["..", ".."]),
+			("C:../../a", ["..", ".."], ["..", "..", "a"]),
+			("C:../../a/b", ["..", ".."], ["..", "..", "a", "b"]),
+		],
+		indirect=['gpath1']
+	)
+	def test_parent_relative_parts(self, gpath1: GPath, expected_parent_parts: list[str], expected_relative_parts: list[str]):
+		"""
+			Test property getters for `parent_parts` and `relative_parts`.
+		"""
+		assert gpath1.parent_parts == expected_parent_parts
+		assert gpath1.relative_parts == expected_relative_parts
 
 
 	@pytest.mark.parametrize(
@@ -238,12 +249,14 @@ class TestGPath:
 			("", "", True),
 			("..", "..", True),
 			("C:/", "C:/", True),
+			("C:", "C:", True),
 			("/", "", False),
 			("..", "", False),
 			("..", "/", False),
 			("..", "../..", False),
 			("C:/", "c:/", False),
 			("C:/", "D:/", False),
+			("C:/", "C:", False),
 			("/usr/bin", "/usr/bin", True),
 			("/usr/bin", "/usr/./bin", True),
 			("usr/bin", "usr/bin", True),
@@ -280,106 +293,14 @@ class TestGPath:
 		assert result == expected
 
 		result = gpath1 == path2
-		assert result == False
+		assert result == expected
 		result = gpath2 == path1
-		assert result == False
+		assert result == expected
 
 		if expected is True:
 			assert hash(gpath1) == hash(gpath2)
 		else:
 			assert hash(gpath1) != hash(gpath2)
-
-
-	@pytest.mark.parametrize(
-		('gpath1', 'gpath2', 'gt_expected', 'eq_expected'),
-		[
-			("/", "/", False, True),
-			("/a/b", "/a/b", False, True),
-			("", "", False, True),
-			("a/b", "a/b", False, True),
-			("..", "..", False, True),
-			("../..", "../..", False, True),
-			("../../a/b", "../../a/b", False, True),
-			("C:/", "C:/", False, True),
-			("C:/a/b", "C:/a/b", False, True),
-
-			("", "/", True, False),
-			("", "..", True, False),
-			("..", "/", True, False),
-			("..", "../..", True, False),
-			("C:/", "/", True, False),
-			("", "C:/", True, False),
-			("..", "C:/", True, False),
-
-			("b", "a", True, False),
-			("aa", "a", True, False),
-			("a", "", True, False),
-			("a", "..", True, False),
-			("a", "/", True, False),
-			("a/b", "a/a", True, False),
-			("b/a", "a/b", True, False),
-
-			("/b", "/a", True, False),
-			("/aa", "/a", True, False),
-			("/a", "/", True, False),
-			("", "/a", True, False),
-			("..", "/a", True, False),
-			("/a/b", "/a/a", True, False),
-			("/b/a", "/a/b", True, False),
-
-			("../b", "../a", True, False),
-			("../aa", "../a", True, False),
-			("../a", "..", True, False),
-			("../a", "/", True, False),
-			("", "../a", True, False),
-			("../a/b", "../a/a", True, False),
-			("../b/a", "../a/b", True, False),
-			("../a", "../../b", True, False),
-
-			("D:/", "C:/", True, False),
-			("CC:/", "C:/", True, False),
-			("C:/b", "C:/a", True, False),
-			("C:/aa", "C:/a", True, False),
-			("C:/a", "C:/", True, False),
-			("D:/", "C:/a", True, False),
-			("C:/a", "/", True, False),
-			("", "C:/a", True, False),
-			("..", "C:/a", True, False),
-			("C:/a/b", "C:/a/a", True, False),
-			("C:/b/a", "C:/a/b", True, False),
-		],
-		indirect=['gpath1', 'gpath2']
-	)
-	def test_gt_lt_gte_lte(self, gpath1: GPath, gpath2: GPath, gt_expected: bool, eq_expected: bool):
-		"""
-			Test `__gt__()`, `__lt__()`, `__gte__()` and `__lte__()`, which are automatically generated based on the definition of `__gt__()` (and `__eq__()`).
-		"""
-		lt_expected = ((not gt_expected) and (not eq_expected))
-		gte_expected = gt_expected or eq_expected
-		lte_expected = lt_expected or eq_expected
-
-		result = gpath1 == gpath2
-		assert result == eq_expected
-
-		result = gpath1 > gpath2
-		assert result == gt_expected
-		result = gpath2 < gpath1
-		assert result == gt_expected
-
-		result = gpath2 > gpath1
-		assert result == lt_expected
-		result = gpath1 < gpath2
-		assert result == lt_expected
-
-		result = gpath1 >= gpath2
-		assert result == gte_expected
-		result = gpath2 <= gpath1
-		assert result == gte_expected
-
-		result = gpath2 >= gpath1
-		assert result == lte_expected
-		result = gpath1 <= gpath2
-		assert result == lte_expected
 
 
 	@pytest.mark.parametrize(
@@ -390,11 +311,13 @@ class TestGPath:
 			("..", True),
 			("../..", True),
 			("C:/", True),
+			("C:", True),
 
 			("/a", True),
 			("a", True),
 			("../a", True),
 			("C:/a", True),
+			("C:a", True),
 		],
 		indirect=['gpath1']
 	)
@@ -411,11 +334,11 @@ class TestGPath:
 	@pytest.mark.parametrize(
 		('path'),
 		[
-			("/"),
 			("."),
 			(".."),
 			("../.."),
 			("C:/"),
+			("C:"),
 			("/a"),
 			("/a/b"),
 			("a"),
@@ -424,15 +347,36 @@ class TestGPath:
 			("../a/b"),
 			("C:/a"),
 			("C:/a/b"),
+			("C:a"),
+			("C:a/b"),
 		]
 	)
 	def test_str_repr(self, path: str):
 		"""
-			Test `__str__()` and `__repr__()`.
+			Test `__str__()` and `__repr__()` for cross-platform outputs.
 		"""
 		gpath = GPath(path)
 		result = str(gpath)
 		assert result == path
+
+		result = repr(gpath)
+		result_eval = eval(result)
+		assert result_eval == gpath
+
+
+	@pytest.mark.parametrize(
+		('path', 'expected'),
+		[
+			("/", {'posix': "/", 'nt': "/", 'java': "/"}),
+		]
+	)
+	def test_str_repr_platform(self, path: str, expected: dict[str, str]):
+		"""
+			Test `__str__()` and `__repr__()` for platform-dependent outputs.
+		"""
+		gpath = GPath(path)
+		result = str(gpath)
+		assert result == expected[os.name]
 
 		result = repr(gpath)
 		result_eval = eval(result)
@@ -447,6 +391,7 @@ class TestGPath:
 			("..", 0),
 			("../..", 0),
 			("C:/", 0),
+			("C:", 0),
 			("/a", 1),
 			("/a/b", 2),
 			("a", 1),
@@ -455,6 +400,8 @@ class TestGPath:
 			("../a/b", 2),
 			("C:/a", 1),
 			("C:/a/b", 2),
+			("C:a", 1),
+			("C:a/b", 2),
 		],
 		indirect=['gpath1']
 	)
@@ -482,6 +429,8 @@ class TestGPath:
 			("../a/b", ["a", "b"]),
 			("C:/a", ["a"]),
 			("C:/a/b", ["a", "b"]),
+			("C:a", ["a"]),
+			("C:a/b", ["a", "b"]),
 		],
 		indirect=['gpath1']
 	)
@@ -523,14 +472,19 @@ class TestGPath:
 			("", "/", False),
 			("/", "..", False),
 			("..", "/", False),
-			("C:/", "/", False),
 			("/", "C:/", False),
+			("C:/", "/", False),
+			("/", "C:", False),
+			("C:", "/", False),
+
 			("C:/", "", False),
 			("", "C:/", False),
 			("C:/", "..", False),
 			("..", "C:/", False),
 			("C:/", "D:/", False),
 			("D:/", "C:/", False),
+			("C:/", "C:", False),
+			("C:", "C:/", False),
 
 			("a", "b", False),
 			("b", "a", False),
@@ -540,6 +494,8 @@ class TestGPath:
 			("../b", "../a", False),
 			("C:/a", "C:/b", False),
 			("C:/b", "C:/a", False),
+			("C:a", "C:b", False),
+			("C:b", "C:a", False),
 
 			("..", "", True),
 			("../..", "", True),
@@ -556,11 +512,13 @@ class TestGPath:
 			("/a", "/a/b", True),
 			("../a", "../a/b", True),
 			("C:/a", "C:/a/b", True),
+			("C:a", "C:a/b", True),
 
 			("a", "a", True),
 			("/a", "/a", True),
 			("../a", "../a", True),
 			("C:/a", "C:/a", True),
+			("C:a", "C:a", True),
 		],
 		indirect=['gpath1', 'gpath2']
 	)
@@ -583,6 +541,7 @@ class TestGPath:
 			("/", "", None, None),
 			("/", "..", None, None),
 			("/", "C:/", None, None),
+			("/", "C:", None, None),
 			("/a", "/", "a", "a"),
 			("/a", "/a", "", ""),
 			("/a/b", "/", "a/b", "a/b"),
@@ -593,6 +552,7 @@ class TestGPath:
 			("", "", "", ""),
 			("", "..", None, None),
 			("", "C:/", None, None),
+			("", "C:", None, None),
 			("", "a", None, ".."),
 			("", "../a", None, None),
 			("a", "", "a", "a"),
@@ -608,6 +568,7 @@ class TestGPath:
 			("..", "..", "", ""),
 			("..", "../..", None, None),
 			("..", "C:/", None, None),
+			("..", "C:", None, None),
 			("..", "a", None, "../.."),
 			("..", "../a", None, ".."),
 			("../a", "..", "a", "a"),
@@ -623,6 +584,7 @@ class TestGPath:
 			("../..", "..", None, ".."),
 			("../..", "../..", "", ""),
 			("../..", "C:/", None, None),
+			("../..", "C:", None, None),
 			("../..", "a", None, "../../.."),
 			("../..", "../a", None, "../.."),
 			("../..", "../../a", None, ".."),
@@ -641,12 +603,26 @@ class TestGPath:
 			("C:/", "..", None, None),
 			("C:/", "C:/", "", ""),
 			("C:/", "D:/", None, None),
+			("C:/", "C:", None, None),
 			("C:/a", "C:/", "a", "a"),
 			("C:/a", "C:/a", "", ""),
 			("C:/a/b", "C:/", "a/b", "a/b"),
 			("C:/a/b", "C:/a", "b", "b"),
 			("C:/a/b", "D:/a", None, None),
 			("C:/a/b", "C:/b", None, "../a/b"),
+
+			("C:", "/", None, None),
+			("C:", "", None, None),
+			("C:", "..", None, None),
+			("C:", "C:/", None, None),
+			("C:", "C:", "", ""),
+			("C:", "D:", None, None),
+			("C:a", "C:", "a", "a"),
+			("C:a", "C:a", "", ""),
+			("C:a/b", "C:", "a/b", "a/b"),
+			("C:a/b", "C:a", "b", "b"),
+			("C:a/b", "D:a", None, None),
+			("C:a/b", "C:b", None, "../a/b"),
 		],
 		indirect=['gpath1', 'gpath2']
 	)
@@ -675,8 +651,6 @@ class TestGPath:
 				assert result == None
 
 		result = gpath1.relpath_from(gpath2)
-		if gpath1._device != "" and result != None:
-			print(result._parts, result._absolute, result._device, result._parent)
 		assert result == relpath_expected_gpath
 
 
@@ -686,39 +660,45 @@ class TestGPath:
 			("/", "/", "/"),
 			("/", "", "/"),
 			("/", "..", "/"),
-			("/", "C:/", "/"),
+			("/", "C:/", "C:/"),
+			("/", "C:", "C:/"),
 			("/", "a", "/a"),
 			("/", "../a", "/a"),
-			("/a", "/", "/a"),
+			("/a", "/", "/"),
 			("/a", "", "/a"),
 			("/a", "..", "/"),
-			("/a", "C:/", "/a"),
+			("/a", "C:/", "C:/"),
+			("/a", "C:", "C:/a"),
 			("/a", "b", "/a/b"),
 			("/a", "../b", "/b"),
 
-			("", "/", ""),
+			("", "/", "/"),
 			("", "", ""),
 			("", "..", ".."),
-			("", "C:/", ""),
+			("", "C:/", "C:/"),
+			("", "C:", "C:"),
 			("", "a", "a"),
 			("", "../a", "../a"),
-			("a", "/", "a"),
+			("a", "/", "/"),
 			("a", "", "a"),
 			("a", "..", ""),
-			("a", "C:/", "a"),
+			("a", "C:/", "C:/"),
+			("a", "C:", "C:a"),
 			("a", "b", "a/b"),
 			("a", "../b", "b"),
 
-			("..", "/", ".."),
+			("..", "/", "/"),
 			("..", "", ".."),
 			("..", "..", "../.."),
-			("..", "C:/", ".."),
+			("..", "C:/", "C:/"),
+			("..", "C:", "C:.."),
 			("..", "a", "../a"),
 			("..", "../a", "../../a"),
-			("../a", "/", "../a"),
+			("../a", "/", "/"),
 			("../a", "", "../a"),
 			("../a", "..", ".."),
-			("../a", "C:/", "../a"),
+			("../a", "C:/", "C:/"),
+			("../a", "C:", "C:../a"),
 			("../a", "b", "../a/b"),
 			("../a", "../b", "../b"),
 
@@ -726,14 +706,18 @@ class TestGPath:
 			("C:/", "", "C:/"),
 			("C:/", "..", "C:/"),
 			("C:/", "C:/", "C:/"),
-			("C:/", "D:/", "C:/"),
+			("C:/", "C:", "C:/"),
+			("C:/", "D:/", "D:/"),
+			("C:/", "D:", "D:/"),
 			("C:/", "a", "C:/a"),
 			("C:/", "../a", "C:/a"),
-			("C:/a", "/", "C:/a"),
+			("C:/a", "/", "C:/"),
 			("C:/a", "", "C:/a"),
 			("C:/a", "..", "C:/"),
-			("C:/a", "C:/", "C:/a"),
-			("C:/a", "D:/", "C:/a"),
+			("C:/a", "C:/", "C:/"),
+			("C:/a", "C:", "C:/a"),
+			("C:/a", "D:/", "D:/"),
+			("C:/a", "D:", "D:/a"),
 			("C:/a", "b", "C:/a/b"),
 			("C:/a", "../b", "C:/b"),
 		],
@@ -744,6 +728,8 @@ class TestGPath:
 			Test `__add__()`.
 		"""
 		result = gpath1 + gpath2
+		assert result == expected_gpath
+		result = gpath1 / gpath2
 		assert result == expected_gpath
 
 
@@ -777,6 +763,13 @@ class TestGPath:
 			("C:/a/b", 1, "C:/a"),
 			("C:/a/b", 2, "C:/"),
 			("C:/a/b", 3, "C:/"),
+
+			("C:", 0, "C:"),
+			("C:", 1, "C:.."),
+			("C:a/b", 0, "C:a/b"),
+			("C:a/b", 1, "C:a"),
+			("C:a/b", 2, "C:"),
+			("C:a/b", 3, "C:.."),
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
@@ -790,7 +783,7 @@ class TestGPath:
 
 	@pytest.mark.parametrize(
 		('gpath1'),
-		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b")],
+		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b"), ("C:"), ("C:a/b")],
 		indirect=['gpath1']
 	)
 	@pytest.mark.parametrize(('sub_value'), [-1])
@@ -839,6 +832,13 @@ class TestGPath:
 			("C:/a/b", 1, "C:/a/b"),
 			("C:/a/b", 2, "C:/a/b/a/b"),
 			("C:/a/b", 0, "C:/"),
+
+			("C:", 1, "C:"),
+			("C:", 2, "C:"),
+			("C:", 0, "C:"),
+			("C:a/b", 1, "C:a/b"),
+			("C:a/b", 2, "C:a/b/a/b"),
+			("C:a/b", 0, "C:"),
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
@@ -852,7 +852,7 @@ class TestGPath:
 
 	@pytest.mark.parametrize(
 		('gpath1'),
-		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b")],
+		[("/"), ("/a/b"), (""), ("a/b"), (".."), ("../a/b"), ("../.."), ("../../a/b"), ("C:/"), ("C:/a/b"), ("C:"), ("C:a/b")],
 		indirect=['gpath1']
 	)
 	@pytest.mark.parametrize(('mul_value'), [-1, -2])
@@ -895,6 +895,11 @@ class TestGPath:
 			("C:/", 1, "C:/", "C:/"),
 			("C:/a/b", 0, "C:/a/b", "C:/a/b"),
 			("C:/a/b", 1, "C:/a/b", "C:/a/b"),
+
+			("C:", 0, "C:", "C:"),
+			("C:", 1, "C:", "C:.."),
+			("C:a/b", 0, "C:a/b", "C:a/b"),
+			("C:a/b", 1, "C:a/b", "C:../a/b"),
 		],
 		indirect=['gpath1']
 	)
@@ -917,6 +922,139 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
+		('gpath1', 'parent_level', 'expected_gpath'),
+		[
+			("/", None, ""),
+			("/", 0, ""),
+			("/", 2, "../.."),
+			("/a/b", None, "a/b"),
+			("/a/b", 0, "a/b"),
+			("/a/b", 2, "../../a/b"),
+
+			("", None, ""),
+			("", 0, ""),
+			("", 2, "../.."),
+			("a/b", None, "a/b"),
+			("a/b", 0, "a/b"),
+			("a/b", 2, "../../a/b"),
+
+			("..", None, ".."),
+			("..", 0, ""),
+			("..", 2, "../.."),
+			("../a/b", None, "../a/b"),
+			("../a/b", 0, "a/b"),
+			("../a/b", 2, "../../a/b"),
+
+			("C:/", None, "C:"),
+			("C:/", 0, "C:"),
+			("C:/", 2, "C:../.."),
+			("C:/a/b", None, "C:a/b"),
+			("C:/a/b", 0, "C:a/b"),
+			("C:/a/b", 2, "C:../../a/b"),
+
+			("C:", None, "C:"),
+			("C:", 0, "C:"),
+			("C:", 2, "C:../.."),
+			("C:a/b", None, "C:a/b"),
+			("C:a/b", 0, "C:a/b"),
+			("C:a/b", 2, "C:../../a/b"),
+		],
+		indirect=['gpath1', 'expected_gpath']
+	)
+	def test_as_relative(self, gpath1: GPath, parent_level: int, expected_gpath: GPath):
+		"""
+			Test `as_relative()`.
+		"""
+		result = gpath1.as_relative(parent_level)
+		assert result == expected_gpath
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'expected_gpath'),
+		[
+			("/", "/"),
+			("/a/b", "/a/b"),
+			("", "/"),
+			("a/b", "/a/b"),
+			("..", "/"),
+			("../a/b", "/a/b"),
+			("C:/", "C:/"),
+			("C:/a/b", "C:/a/b"),
+			("C:", "C:/"),
+			("C:a/b", "C:/a/b"),
+		],
+		indirect=['gpath1', 'expected_gpath']
+	)
+	def test_as_absolute(self, gpath1: GPath, expected_gpath: GPath):
+		"""
+			Test `as_absolute()`.
+		"""
+		result = gpath1.as_absolute()
+		assert result == expected_gpath
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'drive', 'expected_gpath', 'unset_expected'),
+		[
+			("/", "K", "K:/", "/"),
+			("/a/b", "K", "K:/a/b", "/a/b"),
+			("", "K", "K:", ""),
+			("a/b", "K", "K:a/b", "a/b"),
+			("..", "K", "K:..", ".."),
+			("../a/b", "K", "K:../a/b", "../a/b"),
+			("C:/", "K", "K:/", "/"),
+			("C:/a/b", "K", "K:/a/b", "/a/b"),
+			("C:", "K", "K:", ""),
+			("C:a/b", "K", "K:a/b", "a/b"),
+		],
+		indirect=['gpath1', 'expected_gpath']
+	)
+	def test_with_drive(self, gpath1: GPath, drive: str, expected_gpath: GPath, unset_expected: str):
+		"""
+			Test `with_drive()` and `without_drive`.
+		"""
+		result = gpath1.with_drive(drive)
+		assert result == expected_gpath
+
+		unset_expected_gpath = GPath(unset_expected)
+		for unset in ["", None]:
+			result = gpath1.with_drive(unset)
+			assert result == unset_expected_gpath
+		result = gpath1.without_drive()
+		assert result == unset_expected_gpath
+
+
+	@pytest.mark.parametrize(
+		('gpath1'),
+		[
+			("/"),
+			("/a/b"),
+			(""),
+			("a/b"),
+			(".."),
+			("../a/b"),
+			("C:/"),
+			("C:/a/b"),
+			("C:"),
+			("C:a/b"),
+		],
+		indirect=['gpath1']
+	)
+	@pytest.mark.parametrize(('drive'), ["CC", 1, False])
+	def test_with_drive_invalid(self, gpath1: GPath, drive: str):
+		"""
+			Test `with_drive()` when `drive` is longer than one character
+		"""
+		if isinstance(drive, str):
+			with pytest.raises(ValueError):
+				gpath1.with_drive(drive)
+		else:
+			with pytest.raises(TypeError):
+				gpath1.with_drive(drive)
+
+
+
+	@pytest.mark.parametrize(
 		#('path1', 'path2', 'allow_current', 'allow_parents', 'expected_path'),
 		('path1', 'path2', 'allow_current_expected', 'allow_parents_expected', 'allow_current_parent_expected', 'no_common_expected'),
 		[
@@ -924,6 +1062,7 @@ class TestGPath:
 			("/", "", None, None, None, None),
 			("/", "..", None, None, None, None),
 			("/", "C:/", None, None, None, None),
+			("/", "C:", None, None, None, None),
 			("/", "/a", "/", "/", "/", "/"),
 			("/", "a", None, None, None, None),
 			("/", "../a", None, None, None, None),
@@ -931,6 +1070,7 @@ class TestGPath:
 			("/a", "", None, None, None, None),
 			("/a", "..", None, None, None, None),
 			("/a", "C:/", None, None, None, None),
+			("/a", "C:", None, None, None, None),
 			("/a", "/b", "/", "/", "/", "/"),
 			("/a", "b", None, None, None, None),
 			("/a", "../b", None, None, None, None),
@@ -938,33 +1078,41 @@ class TestGPath:
 			("", "", "", "", "", ""),
 			("", "..", None, "..", "..", None),
 			("", "C:/", None, None, None, None),
+			("", "C:", None, None, None, None),
 			("", "a", "", "", "", None),
 			("", "../a", None, "..", "..", None),
 			#("a", "", "", "", "", None),
 			("a", "..", None, "..", "..", None),
 			("a", "C:/", None, None, None, None),
+			("a", "C:", None, None, None, None),
 			("a", "b", "", "", "", None),
 			("a", "../b", None, "..", "..", None),
 
 			("..", "..", "..", "..", "..", ".."),
 			("..", "../..", None, "../..", "../..", None),
 			("..", "C:/", None, None, None, None),
+			("..", "C:", None, None, None, None),
 			("..", "../a", "..", "..", "..", ".."),
 			("..", "../../a", None, "../..", "../..", None),
 			("../a", "..", "..", "..", "..", ".."),
 			("../a", "../..", None, "../..", "../..", None),
 			("../a", "C:/", None, None, None, None),
+			("../a", "C:", None, None, None, None),
 			("../a", "../b", "..", "..", "..", ".."),
 			("../a", "../../b", None, "../..", "../..", None),
 
 			("C:/", "C:/", "C:/", "C:/", "C:/", "C:/"),
+			("C:/", "C:", None, None, None, None),
 			("C:/", "D:/", None, None, None, None),
+			("C:/", "D:", None, None, None, None),
 			("C:/a", "C:/", "C:/", "C:/", "C:/", "C:/"),
+			("C:/a", "C:", None, None, None, None),
 			("C:/a", "D:/", None, None, None, None),
+			("C:/a", "D:", None, None, None, None),
 			("C:/a", "C:/b", "C:/", "C:/", "C:/", "C:/"),
 		]
 	)
-	def test_find_common(self,
+	def test_common_with(self,
 		path1: str,
 		path2: str,
 		allow_current_expected: str,
@@ -973,7 +1121,7 @@ class TestGPath:
 		no_common_expected: str
 	):
 		"""
-			Test `find_common()`.
+			Test `common_with()` and `__and__()`.
 		"""
 		assert allow_parents_expected == allow_current_parent_expected
 
@@ -982,70 +1130,40 @@ class TestGPath:
 		else:
 			allow_current_expected_gpath = None
 
-		result = GPath.find_common(path1, path2)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(path2, path1)
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2))
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1))
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-
 		if allow_parents_expected is not None:
 			allow_parents_expected_gpath = GPath(allow_parents_expected)
 		else:
 			allow_parents_expected_gpath = None
-
-		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
 
 		if allow_current_parent_expected is not None:
 			allow_current_parent_expected_gpath = GPath(allow_current_parent_expected)
 		else:
 			allow_current_parent_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-
 		if no_common_expected is not None:
 			no_common_expected_gpath = GPath(no_common_expected)
 		else:
 			no_common_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
+		for lhs, rhs in itertools.chain(itertools.product([path1], [path2, GPath(path2)]), itertools.product([path2], [path1, GPath(path1)])):
+			gpath = GPath(lhs)
 
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
+			result = gpath.common_with(rhs)
+			assert result == allow_current_expected_gpath
+			result = gpath & rhs
+			assert result == allow_current_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=True, allow_parents=False)
+			assert result == allow_current_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=False, allow_parents=True)
+			assert result == allow_parents_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=True, allow_parents=True)
+			assert result == allow_current_parent_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=False, allow_parents=False)
+			assert result == no_common_expected_gpath
 
 
 
@@ -1066,8 +1184,9 @@ class TestGPath:
 					"C:/Program Files",
 					"C:/Program Files/python.exe",
 					"D:/Documents",
-					"E:/",
-					"E:/Secret Documents/Secret Document.txt",
+					"E:",
+					"E:Apples",
+					"E:Secret Documents/Secret Document.txt",
 				],
 				True,
 				False,
@@ -1096,8 +1215,9 @@ class TestGPath:
 					GPath("D:/Documents"): [
 						GPath(""),
 					],
-					GPath("E:/"): [
+					GPath("E:"): [
 						GPath(""),
+						GPath("Apples"),
 						GPath("Secret Documents/Secret Document.txt"),
 					],
 				}
@@ -1173,50 +1293,56 @@ class TestGPath:
 	@pytest.mark.parametrize(
 		('paths', 'expected_gpath'),
 		[
-			(["", "/", "usr", "bin"], "usr/bin"),
+			(["", "usr", "bin"], "usr/bin"),
+			(["", "/", "usr", "bin"], "/usr/bin"),
 			(["/", "", "usr", "bin"], "/usr/bin"),
 			(["/", "usr", "", "bin"], "/usr/bin"),
 			(["/", "usr", "bin", ""], "/usr/bin"),
-			(["..", "/", "usr", "bin"], "../usr/bin"),
+			(["..", "usr", "bin"], "../usr/bin"),
+			(["..", "/", "usr", "bin"], "/usr/bin"),
 			(["/", "..", "usr", "bin"], "/usr/bin"),
 			(["/", "usr", "..", "bin"], "/bin"),
 			(["/", "usr", "bin", ".."], "/usr"),
 
 			(["/usr", "local", "bin"], "/usr/local/bin"),
-			(["/usr", "/local", "bin"], "/usr/bin"),
+			(["/usr", "/local", "bin"], "/local/bin"),
 			(["/usr", "../local", "bin"], "/local/bin"),
 			(["/usr", "../../local", "bin"], "/local/bin"),
 			(["/usr", "../local", "../bin"], "/bin"),
-			(["/usr", "C:/local", "bin"], "/usr/bin"),
-			(["/", "usr", "bin"], "/usr/bin"),
+			(["/usr", "C:/local", "bin"], "C:/local/bin"),
+			(["/usr", "C:local", "bin"], "C:/usr/local/bin"),
 			(["/", "usr", "bin"], "/usr/bin"),
 
 			(["usr", "local", "bin"], "usr/local/bin"),
-			(["usr", "/local", "bin"], "usr/bin"),
+			(["usr", "/local", "bin"], "/local/bin"),
 			(["usr", "../local", "bin"], "local/bin"),
 			(["usr", "../../local", "bin"], "../local/bin"),
 			(["usr", "../local", "../bin"], "bin"),
-			(["usr", "C:/local", "bin"], "usr/bin"),
+			(["usr", "C:/local", "bin"], "C:/local/bin"),
+			(["usr", "C:local", "bin"], "C:usr/local/bin"),
 			(["", "usr", "bin"], "usr/bin"),
 
 			(["../usr", "local", "bin"], "../usr/local/bin"),
-			(["../usr", "/local", "bin"], "../usr/bin"),
+			(["../usr", "/local", "bin"], "/local/bin"),
 			(["../usr", "../local", "bin"], "../local/bin"),
 			(["../usr", "../../local", "bin"], "../../local/bin"),
 			(["../usr", "../local", "../bin"], "../bin"),
 			(["../usr", "../local", "../../bin"], "../../bin"),
-			(["../usr", "C:/local", "bin"], "../usr/bin"),
+			(["../usr", "C:/local", "bin"], "C:/local/bin"),
+			(["../usr", "C:local", "bin"], "C:../usr/local/bin"),
 			(["..", "usr", "bin"], "../usr/bin"),
 			(["../..", "usr", "bin"], "../../usr/bin"),
 			(["..", "..", "usr", "bin"], "../../usr/bin"),
 
 			(["C:/Windows", "System32", "drivers"], "C:/Windows/System32/drivers"),
-			(["C:/Windows", "/System32", "Containers"], "C:/Windows/Containers"),
+			(["C:/Windows", "/System32", "Containers"], "C:/System32/Containers"),
 			(["C:/Windows", "../System32", "Containers"], "C:/System32/Containers"),
 			(["C:/Windows", "../../System32", "Containers"], "C:/System32/Containers"),
 			(["C:/Windows", "../System32", "../Containers"], "C:/Containers"),
-			(["C:/Windows", "C:/System32", "Containers"], "C:/Windows/Containers"),
-			(["C:/Windows", "D:/System32", "Containers"], "C:/Windows/Containers"),
+			(["C:/Windows", "C:/System32", "Containers"], "C:/System32/Containers"),
+			(["C:/Windows", "C:System32", "Containers"], "C:/Windows/System32/Containers"),
+			(["C:/Windows", "D:/System32", "Containers"], "D:/System32/Containers"),
+			(["C:/Windows", "D:System32", "Containers"], "D:/Windows/System32/Containers"),
 			(["C:/", "Windows", "System32"], "C:/Windows/System32"),
 		],
 		indirect=['expected_gpath']
