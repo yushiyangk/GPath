@@ -892,30 +892,14 @@ class GPath(Hashable, Sized, Iterable):
 
 	def __str__(self) -> str:
 		"""
-			Return a string representation of the path.
+			Return a platform-independent string representation of the path.
 
 			Usage: <code>str(<var>g</var>)</code>
 		"""
-		if self._platform is None:
-			platform = DEFAULT_PLATFORM
+		if bool(self):
+			return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
 		else:
-			platform = self._platform
-
-		if Platform == Platform.POSIX:
-			if bool(self):
-				return (_rules.posix_rules.roots[0] if self._root else "") + _rules.posix_rules.separators[0].join(self.relative_parts)
-			else:
-				return _rules.posix_rules.current_indicators[0]
-		elif platform == Platform.WINDOWS:
-			if bool(self):
-				return (self._drive + _rules.windows_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.windows_rules.roots[0] if self._root else "") + _rules.windows_rules.separators[0].join(self.relative_parts)
-			else:
-				return _rules.windows_rules.current_indicators[0]
-		else:
-			if bool(self):
-				return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
-			else:
-				return _rules.generic_rules.current_indicators[0]
+			return _rules.generic_rules.current_indicators[0]
 
 
 	def __repr__(self) -> str:
