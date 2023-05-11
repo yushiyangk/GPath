@@ -153,8 +153,8 @@ class GPath(Hashable, Sized, Iterable):
 			self._drive = path._drive
 			self._parent_level = path._parent_level
 
-			self._platform = path._platform
-			self._encoding = path._encoding
+			self._platform = path._platform if self._platform is None else self._platform
+			self._encoding = path._encoding if self._encoding is None else self._encoding
 			return
 
 		path = os.fspath(path)
