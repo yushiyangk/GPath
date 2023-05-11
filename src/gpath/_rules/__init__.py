@@ -1,11 +1,11 @@
 from ._common import _PathValidator, _PathValidity, _COMMON_DRIVE_POSTFIX, _COMMON_CURRENT_INDICATOR, _COMMON_PARENT_INDICATOR
-from ._validators import (
+from ._rules import (
     _from_type,
-    _generic_validator,
-    _posix_validator,
-    _posix_portable_validator,
-    _windows_nt_validator,
-    _unc_validator,
+    _generic_rules,
+    _posix_rules,
+    _posix_portable_rules,
+    _windows_nt_rules,
+    _unc_rules,
 )
 
 

@@ -9,9 +9,9 @@ import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence
 from typing import Any, ClassVar, Generator, overload
 
-from . import _validators
+from . import _rules
 from .pathtype import PathType
-from ._validators import _PathValidator, _PathValidity
+from ._rules import _PathValidator, _PathValidity
 
 
 from ._compat import Final, Optional, Union
@@ -70,8 +70,8 @@ def _split_relative(
 
 def _normalise_relative(
 	parts: Sequence[str],
-	current_dirs: Collection[str]=_validators._COMMON_CURRENT_INDICATOR,
-	parent_dirs: Collection[str]=_validators._COMMON_PARENT_INDICATOR,
+	current_dirs: Collection[str]=_rules._COMMON_CURRENT_INDICATOR,
+	parent_dirs: Collection[str]=_rules._COMMON_PARENT_INDICATOR,
 ):
 	output = []
 	for part in parts:
@@ -215,17 +215,17 @@ class GPath(Hashable):
 		#root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.MSDOS | _PathValidity.WINDOWS_NT | _PathValidity.UNC | _PathValidity.NT_API
 		root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.WINDOWS_NT | _PathValidity.UNC
 
-		if path.startswith(_validators._unc_validator.roots[0]):
+		if path.startswith(_rules._unc_rules.roots[0]):
 			root_validity = _PathValidity.UNC
 			self._root = True
-			parts = _split_relative(path[len(_validators._unc_validator.roots[0]):], delimiters=_validators._unc_validator.separators)
+			parts = _split_relative(path[len(_rules._unc_rules.roots[0]):], delimiters=_rules._unc_rules.separators)
 			if len(parts) < 2:
 				root_validity &= ~_PathValidity.UNC
-			self._drive = _validators._unc_validator.separators[0].join(parts[:2])
+			self._drive = _rules._unc_rules.separators[0].join(parts[:2])
 			self._parts = tuple(parts[2:])
 			return
 
-		if len(path) >= 2 and path[1] in _validators._windows_nt_validator.drive_postfixes:
+		if len(path) >= 2 and path[1] in _rules._windows_nt_rules.drive_postfixes:
 			#validities &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC & ~_PathValidity.NT_API
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC
 			self._drive = path[0]
@@ -233,11 +233,11 @@ class GPath(Hashable):
 		else:
 			deviceless_path = path
 
-		if deviceless_path.startswith(_validators._windows_nt_validator.roots[0]):
+		if deviceless_path.startswith(_rules._windows_nt_rules.roots[0]):
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
 			self._root = True
 
-		if deviceless_path.startswith(_validators._posix_validator.roots[0]):
+		if deviceless_path.startswith(_rules._posix_rules.roots[0]):
 			#validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
 			self._root = True
 
@@ -246,15 +246,15 @@ class GPath(Hashable):
 		else:
 			rootless_path = deviceless_path
 
-		if _validators._windows_nt_validator.separators[0] in rootless_path:
+		if _rules._windows_nt_rules.separators[0] in rootless_path:
 			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
 		#if _POSIX_SEPARATOR in rootless_path:
 		#	validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
 
-		parts = _split_relative(rootless_path, delimiters=(set(_validators._windows_nt_validator.separators) | set(_validators._posix_validator.separators)))
+		parts = _split_relative(rootless_path, delimiters=(set(_rules._windows_nt_rules.separators) | set(_rules._posix_rules.separators)))
 		parts = _normalise_relative(parts)
 		parent_level = 0
-		while parent_level < len(parts) and parts[parent_level] == _validators._COMMON_PARENT_INDICATOR:
+		while parent_level < len(parts) and parts[parent_level] == _rules._COMMON_PARENT_INDICATOR:
 			parent_level += 1
 		self._parts = tuple(parts[parent_level:])
 		if self._root == False:
@@ -775,7 +775,7 @@ class GPath(Hashable):
 			if self.root and self._drive == "":
 				return GPath._plain_root_indicator
 			else:
-				return (self._drive + _validators._windows_nt_validator.drive_postfixes[0] if self._drive != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
+				return (self._drive + _rules._windows_nt_rules.drive_postfixes[0] if self._drive != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
 		else:
 			return GPath._current_indicator
 
