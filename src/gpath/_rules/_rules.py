@@ -15,7 +15,6 @@ class generic_rules(UnvalidatedRules):
 	parent_indicators: Final = [COMMON_PARENT_INDICATOR]
 	roots: Final = ["/", "\\"]
 	separators: Final = ["/", "\\"]
-	drive_postfixes: Final = [":"]
 
 
 def from_type(type: PathType) -> Type[UnvalidatedRules]:

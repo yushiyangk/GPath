@@ -171,8 +171,7 @@ class GPath(Hashable, Sized, Iterable):
 		else:
 			rootless_path = driveless_path
 
-
-		parts = _split_relative(rootless_path, delimiters=(set(_rules.generic_rules.separators) | set(_rules.generic_rules.separators)))
+		parts = _split_relative(rootless_path, delimiters=_rules.generic_rules.separators)
 		parts = _normalise_relative(parts)
 		parent_level = 0
 		while parent_level < len(parts) and parts[parent_level] in _rules.generic_rules.parent_indicators:
