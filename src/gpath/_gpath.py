@@ -111,7 +111,6 @@ class GPath(Hashable):
 		'_anchor',
 		'_parent_level',
 		'_encoding',
-		'_target_type',
 	)
 
 	_separator: ClassVar[str] = _LOCAL_SEPARATOR
@@ -154,7 +153,6 @@ class GPath(Hashable):
 		self._parent_level: int = 0
 
 		self._encoding: Optional[str] = encoding
-		self._target_type: PathType = PathType.GENERIC
 
 		if path is None or path == "":
 			return
