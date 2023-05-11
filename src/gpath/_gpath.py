@@ -1116,6 +1116,7 @@ class GPath(Hashable):
 			self._drive,
 			self._parent_level,
 			self._parts,
+			self._encoding,
 		)
 
 
