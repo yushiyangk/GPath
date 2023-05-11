@@ -14,7 +14,7 @@ The recommended version specifier is <code>generic-path ~= <var>x</var>.<var>y</
 	- <code><var>g</var>.get_device()</code> → <code><var>g</var>.drive</code> (renamed `device` to `drive`)
 	- <code><var>g</var>.is_absolute()</code> → <code><var>g</var>.absolute</code>
 	- <code><var>g</var>.is_root()</code> → <code><var>g</var>.root</code>
-- Replaced <code><var>g</var>.get_parts()</code> and <code><var>g</var>.from_parts()</code> with the read-only property <code><var>g</var>.named_parts</code>
+- Replaced <code><var>g</var>.get_parts()</code> and <code><var>g</var>.from_parts()</code> with the read-only properties <code><var>g</var>.named_parts</code> and <code><var>g</var>.relative_parts</code>
 - Replaced `GPath.find_common()` with <code><var>g</var>.common_with()</code> and added <code><var>g1</var> & <var>g2</var></code> as an alias for <code><var>g</var>.common_with()</code> with default options
 - Removed the ability to sort GPaths, and removed the following comparison operators:
 	- <code><var>g1</var> < <var>g2</var></code>
