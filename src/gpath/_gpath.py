@@ -158,19 +158,19 @@ class GPath(Hashable, Sized, Iterable):
 
 		if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
 			self._drive = path[0]
-			deviceless_path = path[2:]
+			driveless_path = path[2:]
 		else:
-			deviceless_path = path
+			driveless_path = path
 
 		for root in _rules.generic_rules.roots:
-			if deviceless_path.startswith(root):
+			if driveless_path.startswith(root):
 				self._root = True
 				break
 
 		if self._root:
-			rootless_path = deviceless_path[1:]
+			rootless_path = driveless_path[1:]
 		else:
-			rootless_path = deviceless_path
+			rootless_path = driveless_path
 
 
 		parts = _split_relative(rootless_path, delimiters=(set(_rules.generic_rules.separators) | set(_rules.generic_rules.separators)))
@@ -186,7 +186,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def named_parts(self) -> list[str]:
 		"""
-			Read-only named components of the path, not including the filesystem root, device name, or any parent directories
+			Read-only named components of the path, not including the filesystem root, drive name, or any parent directories
 
 			Examples
 			--------
@@ -230,7 +230,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def relative_parts(self) -> list[str]:
 		"""
-			Read-only relative components of the path, not including the filesystem root or device name, with a copy of `parent_indicator` for each level of parent directory
+			Read-only relative components of the path, not including the filesystem root or drive name, with a copy of `parent_indicator` for each level of parent directory
 
 			Examples
 			--------
@@ -246,14 +246,14 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def drive(self) -> str:
 		"""
-			Read-only device name
+			Read-only drive name
 
 			Examples
 			--------
 			```python
-			GPath("C:/Windows").device       # "C:"
-			GPath("/usr/bin").device         # ""
-			GPath("../../Documents").device  # ""
+			GPath("C:/Windows").drive       # "C:"
+			GPath("/usr/bin").drive         # ""
+			GPath("../../Documents").drive  # ""
 			```
 		"""
 		return self._drive
@@ -569,7 +569,7 @@ class GPath(Hashable, Sized, Iterable):
 		"""
 			Find the longest common base path shared between `self` and `other`, or return None if no such path exists.
 
-			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the `allow_current` and `allow_parents` options.
+			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different drive names), or in other cases as controlled by the `allow_current` and `allow_parents` options.
 
 			If using the default options of `allow_current=True` and `allow_parent=False`, the binary operator for bitwise-and can be used: `__and__()` (usage: <code><var>g1</var> & <var>g2</var></code>).
 
@@ -851,7 +851,7 @@ class GPath(Hashable, Sized, Iterable):
 
 	def __len__(self) -> int:
 		"""
-			Get the number of named path components, excluding any device name or parent directories.
+			Get the number of named path components, excluding any drive name or parent directories.
 
 			Usage: <code>len(<var>g</var>)</code>
 
@@ -869,7 +869,7 @@ class GPath(Hashable, Sized, Iterable):
 
 	def __getitem__(self, index: Union[int, slice]) -> Union[str, list[str]]:
 		"""
-			Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.
+			Get a 0-indexed named path component, or a slice of path components, excluding any drive name or parent directories.
 
 			Usage: <code><var>g</var>[<var>n</var>]</code>, <code><var>g</var>[<var>start</var>:<var>end</var>]</code>, <code><var>g</var>[<var>start</var>:<var>end</var>:<var>step</var>]</code>, etc.
 
@@ -890,7 +890,7 @@ class GPath(Hashable, Sized, Iterable):
 
 	def __iter__(self) -> Iterator[str]:
 		"""
-			Get an iterator through the named path components, excluding any device name or parent directories.
+			Get an iterator through the named path components, excluding any drive name or parent directories.
 
 			Usage: <code>iter(<var>g</var>)</code> or <code>for <var>p</var> in <var>g</var>:</code>
 		"""
@@ -925,9 +925,9 @@ class GPath(Hashable, Sized, Iterable):
 		"""
 			Add (concatenate) `other` to the end of `self`, and return a new copy.
 
-			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the device name.
+			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the drive name.
 
-			If `other` has a device name, the returned path will have the same device name as `other`. Otherwise, the returned path will have the same device name as `self`. If neither has a device name, the returned path will not have a device name as well.
+			If `other` has a drive, the returned path will have the same drive as `other`. Otherwise, the returned path will have the same drive as `self`. If neither has a drive, the returned path will not have a drive as well.
 
 			Alias: `__truediv__()`
 
