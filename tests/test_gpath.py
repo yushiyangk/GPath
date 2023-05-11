@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import os
 
 import pytest
@@ -31,7 +32,7 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
-		('path', 'expected_parts', 'expected_device', 'expected_absolute', 'expected_parent_level'),
+		('path', 'expected_parts', 'expected_drive', 'expected_root', 'expected_parent_level'),
 		[
 			(None, tuple(), "", False, 0),
 			("", tuple(), "", False, 0),
@@ -61,39 +62,39 @@ class TestGPath:
 	def test_constructor_root(self,
 		path: Optional[str],
 		expected_parts: tuple[str, ...],
-		expected_device: str,
-		expected_absolute: bool,
+		expected_drive: str,
+		expected_root: bool,
 		expected_parent_level: int,
 	):
 		"""
-			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`, for paths requiring special treatment.
+			Test constructor `__init__()` as well as property getters for `absolute`, `drive`, `named_parts` and `parent_level`, for paths requiring special treatment.
 		"""
 		if path is None:
 			gpath = GPath()
 		else:
 			gpath = GPath(path)
 
-		if expected_absolute and expected_parent_level > 0:
+		if expected_root and expected_parent_level > 0:
 			expected_parent_level = 0
 
 		assert gpath._parts == expected_parts
-		assert gpath._device == expected_device
-		assert gpath._absolute == expected_absolute
+		assert gpath._drive == expected_drive
+		assert gpath._root == expected_root
 		assert gpath._parent_level == expected_parent_level
 
-		assert gpath.absolute == expected_absolute
-		assert gpath.device == expected_device
+		assert gpath.absolute == expected_root
+		assert gpath.drive == expected_drive
 		assert gpath.named_parts == list(expected_parts)
 		assert gpath.parent_level == expected_parent_level
 
 		gpath_copy = GPath(gpath)
 		assert gpath_copy._parts == expected_parts
-		assert gpath_copy._device == expected_device
-		assert gpath_copy._absolute == expected_absolute
+		assert gpath_copy._drive == expected_drive
+		assert gpath_copy._root == expected_root
 		assert gpath_copy._parent_level == expected_parent_level
 
-		assert gpath_copy.absolute == expected_absolute
-		assert gpath_copy.device == expected_device
+		assert gpath_copy.absolute == expected_root
+		assert gpath_copy.drive == expected_drive
 		assert gpath_copy.named_parts == list(expected_parts)
 		assert gpath_copy.parent_level == expected_parent_level
 
@@ -129,7 +130,7 @@ class TestGPath:
 	)
 	@pytest.mark.parametrize('path_suffix', ["", "/", "//", "/.", "/./", "/././/"])
 	@pytest.mark.parametrize(
-		('path_prefix', 'expected_device', 'expected_absolute'),
+		('path_prefix', 'expected_drive', 'expected_root'),
 		[
 			("", "", False),
 			("/", "", True),
@@ -146,36 +147,36 @@ class TestGPath:
 		path_prefix: str,
 		path_suffix: str,
 		expected_parts: tuple[str, ...],
-		expected_device: str,
-		expected_absolute: bool,
+		expected_drive: str,
+		expected_root: bool,
 		expected_parent_level: int,
 	):
 		"""
 			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`.
 		"""
 		gpath = GPath(path_prefix + path + path_suffix)
-		if expected_absolute and expected_parent_level > 0:
+		if expected_root and expected_parent_level > 0:
 			expected_parent_level = 0
 
 		assert gpath._parts == expected_parts
-		assert gpath._device == expected_device
-		assert gpath._absolute == expected_absolute
+		assert gpath._drive == expected_drive
+		assert gpath._root == expected_root
 		assert gpath._parent_level == expected_parent_level
 
-		assert gpath.absolute == expected_absolute
-		assert gpath.device == expected_device
+		assert gpath.absolute == expected_root
+		assert gpath.drive == expected_drive
 		assert gpath.named_parts == list(expected_parts)
 		assert gpath.parent_level == expected_parent_level
 
 		gpath_copy = GPath(gpath)
 
 		assert gpath_copy._parts == expected_parts
-		assert gpath_copy._device == expected_device
-		assert gpath_copy._absolute == expected_absolute
+		assert gpath_copy._drive == expected_drive
+		assert gpath_copy._root == expected_root
 		assert gpath_copy._parent_level == expected_parent_level
 
-		assert gpath_copy.absolute == expected_absolute
-		assert gpath_copy.device == expected_device
+		assert gpath_copy.absolute == expected_root
+		assert gpath_copy.drive == expected_drive
 		assert gpath_copy.named_parts == list(expected_parts)
 		assert gpath_copy.parent_level == expected_parent_level
 
@@ -295,129 +296,14 @@ class TestGPath:
 		assert result == expected
 
 		result = gpath1 == path2
-		assert result == False
+		assert result == expected
 		result = gpath2 == path1
-		assert result == False
+		assert result == expected
 
 		if expected is True:
 			assert hash(gpath1) == hash(gpath2)
 		else:
 			assert hash(gpath1) != hash(gpath2)
-
-
-	@pytest.mark.parametrize(
-		('gpath1', 'gpath2', 'lt_expected', 'eq_expected'),
-		[
-			("/", "/", False, True),
-			("/a/b", "/a/b", False, True),
-			("", "", False, True),
-			("a/b", "a/b", False, True),
-			("..", "..", False, True),
-			("../..", "../..", False, True),
-			("../../a/b", "../../a/b", False, True),
-			("C:/", "C:/", False, True),
-			("C:/a/b", "C:/a/b", False, True),
-			("C:", "C:", False, True),
-			("C:a/b", "C:a/b", False, True),
-
-			("", "/", True, False),
-			("", "..", True, False),
-			("..", "/", True, False),
-			("..", "../..", True, False),
-			("/", "C:/", True, False),
-			("", "C:/", True, False),
-			("..", "C:/", True, False),
-			("C:", "C:/", True, False),
-			("", "C:", True, False),
-			("..", "C:", True, False),
-
-			("a", "b", True, False),
-			("a", "aa", True, False),
-			("", "a", True, False),
-			("a", "..", True, False),
-			("a", "/", True, False),
-			("a", "C:/", True, False),
-			("a", "C:", True, False),
-			("a/a", "a/b", True, False),
-			("a/b", "b/a", True, False),
-
-			("/a", "/b", True, False),
-			("/a", "/aa", True, False),
-			("/", "/a", True, False),
-			("", "/a", True, False),
-			("..", "/a", True, False),
-			("/a", "C:/", True, False),
-			("C:", "/a", True, False),
-			("/a/a", "/a/b", True, False),
-			("/a/b", "/b/a", True, False),
-
-			("../a", "../b", True, False),
-			("../a", "../aa", True, False),
-			("..", "../a", True, False),
-			("../a", "/", True, False),
-			("", "../a", True, False),
-			("../a", "C:/", True, False),
-			("../a", "C:", True, False),
-			("../a/a", "../a/b", True, False),
-			("../a/b", "../b/a", True, False),
-			("../a", "../../b", True, False),
-
-			("C:/", "D:/", True, False),
-			("C:/a", "C:/b", True, False),
-			("C:/a", "C:/aa", True, False),
-			("C:/", "C:/a", True, False),
-			("C:/a", "D:/", True, False),
-			("/", "C:/a", True, False),
-			("", "C:/a", True, False),
-			("..", "C:/a", True, False),
-			("C:", "C:/a", True, False),
-			("C:/a/a", "C:/a/b", True, False),
-			("C:/a/b", "C:/b/a", True, False),
-
-			("C:", "D:", True, False),
-			("C:a", "C:b", True, False),
-			("C:a", "C:aa", True, False),
-			("C:", "C:a", True, False),
-			("C:a", "D:", True, False),
-			("C:a", "/", True, False),
-			("", "C:a", True, False),
-			("..", "C:a", True, False),
-			("C:a", "C:/", True, False),
-			("C:a/a", "C:a/b", True, False),
-			("C:a/b", "C:b/a", True, False),
-		],
-		indirect=['gpath1', 'gpath2']
-	)
-	def test_gt_lt_gte_lte(self, gpath1: GPath, gpath2: GPath, lt_expected: bool, eq_expected: bool):
-		"""
-			Test `__gt__()`, `__lt__()`, `__gte__()` and `__lte__()`, which are automatically generated based on the definition of `__gt__()` (and `__eq__()`).
-		"""
-		gt_expected = ((not lt_expected) and (not eq_expected))
-		gte_expected = gt_expected or eq_expected
-		lte_expected = lt_expected or eq_expected
-
-		result = gpath1 == gpath2
-		assert result == eq_expected
-
-		result = gpath1 > gpath2
-		assert result == gt_expected
-		result = gpath2 < gpath1
-		assert result == gt_expected
-
-		result = gpath2 > gpath1
-		assert result == lt_expected
-		result = gpath1 < gpath2
-		assert result == lt_expected
-
-		result = gpath1 >= gpath2
-		assert result == gte_expected
-		result = gpath2 <= gpath1
-		assert result == gte_expected
-
-		result = gpath2 >= gpath1
-		assert result == lte_expected
-		result = gpath1 <= gpath2
-		assert result == lte_expected
 
 
 	@pytest.mark.parametrize(
@@ -484,7 +370,7 @@ class TestGPath:
 	@pytest.mark.parametrize(
 		('path', 'expected'),
 		[
-			("/", {'posix': "/", 'nt': "\\", 'java': "/"}),
+			("/", {'posix': "/", 'nt': "/", 'java': "/"}),
 		]
 	)
 	def test_str_repr_platform(self, path: str, expected: dict[str, str]):
@@ -846,6 +732,8 @@ class TestGPath:
 		"""
 		result = gpath1 + gpath2
 		assert result == expected_gpath
+		result = gpath1 / gpath2
+		assert result == expected_gpath
 
 
 	@pytest.mark.parametrize(
@@ -1094,7 +982,7 @@ class TestGPath:
 			("C:/a", "C:/b", "C:/", "C:/", "C:/", "C:/"),
 		]
 	)
-	def test_find_common(self,
+	def test_common_with(self,
 		path1: str,
 		path2: str,
 		allow_current_expected: str,
@@ -1103,7 +991,7 @@ class TestGPath:
 		no_common_expected: str
 	):
 		"""
-			Test `find_common()`.
+			Test `common_with()` and `__and__()`.
 		"""
 		assert allow_parents_expected == allow_current_parent_expected
 
@@ -1112,70 +1000,40 @@ class TestGPath:
 		else:
 			allow_current_expected_gpath = None
 
-		result = GPath.find_common(path1, path2)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(path2, path1)
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2))
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1))
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=False)
-		assert result == allow_current_expected_gpath
-
 		if allow_parents_expected is not None:
 			allow_parents_expected_gpath = GPath(allow_parents_expected)
 		else:
 			allow_parents_expected_gpath = None
-
-		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=True)
-		assert result == allow_parents_expected_gpath
 
 		if allow_current_parent_expected is not None:
 			allow_current_parent_expected_gpath = GPath(allow_current_parent_expected)
 		else:
 			allow_current_parent_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=True, allow_parents=True)
-		assert result == allow_current_parent_expected_gpath
-
 		if no_common_expected is not None:
 			no_common_expected_gpath = GPath(no_common_expected)
 		else:
 			no_common_expected_gpath = None
 
-		result = GPath.find_common(path1, path2, allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
-		result = GPath.find_common(path2, path1, allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
+		for lhs, rhs in itertools.chain(itertools.product([path1], [path2, GPath(path2)]), itertools.product([path2], [path1, GPath(path1)])):
+			gpath = GPath(lhs)
 
-		result = GPath.find_common(GPath(path1), GPath(path2), allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
-		result = GPath.find_common(GPath(path2), GPath(path1), allow_current=False, allow_parents=False)
-		assert result == no_common_expected_gpath
+			result = gpath.common_with(rhs)
+			assert result == allow_current_expected_gpath
+			result = gpath & rhs
+			assert result == allow_current_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=True, allow_parents=False)
+			assert result == allow_current_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=False, allow_parents=True)
+			assert result == allow_parents_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=True, allow_parents=True)
+			assert result == allow_current_parent_expected_gpath
+
+			result = gpath.common_with(rhs, allow_current=False, allow_parents=False)
+			assert result == no_common_expected_gpath
 
 
 
