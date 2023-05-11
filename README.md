@@ -91,7 +91,7 @@ Run `pip install -r requirements.dev.txt`.
 
 ### Install
 
-To install the package locally (in the venv) for development, run `pip install -e `.
+To install the package locally (in the venv) for development, run `pip install -e .`.
 
 ### Tasks
 
@@ -99,13 +99,13 @@ For unit tests, run `pytest`.
 
 To run unit tests across all supported Python versions, run `tox p -m testall`. This is slower than just `pytest`. Note that only Python versions that are installed locally will be run.
 
-To run the full set of tests and tasks, run `tox p -m prepare`. This should be done prior to package publication. Alternatively, see below for manually running individual steps in this process.
+To run the full set of tasks before package publication, run `tox p -m prepare`. Alternatively, see below for manually running individual steps in this process.
 
 #### Unit tests
 
 Run `pytest` or `coverage run -m pytest`.
 
-For coverage report, first run `coverage run -m pytest`, then either `coverage report -m` to print to stdout or `coverage html` to generate an HTML report in `htmlcov/`. Alternatively, run `tox r -m test` to do both steps automatically.
+For coverage report, first run `coverage run -m pytest`, then either `coverage report -m` to print to stdout or `coverage html` to generate an HTML report in `htmlcov/`. Alternatively, run `tox r -m test` to do both steps automatically (slower).
 
 #### Documentation
 
