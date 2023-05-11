@@ -1,6 +1,6 @@
 from .._compat import Final
 
 
-_COMMON_DRIVE_POSTFIX: Final = ":"
-_COMMON_CURRENT_INDICATOR: Final = "."
-_COMMON_PARENT_INDICATOR: Final = ".."
+COMMON_DRIVE_POSTFIX: Final = ":"
+COMMON_CURRENT_INDICATOR: Final = "."
+COMMON_PARENT_INDICATOR: Final = ".."

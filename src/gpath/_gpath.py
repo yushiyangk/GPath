@@ -26,7 +26,7 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
 
 
-_DEFAULT_ENCODING: Final = 'utf-8'
+DEFAULT_ENCODING: Final = 'utf-8'
 
 
 
@@ -62,8 +62,8 @@ def _split_relative(
 
 def _normalise_relative(
 	parts: Sequence[str],
-	current_dirs: Collection[str]=_rules._COMMON_CURRENT_INDICATOR,
-	parent_dirs: Collection[str]=_rules._COMMON_PARENT_INDICATOR,
+	current_dirs: Collection[str]=_rules.COMMON_CURRENT_INDICATOR,
+	parent_dirs: Collection[str]=_rules.COMMON_PARENT_INDICATOR,
 ):
 	output = []
 	for part in parts:
@@ -160,19 +160,19 @@ class GPath(Hashable):
 
 		if isinstance(path, bytes):
 			if self._encoding is None:
-				path = path.decode(_DEFAULT_ENCODING)
+				path = path.decode(DEFAULT_ENCODING)
 			else:
 				path = path.decode(self._encoding)
 
 		# path is a str
 
-		if len(path) >= 2 and path[1] in _rules._generic_rules.drive_postfixes:
+		if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
 			self._drive = path[0]
 			deviceless_path = path[2:]
 		else:
 			deviceless_path = path
 
-		for root in _rules._generic_rules.roots:
+		for root in _rules.generic_rules.roots:
 			if deviceless_path.startswith(root):
 				self._root = True
 				break
@@ -183,10 +183,10 @@ class GPath(Hashable):
 			rootless_path = deviceless_path
 
 
-		parts = _split_relative(rootless_path, delimiters=(set(_rules._generic_rules.separators) | set(_rules._generic_rules.separators)))
+		parts = _split_relative(rootless_path, delimiters=(set(_rules.generic_rules.separators) | set(_rules.generic_rules.separators)))
 		parts = _normalise_relative(parts)
 		parent_level = 0
-		while parent_level < len(parts) and parts[parent_level] in _rules._generic_rules.parent_indicators:
+		while parent_level < len(parts) and parts[parent_level] in _rules.generic_rules.parent_indicators:
 			parent_level += 1
 		self._parts = tuple(parts[parent_level:])
 		if self._root == False:
@@ -235,7 +235,7 @@ class GPath(Hashable):
 			GPath("usr/local/bin").parent_parts    # []
 			```
 		"""
-		return [_rules._generic_rules.parent_indicators[0] for i in range(self._parent_level)]
+		return [_rules.generic_rules.parent_indicators[0] for i in range(self._parent_level)]
 
 	@property
 	def relative_parts(self) -> list[str]:
@@ -705,11 +705,11 @@ class GPath(Hashable):
 		"""
 		if bool(self):
 			if self.root and self._drive == "":
-				return _rules._generic_rules.roots[0]
+				return _rules.generic_rules.roots[0]
 			else:
-				return (self._drive + _rules._generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules._generic_rules.roots[0] if self._root else "") + _rules._generic_rules.separators[0].join(self.relative_parts)
+				return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
 		else:
-			return _rules._generic_rules.current_indicators[0]
+			return _rules.generic_rules.current_indicators[0]
 
 
 	def __repr__(self) -> str:
