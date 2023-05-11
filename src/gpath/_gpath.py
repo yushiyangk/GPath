@@ -90,10 +90,6 @@ class GPath(Hashable):
 		The path is always stored in a normalised state, and is always treated as case sensitive.
 
 		The path can be rendered as a string using <code>str(<var>g</var>)</code>, which will use `/` as the path separator if possible to maximise cross-platform compatibility.
-
-		If the GPath will be used on a specific operating system,
-
-		If the GPath is to be used on the local system, use <code><var>g</var>.to_local()</code> instead, which will render object represents a viable real path on the local system, it will always be rendered in a format that is meaningful to the local system.
 	"""
 
 	__slots__ = (
