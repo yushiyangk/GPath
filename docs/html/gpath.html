@@ -232,7 +232,7 @@ gpath    </h1>
 
                         <label class="view-source-button" for="mod-gpath-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.4.dev3&#39;</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.4.1&#39;</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="kn">from</span> <span class="nn">._gpath</span> <span class="kn">import</span> <span class="n">GPath</span><span class="p">,</span> <span class="n">GPathLike</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a>
@@ -330,19 +330,19 @@ gpath    </h1>
 </span><span id="GPath-159"><a href="#GPath-159"><span class="linenos"> 159</span></a>
 </span><span id="GPath-160"><a href="#GPath-160"><span class="linenos"> 160</span></a>		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">:</span>
 </span><span id="GPath-161"><a href="#GPath-161"><span class="linenos"> 161</span></a>			<span class="bp">self</span><span class="o">.</span><span class="n">_drive</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="GPath-162"><a href="#GPath-162"><span class="linenos"> 162</span></a>			<span class="n">deviceless_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+</span><span id="GPath-162"><a href="#GPath-162"><span class="linenos"> 162</span></a>			<span class="n">driveless_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
 </span><span id="GPath-163"><a href="#GPath-163"><span class="linenos"> 163</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="GPath-164"><a href="#GPath-164"><span class="linenos"> 164</span></a>			<span class="n">deviceless_path</span> <span class="o">=</span> <span class="n">path</span>
+</span><span id="GPath-164"><a href="#GPath-164"><span class="linenos"> 164</span></a>			<span class="n">driveless_path</span> <span class="o">=</span> <span class="n">path</span>
 </span><span id="GPath-165"><a href="#GPath-165"><span class="linenos"> 165</span></a>
 </span><span id="GPath-166"><a href="#GPath-166"><span class="linenos"> 166</span></a>		<span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
-</span><span id="GPath-167"><a href="#GPath-167"><span class="linenos"> 167</span></a>			<span class="k">if</span> <span class="n">deviceless_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+</span><span id="GPath-167"><a href="#GPath-167"><span class="linenos"> 167</span></a>			<span class="k">if</span> <span class="n">driveless_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
 </span><span id="GPath-168"><a href="#GPath-168"><span class="linenos"> 168</span></a>				<span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="GPath-169"><a href="#GPath-169"><span class="linenos"> 169</span></a>				<span class="k">break</span>
 </span><span id="GPath-170"><a href="#GPath-170"><span class="linenos"> 170</span></a>
 </span><span id="GPath-171"><a href="#GPath-171"><span class="linenos"> 171</span></a>		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">:</span>
-</span><span id="GPath-172"><a href="#GPath-172"><span class="linenos"> 172</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">deviceless_path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+</span><span id="GPath-172"><a href="#GPath-172"><span class="linenos"> 172</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">driveless_path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 </span><span id="GPath-173"><a href="#GPath-173"><span class="linenos"> 173</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="GPath-174"><a href="#GPath-174"><span class="linenos"> 174</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">deviceless_path</span>
+</span><span id="GPath-174"><a href="#GPath-174"><span class="linenos"> 174</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">driveless_path</span>
 </span><span id="GPath-175"><a href="#GPath-175"><span class="linenos"> 175</span></a>
 </span><span id="GPath-176"><a href="#GPath-176"><span class="linenos"> 176</span></a>
 </span><span id="GPath-177"><a href="#GPath-177"><span class="linenos"> 177</span></a>		<span class="n">parts</span> <span class="o">=</span> <span class="n">_split_relative</span><span class="p">(</span><span class="n">rootless_path</span><span class="p">,</span> <span class="n">delimiters</span><span class="o">=</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">)))</span>
@@ -358,7 +358,7 @@ gpath    </h1>
 </span><span id="GPath-187"><a href="#GPath-187"><span class="linenos"> 187</span></a>	<span class="nd">@property</span>
 </span><span id="GPath-188"><a href="#GPath-188"><span class="linenos"> 188</span></a>	<span class="k">def</span> <span class="nf">named_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="GPath-189"><a href="#GPath-189"><span class="linenos"> 189</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-190"><a href="#GPath-190"><span class="linenos"> 190</span></a><span class="sd">			Read-only named components of the path, not including the filesystem root, device name, or any parent directories</span>
+</span><span id="GPath-190"><a href="#GPath-190"><span class="linenos"> 190</span></a><span class="sd">			Read-only named components of the path, not including the filesystem root, drive name, or any parent directories</span>
 </span><span id="GPath-191"><a href="#GPath-191"><span class="linenos"> 191</span></a>
 </span><span id="GPath-192"><a href="#GPath-192"><span class="linenos"> 192</span></a><span class="sd">			Examples</span>
 </span><span id="GPath-193"><a href="#GPath-193"><span class="linenos"> 193</span></a><span class="sd">			--------</span>
@@ -402,7 +402,7 @@ gpath    </h1>
 </span><span id="GPath-231"><a href="#GPath-231"><span class="linenos"> 231</span></a>	<span class="nd">@property</span>
 </span><span id="GPath-232"><a href="#GPath-232"><span class="linenos"> 232</span></a>	<span class="k">def</span> <span class="nf">relative_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="GPath-233"><a href="#GPath-233"><span class="linenos"> 233</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-234"><a href="#GPath-234"><span class="linenos"> 234</span></a><span class="sd">			Read-only relative components of the path, not including the filesystem root or device name, with a copy of `parent_indicator` for each level of parent directory</span>
+</span><span id="GPath-234"><a href="#GPath-234"><span class="linenos"> 234</span></a><span class="sd">			Read-only relative components of the path, not including the filesystem root or drive name, with a copy of `parent_indicator` for each level of parent directory</span>
 </span><span id="GPath-235"><a href="#GPath-235"><span class="linenos"> 235</span></a>
 </span><span id="GPath-236"><a href="#GPath-236"><span class="linenos"> 236</span></a><span class="sd">			Examples</span>
 </span><span id="GPath-237"><a href="#GPath-237"><span class="linenos"> 237</span></a><span class="sd">			--------</span>
@@ -418,14 +418,14 @@ gpath    </h1>
 </span><span id="GPath-247"><a href="#GPath-247"><span class="linenos"> 247</span></a>	<span class="nd">@property</span>
 </span><span id="GPath-248"><a href="#GPath-248"><span class="linenos"> 248</span></a>	<span class="k">def</span> <span class="nf">drive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="GPath-249"><a href="#GPath-249"><span class="linenos"> 249</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-250"><a href="#GPath-250"><span class="linenos"> 250</span></a><span class="sd">			Read-only device name</span>
+</span><span id="GPath-250"><a href="#GPath-250"><span class="linenos"> 250</span></a><span class="sd">			Read-only drive name</span>
 </span><span id="GPath-251"><a href="#GPath-251"><span class="linenos"> 251</span></a>
 </span><span id="GPath-252"><a href="#GPath-252"><span class="linenos"> 252</span></a><span class="sd">			Examples</span>
 </span><span id="GPath-253"><a href="#GPath-253"><span class="linenos"> 253</span></a><span class="sd">			--------</span>
 </span><span id="GPath-254"><a href="#GPath-254"><span class="linenos"> 254</span></a><span class="sd">			```python</span>
-</span><span id="GPath-255"><a href="#GPath-255"><span class="linenos"> 255</span></a><span class="sd">			GPath(&quot;C:/Windows&quot;).device       # &quot;C:&quot;</span>
-</span><span id="GPath-256"><a href="#GPath-256"><span class="linenos"> 256</span></a><span class="sd">			GPath(&quot;/usr/bin&quot;).device         # &quot;&quot;</span>
-</span><span id="GPath-257"><a href="#GPath-257"><span class="linenos"> 257</span></a><span class="sd">			GPath(&quot;../../Documents&quot;).device  # &quot;&quot;</span>
+</span><span id="GPath-255"><a href="#GPath-255"><span class="linenos"> 255</span></a><span class="sd">			GPath(&quot;C:/Windows&quot;).drive       # &quot;C:&quot;</span>
+</span><span id="GPath-256"><a href="#GPath-256"><span class="linenos"> 256</span></a><span class="sd">			GPath(&quot;/usr/bin&quot;).drive         # &quot;&quot;</span>
+</span><span id="GPath-257"><a href="#GPath-257"><span class="linenos"> 257</span></a><span class="sd">			GPath(&quot;../../Documents&quot;).drive  # &quot;&quot;</span>
 </span><span id="GPath-258"><a href="#GPath-258"><span class="linenos"> 258</span></a><span class="sd">			```</span>
 </span><span id="GPath-259"><a href="#GPath-259"><span class="linenos"> 259</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="GPath-260"><a href="#GPath-260"><span class="linenos"> 260</span></a>		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drive</span>
@@ -741,7 +741,7 @@ gpath    </h1>
 </span><span id="GPath-570"><a href="#GPath-570"><span class="linenos"> 570</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-571"><a href="#GPath-571"><span class="linenos"> 571</span></a><span class="sd">			Find the longest common base path shared between `self` and `other`, or return None if no such path exists.</span>
 </span><span id="GPath-572"><a href="#GPath-572"><span class="linenos"> 572</span></a>
-</span><span id="GPath-573"><a href="#GPath-573"><span class="linenos"> 573</span></a><span class="sd">			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the `allow_current` and `allow_parents` options.</span>
+</span><span id="GPath-573"><a href="#GPath-573"><span class="linenos"> 573</span></a><span class="sd">			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different drive names), or in other cases as controlled by the `allow_current` and `allow_parents` options.</span>
 </span><span id="GPath-574"><a href="#GPath-574"><span class="linenos"> 574</span></a>
 </span><span id="GPath-575"><a href="#GPath-575"><span class="linenos"> 575</span></a><span class="sd">			If using the default options of `allow_current=True` and `allow_parent=False`, the binary operator for bitwise-and can be used: `__and__()` (usage: &lt;code&gt;&lt;var&gt;g1&lt;/var&gt; &amp; &lt;var&gt;g2&lt;/var&gt;&lt;/code&gt;).</span>
 </span><span id="GPath-576"><a href="#GPath-576"><span class="linenos"> 576</span></a>
@@ -1023,7 +1023,7 @@ gpath    </h1>
 </span><span id="GPath-852"><a href="#GPath-852"><span class="linenos"> 852</span></a>
 </span><span id="GPath-853"><a href="#GPath-853"><span class="linenos"> 853</span></a>	<span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 </span><span id="GPath-854"><a href="#GPath-854"><span class="linenos"> 854</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-855"><a href="#GPath-855"><span class="linenos"> 855</span></a><span class="sd">			Get the number of named path components, excluding any device name or parent directories.</span>
+</span><span id="GPath-855"><a href="#GPath-855"><span class="linenos"> 855</span></a><span class="sd">			Get the number of named path components, excluding any drive name or parent directories.</span>
 </span><span id="GPath-856"><a href="#GPath-856"><span class="linenos"> 856</span></a>
 </span><span id="GPath-857"><a href="#GPath-857"><span class="linenos"> 857</span></a><span class="sd">			Usage: &lt;code&gt;len(&lt;var&gt;g&lt;/var&gt;)&lt;/code&gt;</span>
 </span><span id="GPath-858"><a href="#GPath-858"><span class="linenos"> 858</span></a>
@@ -1041,7 +1041,7 @@ gpath    </h1>
 </span><span id="GPath-870"><a href="#GPath-870"><span class="linenos"> 870</span></a>
 </span><span id="GPath-871"><a href="#GPath-871"><span class="linenos"> 871</span></a>	<span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 </span><span id="GPath-872"><a href="#GPath-872"><span class="linenos"> 872</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-873"><a href="#GPath-873"><span class="linenos"> 873</span></a><span class="sd">			Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</span>
+</span><span id="GPath-873"><a href="#GPath-873"><span class="linenos"> 873</span></a><span class="sd">			Get a 0-indexed named path component, or a slice of path components, excluding any drive name or parent directories.</span>
 </span><span id="GPath-874"><a href="#GPath-874"><span class="linenos"> 874</span></a>
 </span><span id="GPath-875"><a href="#GPath-875"><span class="linenos"> 875</span></a><span class="sd">			Usage: &lt;code&gt;&lt;var&gt;g&lt;/var&gt;[&lt;var&gt;n&lt;/var&gt;]&lt;/code&gt;, &lt;code&gt;&lt;var&gt;g&lt;/var&gt;[&lt;var&gt;start&lt;/var&gt;:&lt;var&gt;end&lt;/var&gt;]&lt;/code&gt;, &lt;code&gt;&lt;var&gt;g&lt;/var&gt;[&lt;var&gt;start&lt;/var&gt;:&lt;var&gt;end&lt;/var&gt;:&lt;var&gt;step&lt;/var&gt;]&lt;/code&gt;, etc.</span>
 </span><span id="GPath-876"><a href="#GPath-876"><span class="linenos"> 876</span></a>
@@ -1062,7 +1062,7 @@ gpath    </h1>
 </span><span id="GPath-891"><a href="#GPath-891"><span class="linenos"> 891</span></a>
 </span><span id="GPath-892"><a href="#GPath-892"><span class="linenos"> 892</span></a>	<span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="GPath-893"><a href="#GPath-893"><span class="linenos"> 893</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-894"><a href="#GPath-894"><span class="linenos"> 894</span></a><span class="sd">			Get an iterator through the named path components, excluding any device name or parent directories.</span>
+</span><span id="GPath-894"><a href="#GPath-894"><span class="linenos"> 894</span></a><span class="sd">			Get an iterator through the named path components, excluding any drive name or parent directories.</span>
 </span><span id="GPath-895"><a href="#GPath-895"><span class="linenos"> 895</span></a>
 </span><span id="GPath-896"><a href="#GPath-896"><span class="linenos"> 896</span></a><span class="sd">			Usage: &lt;code&gt;iter(&lt;var&gt;g&lt;/var&gt;)&lt;/code&gt; or &lt;code&gt;for &lt;var&gt;p&lt;/var&gt; in &lt;var&gt;g&lt;/var&gt;:&lt;/code&gt;</span>
 </span><span id="GPath-897"><a href="#GPath-897"><span class="linenos"> 897</span></a><span class="sd">		&quot;&quot;&quot;</span>
@@ -1097,9 +1097,9 @@ gpath    </h1>
 </span><span id="GPath-926"><a href="#GPath-926"><span class="linenos"> 926</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-927"><a href="#GPath-927"><span class="linenos"> 927</span></a><span class="sd">			Add (concatenate) `other` to the end of `self`, and return a new copy.</span>
 </span><span id="GPath-928"><a href="#GPath-928"><span class="linenos"> 928</span></a>
-</span><span id="GPath-929"><a href="#GPath-929"><span class="linenos"> 929</span></a><span class="sd">			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the device name.</span>
+</span><span id="GPath-929"><a href="#GPath-929"><span class="linenos"> 929</span></a><span class="sd">			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the drive name.</span>
 </span><span id="GPath-930"><a href="#GPath-930"><span class="linenos"> 930</span></a>
-</span><span id="GPath-931"><a href="#GPath-931"><span class="linenos"> 931</span></a><span class="sd">			If `other` has a device name, the returned path will have the same device name as `other`. Otherwise, the returned path will have the same device name as `self`. If neither has a device name, the returned path will not have a device name as well.</span>
+</span><span id="GPath-931"><a href="#GPath-931"><span class="linenos"> 931</span></a><span class="sd">			If `other` has a drive, the returned path will have the same drive as `other`. Otherwise, the returned path will have the same drive as `self`. If neither has a drive, the returned path will not have a drive as well.</span>
 </span><span id="GPath-932"><a href="#GPath-932"><span class="linenos"> 932</span></a>
 </span><span id="GPath-933"><a href="#GPath-933"><span class="linenos"> 933</span></a><span class="sd">			Alias: `__truediv__()`</span>
 </span><span id="GPath-934"><a href="#GPath-934"><span class="linenos"> 934</span></a>
@@ -1331,7 +1331,7 @@ gpath    </h1>
 				<dt><span class="name"><a href="#GPath.named_parts">named_parts</a></span><span class="annotation">: list[str]</span></dt>
 
 <dd>
-<p>Read-only named components of the path, not including the filesystem root, device name, or any parent directories</p></dd>
+<p>Read-only named components of the path, not including the filesystem root, drive name, or any parent directories</p></dd>
 	<dt><span class="name"><a href="#GPath.parent_level">parent_level</a></span><span class="annotation">: int</span></dt>
 
 <dd>
@@ -1343,11 +1343,11 @@ gpath    </h1>
 	<dt><span class="name"><a href="#GPath.relative_parts">relative_parts</a></span><span class="annotation">: list[str]</span></dt>
 
 <dd>
-<p>Read-only relative components of the path, not including the filesystem root or device name, with a copy of <code>parent_indicator</code> for each level of parent directory</p></dd>
+<p>Read-only relative components of the path, not including the filesystem root or drive name, with a copy of <code>parent_indicator</code> for each level of parent directory</p></dd>
 	<dt><span class="name"><a href="#GPath.drive">drive</a></span><span class="annotation">: str</span></dt>
 
 <dd>
-<p>Read-only device name</p></dd>
+<p>Read-only drive name</p></dd>
 	<dt><span class="name"><a href="#GPath.absolute">absolute</a></span><span class="annotation">: bool</span></dt>
 
 <dd>
@@ -1433,15 +1433,15 @@ gpath    </h1>
 	<dt>					<span class="name"><a href="#GPath.__len__">__len__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span></dt>
 
 <dd>
-<p>Get the number of named path components, excluding any device name or parent directories.</p></dd>
+<p>Get the number of named path components, excluding any drive name or parent directories.</p></dd>
 	<dt>					<span class="name"><a href="#GPath.__getitem__">__getitem__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>:</span></span></dt>
 
 <dd>
-<p>Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</p></dd>
+<p>Get a 0-indexed named path component, or a slice of path components, excluding any drive name or parent directories.</p></dd>
 	<dt>					<span class="name"><a href="#GPath.__iter__">__iter__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span></dt>
 
 <dd>
-<p>Get an iterator through the named path components, excluding any device name or parent directories.</p></dd>
+<p>Get an iterator through the named path components, excluding any drive name or parent directories.</p></dd>
 	<dt>					<span class="name"><a href="#GPath.__contains__">__contains__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n"><a href="#GPath">GPath</a></span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
 
 <dd>
@@ -1548,19 +1548,19 @@ gpath    </h1>
 </span><span id="GPath.__init__-159"><a href="#GPath.__init__-159"><span class="linenos">159</span></a>
 </span><span id="GPath.__init__-160"><a href="#GPath.__init__-160"><span class="linenos">160</span></a>		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">:</span>
 </span><span id="GPath.__init__-161"><a href="#GPath.__init__-161"><span class="linenos">161</span></a>			<span class="bp">self</span><span class="o">.</span><span class="n">_drive</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="GPath.__init__-162"><a href="#GPath.__init__-162"><span class="linenos">162</span></a>			<span class="n">deviceless_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+</span><span id="GPath.__init__-162"><a href="#GPath.__init__-162"><span class="linenos">162</span></a>			<span class="n">driveless_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
 </span><span id="GPath.__init__-163"><a href="#GPath.__init__-163"><span class="linenos">163</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="GPath.__init__-164"><a href="#GPath.__init__-164"><span class="linenos">164</span></a>			<span class="n">deviceless_path</span> <span class="o">=</span> <span class="n">path</span>
+</span><span id="GPath.__init__-164"><a href="#GPath.__init__-164"><span class="linenos">164</span></a>			<span class="n">driveless_path</span> <span class="o">=</span> <span class="n">path</span>
 </span><span id="GPath.__init__-165"><a href="#GPath.__init__-165"><span class="linenos">165</span></a>
 </span><span id="GPath.__init__-166"><a href="#GPath.__init__-166"><span class="linenos">166</span></a>		<span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
-</span><span id="GPath.__init__-167"><a href="#GPath.__init__-167"><span class="linenos">167</span></a>			<span class="k">if</span> <span class="n">deviceless_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
+</span><span id="GPath.__init__-167"><a href="#GPath.__init__-167"><span class="linenos">167</span></a>			<span class="k">if</span> <span class="n">driveless_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
 </span><span id="GPath.__init__-168"><a href="#GPath.__init__-168"><span class="linenos">168</span></a>				<span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="GPath.__init__-169"><a href="#GPath.__init__-169"><span class="linenos">169</span></a>				<span class="k">break</span>
 </span><span id="GPath.__init__-170"><a href="#GPath.__init__-170"><span class="linenos">170</span></a>
 </span><span id="GPath.__init__-171"><a href="#GPath.__init__-171"><span class="linenos">171</span></a>		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">:</span>
-</span><span id="GPath.__init__-172"><a href="#GPath.__init__-172"><span class="linenos">172</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">deviceless_path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+</span><span id="GPath.__init__-172"><a href="#GPath.__init__-172"><span class="linenos">172</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">driveless_path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 </span><span id="GPath.__init__-173"><a href="#GPath.__init__-173"><span class="linenos">173</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="GPath.__init__-174"><a href="#GPath.__init__-174"><span class="linenos">174</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">deviceless_path</span>
+</span><span id="GPath.__init__-174"><a href="#GPath.__init__-174"><span class="linenos">174</span></a>			<span class="n">rootless_path</span> <span class="o">=</span> <span class="n">driveless_path</span>
 </span><span id="GPath.__init__-175"><a href="#GPath.__init__-175"><span class="linenos">175</span></a>
 </span><span id="GPath.__init__-176"><a href="#GPath.__init__-176"><span class="linenos">176</span></a>
 </span><span id="GPath.__init__-177"><a href="#GPath.__init__-177"><span class="linenos">177</span></a>		<span class="n">parts</span> <span class="o">=</span> <span class="n">_split_relative</span><span class="p">(</span><span class="n">rootless_path</span><span class="p">,</span> <span class="n">delimiters</span><span class="o">=</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">generic_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">)))</span>
@@ -1611,7 +1611,7 @@ gpath    </h1>
     <a class="headerlink" href="#GPath.named_parts"></a>
     
     <div class="docstring">
-<p>Read-only named components of the path, not including the filesystem root, device name, or any parent directories</p>
+<p>Read-only named components of the path, not including the filesystem root, drive name, or any parent directories</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -1682,7 +1682,7 @@ gpath    </h1>
     <a class="headerlink" href="#GPath.relative_parts"></a>
     
     <div class="docstring">
-<p>Read-only relative components of the path, not including the filesystem root or device name, with a copy of <code>parent_indicator</code> for each level of parent directory</p>
+<p>Read-only relative components of the path, not including the filesystem root or drive name, with a copy of <code>parent_indicator</code> for each level of parent directory</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -1707,14 +1707,14 @@ gpath    </h1>
     <a class="headerlink" href="#GPath.drive"></a>
     
     <div class="docstring">
-<p>Read-only device name</p>
+<p>Read-only drive name</p>
 
 <h2 id="examples">Examples</h2>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Windows&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">device</span>       <span class="c1"># &quot;C:&quot;</span>
-<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">device</span>         <span class="c1"># &quot;&quot;</span>
-<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">device</span>  <span class="c1"># &quot;&quot;</span>
+<pre><span></span><code><span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;C:/Windows&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">drive</span>       <span class="c1"># &quot;C:&quot;</span>
+<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;/usr/bin&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">drive</span>         <span class="c1"># &quot;&quot;</span>
+<span class="n">GPath</span><span class="p">(</span><span class="s2">&quot;../../Documents&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">drive</span>  <span class="c1"># &quot;&quot;</span>
 </code></pre>
 </div></div>
 
@@ -2309,7 +2309,7 @@ if any of the GPaths are invalid</p>
 </span><span id="GPath.common_with-570"><a href="#GPath.common_with-570"><span class="linenos">570</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath.common_with-571"><a href="#GPath.common_with-571"><span class="linenos">571</span></a><span class="sd">			Find the longest common base path shared between `self` and `other`, or return None if no such path exists.</span>
 </span><span id="GPath.common_with-572"><a href="#GPath.common_with-572"><span class="linenos">572</span></a>
-</span><span id="GPath.common_with-573"><a href="#GPath.common_with-573"><span class="linenos">573</span></a><span class="sd">			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the `allow_current` and `allow_parents` options.</span>
+</span><span id="GPath.common_with-573"><a href="#GPath.common_with-573"><span class="linenos">573</span></a><span class="sd">			A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different drive names), or in other cases as controlled by the `allow_current` and `allow_parents` options.</span>
 </span><span id="GPath.common_with-574"><a href="#GPath.common_with-574"><span class="linenos">574</span></a>
 </span><span id="GPath.common_with-575"><a href="#GPath.common_with-575"><span class="linenos">575</span></a><span class="sd">			If using the default options of `allow_current=True` and `allow_parent=False`, the binary operator for bitwise-and can be used: `__and__()` (usage: &lt;code&gt;&lt;var&gt;g1&lt;/var&gt; &amp; &lt;var&gt;g2&lt;/var&gt;&lt;/code&gt;).</span>
 </span><span id="GPath.common_with-576"><a href="#GPath.common_with-576"><span class="linenos">576</span></a>
@@ -2389,7 +2389,7 @@ if any of the GPaths are invalid</p>
     <div class="docstring">
 <p>Find the longest common base path shared between <code>self</code> and <code>other</code>, or return None if no such path exists.</p>
 
-<p>A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different device names), or in other cases as controlled by the <code>allow_current</code> and <code>allow_parents</code> options.</p>
+<p>A common base path might not exist if one path is an absolute path while the other is a relative path, or if the two paths are in different filesystems (with different drive names), or in other cases as controlled by the <code>allow_current</code> and <code>allow_parents</code> options.</p>
 
 <p>If using the default options of <code>allow_current=True</code> and <code>allow_parent=False</code>, the binary operator for bitwise-and can be used: <code><a href="#GPath.__and__">__and__()</a></code> (usage: <code><var>g1</var> &amp; <var>g2</var></code>).</p>
 
@@ -2870,7 +2870,7 @@ if any of the GPaths are invalid</p>
     <a class="headerlink" href="#GPath.__len__"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__len__-853"><a href="#GPath.__len__-853"><span class="linenos">853</span></a>	<span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 </span><span id="GPath.__len__-854"><a href="#GPath.__len__-854"><span class="linenos">854</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath.__len__-855"><a href="#GPath.__len__-855"><span class="linenos">855</span></a><span class="sd">			Get the number of named path components, excluding any device name or parent directories.</span>
+</span><span id="GPath.__len__-855"><a href="#GPath.__len__-855"><span class="linenos">855</span></a><span class="sd">			Get the number of named path components, excluding any drive name or parent directories.</span>
 </span><span id="GPath.__len__-856"><a href="#GPath.__len__-856"><span class="linenos">856</span></a>
 </span><span id="GPath.__len__-857"><a href="#GPath.__len__-857"><span class="linenos">857</span></a><span class="sd">			Usage: &lt;code&gt;len(&lt;var&gt;g&lt;/var&gt;)&lt;/code&gt;</span>
 </span><span id="GPath.__len__-858"><a href="#GPath.__len__-858"><span class="linenos">858</span></a>
@@ -2888,7 +2888,7 @@ if any of the GPaths are invalid</p>
 
 
     <div class="docstring">
-<p>Get the number of named path components, excluding any device name or parent directories.</p>
+<p>Get the number of named path components, excluding any drive name or parent directories.</p>
 
 <p>Usage: <code>len(<var>g</var>)</code></p>
 
@@ -2919,7 +2919,7 @@ if any of the GPaths are invalid</p>
     <a class="headerlink" href="#GPath.__getitem__"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__getitem__-871"><a href="#GPath.__getitem__-871"><span class="linenos">871</span></a>	<span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 </span><span id="GPath.__getitem__-872"><a href="#GPath.__getitem__-872"><span class="linenos">872</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath.__getitem__-873"><a href="#GPath.__getitem__-873"><span class="linenos">873</span></a><span class="sd">			Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</span>
+</span><span id="GPath.__getitem__-873"><a href="#GPath.__getitem__-873"><span class="linenos">873</span></a><span class="sd">			Get a 0-indexed named path component, or a slice of path components, excluding any drive name or parent directories.</span>
 </span><span id="GPath.__getitem__-874"><a href="#GPath.__getitem__-874"><span class="linenos">874</span></a>
 </span><span id="GPath.__getitem__-875"><a href="#GPath.__getitem__-875"><span class="linenos">875</span></a><span class="sd">			Usage: &lt;code&gt;&lt;var&gt;g&lt;/var&gt;[&lt;var&gt;n&lt;/var&gt;]&lt;/code&gt;, &lt;code&gt;&lt;var&gt;g&lt;/var&gt;[&lt;var&gt;start&lt;/var&gt;:&lt;var&gt;end&lt;/var&gt;]&lt;/code&gt;, &lt;code&gt;&lt;var&gt;g&lt;/var&gt;[&lt;var&gt;start&lt;/var&gt;:&lt;var&gt;end&lt;/var&gt;:&lt;var&gt;step&lt;/var&gt;]&lt;/code&gt;, etc.</span>
 </span><span id="GPath.__getitem__-876"><a href="#GPath.__getitem__-876"><span class="linenos">876</span></a>
@@ -2940,7 +2940,7 @@ if any of the GPaths are invalid</p>
 
 
     <div class="docstring">
-<p>Get a 0-indexed named path component, or a slice of path components, excluding any device name or parent directories.</p>
+<p>Get a 0-indexed named path component, or a slice of path components, excluding any drive name or parent directories.</p>
 
 <p>Usage: <code><var>g</var>[<var>n</var>]</code>, <code><var>g</var>[<var>start</var>:<var>end</var>]</code>, <code><var>g</var>[<var>start</var>:<var>end</var>:<var>step</var>]</code>, etc.</p>
 
@@ -2971,7 +2971,7 @@ if any of the GPaths are invalid</p>
     <a class="headerlink" href="#GPath.__iter__"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__iter__-892"><a href="#GPath.__iter__-892"><span class="linenos">892</span></a>	<span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="GPath.__iter__-893"><a href="#GPath.__iter__-893"><span class="linenos">893</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath.__iter__-894"><a href="#GPath.__iter__-894"><span class="linenos">894</span></a><span class="sd">			Get an iterator through the named path components, excluding any device name or parent directories.</span>
+</span><span id="GPath.__iter__-894"><a href="#GPath.__iter__-894"><span class="linenos">894</span></a><span class="sd">			Get an iterator through the named path components, excluding any drive name or parent directories.</span>
 </span><span id="GPath.__iter__-895"><a href="#GPath.__iter__-895"><span class="linenos">895</span></a>
 </span><span id="GPath.__iter__-896"><a href="#GPath.__iter__-896"><span class="linenos">896</span></a><span class="sd">			Usage: &lt;code&gt;iter(&lt;var&gt;g&lt;/var&gt;)&lt;/code&gt; or &lt;code&gt;for &lt;var&gt;p&lt;/var&gt; in &lt;var&gt;g&lt;/var&gt;:&lt;/code&gt;</span>
 </span><span id="GPath.__iter__-897"><a href="#GPath.__iter__-897"><span class="linenos">897</span></a><span class="sd">		&quot;&quot;&quot;</span>
@@ -2980,7 +2980,7 @@ if any of the GPaths are invalid</p>
 
 
     <div class="docstring">
-<p>Get an iterator through the named path components, excluding any device name or parent directories.</p>
+<p>Get an iterator through the named path components, excluding any drive name or parent directories.</p>
 
 <p>Usage: <code>iter(<var>g</var>)</code> or <code>for <var>p</var> in <var>g</var>:</code></p></div>
 
@@ -3060,9 +3060,9 @@ if any of the GPaths are invalid</p>
 </span><span id="GPath.__add__-926"><a href="#GPath.__add__-926"><span class="linenos">926</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath.__add__-927"><a href="#GPath.__add__-927"><span class="linenos">927</span></a><span class="sd">			Add (concatenate) `other` to the end of `self`, and return a new copy.</span>
 </span><span id="GPath.__add__-928"><a href="#GPath.__add__-928"><span class="linenos">928</span></a>
-</span><span id="GPath.__add__-929"><a href="#GPath.__add__-929"><span class="linenos">929</span></a><span class="sd">			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the device name.</span>
+</span><span id="GPath.__add__-929"><a href="#GPath.__add__-929"><span class="linenos">929</span></a><span class="sd">			If `other` is an absolute path, the returned path will be an absolute path that matches `other`, apart from the drive name.</span>
 </span><span id="GPath.__add__-930"><a href="#GPath.__add__-930"><span class="linenos">930</span></a>
-</span><span id="GPath.__add__-931"><a href="#GPath.__add__-931"><span class="linenos">931</span></a><span class="sd">			If `other` has a device name, the returned path will have the same device name as `other`. Otherwise, the returned path will have the same device name as `self`. If neither has a device name, the returned path will not have a device name as well.</span>
+</span><span id="GPath.__add__-931"><a href="#GPath.__add__-931"><span class="linenos">931</span></a><span class="sd">			If `other` has a drive, the returned path will have the same drive as `other`. Otherwise, the returned path will have the same drive as `self`. If neither has a drive, the returned path will not have a drive as well.</span>
 </span><span id="GPath.__add__-932"><a href="#GPath.__add__-932"><span class="linenos">932</span></a>
 </span><span id="GPath.__add__-933"><a href="#GPath.__add__-933"><span class="linenos">933</span></a><span class="sd">			Alias: `__truediv__()`</span>
 </span><span id="GPath.__add__-934"><a href="#GPath.__add__-934"><span class="linenos">934</span></a>
@@ -3113,9 +3113,9 @@ if any of the GPaths are invalid</p>
     <div class="docstring">
 <p>Add (concatenate) <code>other</code> to the end of <code>self</code>, and return a new copy.</p>
 
-<p>If <code>other</code> is an absolute path, the returned path will be an absolute path that matches <code>other</code>, apart from the device name.</p>
+<p>If <code>other</code> is an absolute path, the returned path will be an absolute path that matches <code>other</code>, apart from the drive name.</p>
 
-<p>If <code>other</code> has a device name, the returned path will have the same device name as <code>other</code>. Otherwise, the returned path will have the same device name as <code>self</code>. If neither has a device name, the returned path will not have a device name as well.</p>
+<p>If <code>other</code> has a drive, the returned path will have the same drive as <code>other</code>. Otherwise, the returned path will have the same drive as <code>self</code>. If neither has a drive, the returned path will not have a drive as well.</p>
 
 <p>Alias: <code><a href="#GPath.__truediv__">__truediv__()</a></code></p>
 
