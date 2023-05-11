@@ -925,26 +925,50 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
-		('gpath1', 'expected_gpath'),
+		('gpath1', 'parent_level', 'expected_gpath'),
 		[
-			("/", ""),
-			("/a/b", "a/b"),
-			("", ""),
-			("a/b", "a/b"),
-			("..", ".."),
-			("../a/b", "../a/b"),
-			("C:/", "C:"),
-			("C:/a/b", "C:a/b"),
-			("C:", "C:"),
-			("C:a/b", "C:a/b"),
+			("/", None, ""),
+			("/", 0, ""),
+			("/", 2, "../.."),
+			("/a/b", None, "a/b"),
+			("/a/b", 0, "a/b"),
+			("/a/b", 2, "../../a/b"),
+
+			("", None, ""),
+			("", 0, ""),
+			("", 2, "../.."),
+			("a/b", None, "a/b"),
+			("a/b", 0, "a/b"),
+			("a/b", 2, "../../a/b"),
+
+			("..", None, ".."),
+			("..", 0, ""),
+			("..", 2, "../.."),
+			("../a/b", None, "../a/b"),
+			("../a/b", 0, "a/b"),
+			("../a/b", 2, "../../a/b"),
+
+			("C:/", None, "C:"),
+			("C:/", 0, "C:"),
+			("C:/", 2, "C:../.."),
+			("C:/a/b", None, "C:a/b"),
+			("C:/a/b", 0, "C:a/b"),
+			("C:/a/b", 2, "C:../../a/b"),
+
+			("C:", None, "C:"),
+			("C:", 0, "C:"),
+			("C:", 2, "C:../.."),
+			("C:a/b", None, "C:a/b"),
+			("C:a/b", 0, "C:a/b"),
+			("C:a/b", 2, "C:../../a/b"),
 		],
 		indirect=['gpath1', 'expected_gpath']
 	)
-	def test_as_relative(self, gpath1: GPath, expected_gpath: GPath):
+	def test_as_relative(self, gpath1: GPath, parent_level: int, expected_gpath: GPath):
 		"""
 			Test `as_relative()`.
 		"""
-		result = gpath1.as_relative()
+		result = gpath1.as_relative(parent_level)
 		assert result == expected_gpath
 
 

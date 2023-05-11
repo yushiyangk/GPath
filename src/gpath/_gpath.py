@@ -448,11 +448,18 @@ class GPath(Hashable):
 		return combined_path
 
 
-	def as_relative(self) -> GPath:
+	def as_relative(self, parent_level: Optional[int]=None) -> GPath:
 		"""
 			Convert the path to a relative path and return a new copy.
 
-			If the path is already relative, an identical copy is returned.
+			Parameters
+			----------
+			`parent_level`
+			: the number of levels of parent directories that the returned path should be relative to, which may be 0. If set to None, the returned path will have the same parent level as the current path if it is currently a relative path, or have no parent level (i.e. 0) otherwise.
+
+			Raises
+			------
+			`TypeError` if `parent_level` is not a valid type
 
 			Examples
 			--------
@@ -462,8 +469,16 @@ class GPath(Hashable):
 			GPath("../Documents").as_relative()  # GPath("../Documents")
 			```
 		"""
+
 		new_path = GPath(self)
 		new_path._root = False
+		if parent_level is None:
+			pass
+		elif isinstance(parent_level, int):
+			new_path._parent_level = parent_level
+		else:
+			raise TypeError(f"parent_level must be an int: {parent_level} ({type(parent_level)})")
+
 		return new_path
 
 
