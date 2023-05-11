@@ -94,10 +94,8 @@ class GPath(Hashable):
 
 	__slots__ = (
 		'_parts',
-		'_namespace',
 		'_root',
 		'_drive',
-		'_anchor',
 		'_parent_level',
 		'_encoding',
 	)
@@ -129,10 +127,8 @@ class GPath(Hashable):
 		"""
 
 		self._parts: tuple[str, ...] = tuple()  # root- or parent- relative path
-		self._namespace: tuple[str, ...] = tuple()
 		self._root: bool = False
 		self._drive: str = ""
-		self._anchor: str = ""
 		self._parent_level: int = 0
 
 		self._encoding: Optional[str] = encoding
@@ -143,10 +139,8 @@ class GPath(Hashable):
 		if isinstance(path, GPath):
 			path._validate()
 			self._parts = path._parts
-			self._namespace = path._namespace
 			self._root = path._root
 			self._drive = path._drive
-			self._anchor = path._anchor
 			self._parent_level = path._parent_level
 
 			self._encoding = path._encoding if encoding is None else encoding
@@ -1121,8 +1115,6 @@ class GPath(Hashable):
 			self._root,
 			self._drive,
 			self._parent_level,
-			self._anchor,
-			self._namespace,
 			self._parts,
 		)
 
@@ -1131,10 +1123,8 @@ class GPath(Hashable):
 	def _order(self) -> tuple:
 		# Get a tuple that represents the ordering of the class
 		return (
-			self._namespace,
 			self._root,  # relative before absolute
 			self._drive,  # no device before devices
-			self._anchor,
 			self._parent_level,  # no parent before low parent before high parent
 			self._parts  # empty before few components before many components
 		)
