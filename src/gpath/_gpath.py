@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence
+from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, Sized
 from typing import Any, overload
 
 from . import _rules
@@ -81,7 +81,7 @@ def _normalise_relative(
 	return output
 
 
-class GPath(Hashable):
+class GPath(Hashable, Sized, Iterable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
 

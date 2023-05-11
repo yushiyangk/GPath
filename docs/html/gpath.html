@@ -244,14 +244,14 @@ gpath    </h1>
 <div class="attr class">
             
     <span class="def">class</span>
-    <span class="name">GPath</span><wbr>(<span class="base">Hashable</span>):
+    <span class="name">GPath</span><wbr>(<span class="base">Hashable</span>, <span class="base">Sized</span>, <span class="base">Iterable</span>):
 
 
                 <label class="view-source-button" for="GPath-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#GPath"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GPath-85"><a href="#GPath-85"><span class="linenos">  85</span></a><span class="k">class</span> <span class="nc">GPath</span><span class="p">(</span><span class="n">Hashable</span><span class="p">):</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GPath-85"><a href="#GPath-85"><span class="linenos">  85</span></a><span class="k">class</span> <span class="nc">GPath</span><span class="p">(</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Sized</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
 </span><span id="GPath-86"><a href="#GPath-86"><span class="linenos">  86</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-87"><a href="#GPath-87"><span class="linenos">  87</span></a><span class="sd">		An immutable generalised abstract file path that has no dependency on any real filesystem.</span>
 </span><span id="GPath-88"><a href="#GPath-88"><span class="linenos">  88</span></a>
@@ -3456,6 +3456,10 @@ if any of the GPaths are invalid</p>
                                 <dl>
                                     <div><dt>collections.abc.Hashable</dt>
                                 <dd id="GPath.__subclasshook__" class="function">__subclasshook__</dd>
+
+            </div>
+            <div><dt>collections.abc.Iterable</dt>
+                                <dd id="GPath.__class_getitem__" class="function">__class_getitem__</dd>
 
             </div>
             <div><dt>builtins.object</dt>
