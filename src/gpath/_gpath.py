@@ -11,7 +11,6 @@ from typing import Any, ClassVar, Generator, overload
 
 from . import _rules
 from .pathtype import PathType
-from ._rules import _PathValidator, _PathValidity
 
 
 from ._compat import Final, Optional, Union
@@ -113,9 +112,6 @@ class GPath(Hashable):
 		'_parent_level',
 		'_encoding',
 		'_target_type',
-		'_root_validity',
-		'_part_validities',
-		'_namespace_validities',
 	)
 
 	_separator: ClassVar[str] = _LOCAL_SEPARATOR
@@ -159,9 +155,6 @@ class GPath(Hashable):
 
 		self._encoding: Optional[str] = encoding
 		self._target_type: PathType = PathType.GENERIC
-		self._root_validity: _PathValidity = _PathValidity.NONE
-		self._part_validities: tuple[_PathValidity, ...] = tuple()
-		self._namespace_validities: tuple[_PathValidity, ...] = tuple()
 
 		if path is None or path == "":
 			return
@@ -176,9 +169,6 @@ class GPath(Hashable):
 			self._parent_level = path._parent_level
 
 			self._encoding = path._encoding if encoding is None else encoding
-			self._root_validity = path._root_validity
-			self._part_validities = path._part_validities
-			self._namespace_validities = path._namespace_validities
 			return
 
 		path = os.fspath(path)
@@ -191,54 +181,16 @@ class GPath(Hashable):
 
 		# path is a str
 
-		#if path.startswith(_WIN32_FILE_PREFIX):
-		#	self._validities = _PathValidity.WIN32_FILE
-		#	self._parts = tuple(_split_path(path[len(_WIN32_FILE_PREFIX):], delimiter=_WIN32_API_SEPARATOR, collapse=False))
-		#	self._root = _WIN32_FILE_PREFIX
-		#	return
-
-		#if path.startswith(_WIN32_DEVICE_PREFIX):
-		#	self._validities = _PathValidity.WIN32_DEVICE
-		#	parts = _split_path(path[len(_WIN32_DEVICE_PREFIX):], delimiter=_WIN32_API_SEPARATOR)
-		#	self._parts = tuple(_normalise_relative(parts))
-		#	self._root = _WIN32_DEVICE_PREFIX
-		#	return
-
-		#if path.startswith(_NT_OBJECT_PREFIX):
-		#	self._validities = _PathValidity.NT_OBJECT | _PathValidity.NT_API
-		#	parts = _split_path(path[len(_NT_OBJECT_PREFIX):], delimiter=_NT_API_SEPARATOR)
-		#	self._parts = tuple(_normalise_relative(parts))
-		#	self._root = _NT_OBJECT_PREFIX
-		#	return
-
-		# path is POSIX, POSIX_PORTABLE, MSDOS, WINDOWS_NT, UNC or NT_API
-		#root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.MSDOS | _PathValidity.WINDOWS_NT | _PathValidity.UNC | _PathValidity.NT_API
-		root_validity = _PathValidity.POSIX | _PathValidity.POSIX_PORTABLE | _PathValidity.WINDOWS_NT | _PathValidity.UNC
-
-		if path.startswith(_rules._unc_rules.roots[0]):
-			root_validity = _PathValidity.UNC
-			self._root = True
-			parts = _split_relative(path[len(_rules._unc_rules.roots[0]):], delimiters=_rules._unc_rules.separators)
-			if len(parts) < 2:
-				root_validity &= ~_PathValidity.UNC
-			self._drive = _rules._unc_rules.separators[0].join(parts[:2])
-			self._parts = tuple(parts[2:])
-			return
-
 		if len(path) >= 2 and path[1] in _rules._windows_nt_rules.drive_postfixes:
-			#validities &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC & ~_PathValidity.NT_API
-			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE & ~_PathValidity.UNC
 			self._drive = path[0]
 			deviceless_path = path[2:]
 		else:
 			deviceless_path = path
 
 		if deviceless_path.startswith(_rules._windows_nt_rules.roots[0]):
-			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
 			self._root = True
 
 		if deviceless_path.startswith(_rules._posix_rules.roots[0]):
-			#validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
 			self._root = True
 
 		if self._root:
@@ -246,15 +198,11 @@ class GPath(Hashable):
 		else:
 			rootless_path = deviceless_path
 
-		if _rules._windows_nt_rules.separators[0] in rootless_path:
-			root_validity &= ~_PathValidity.POSIX & ~_PathValidity.POSIX_PORTABLE
-		#if _POSIX_SEPARATOR in rootless_path:
-		#	validities &= ~_PathValidity.MSDOS & ~_PathValidity.NT_API
 
 		parts = _split_relative(rootless_path, delimiters=(set(_rules._windows_nt_rules.separators) | set(_rules._posix_rules.separators)))
 		parts = _normalise_relative(parts)
 		parent_level = 0
-		while parent_level < len(parts) and parts[parent_level] == _rules._COMMON_PARENT_INDICATOR:
+		while parent_level < len(parts) and parts[parent_level] in _rules._generic_rules.parent_indicators:
 			parent_level += 1
 		self._parts = tuple(parts[parent_level:])
 		if self._root == False:

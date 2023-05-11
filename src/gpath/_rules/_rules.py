@@ -1,16 +1,30 @@
-from ._common import _GenericValidator, _PathValidator
-from ._posix import _PosixPortableValidator, _PosixValidator
-from ._windows import _UNCValidator, _WindowsNTValidator
+from typing import Type
+from ._common import _COMMON_DRIVE_POSTFIX, _COMMON_CURRENT_INDICATOR, _COMMON_PARENT_INDICATOR
 from ..pathtype import PathType
 
 from .._compat import Final
 
 
-_generic_rules = _GenericValidator()
-_posix_rules = _PosixValidator()
-_posix_portable_rules = _PosixPortableValidator()
-_windows_nt_rules = _WindowsNTValidator()
-_unc_rules = _UNCValidator()
+class UnvalidatedRules:
+	pass
+
+class _generic_rules(UnvalidatedRules):
+	drive_postfixes: Final = [_COMMON_DRIVE_POSTFIX]
+	current_indicators: Final = [_COMMON_CURRENT_INDICATOR]
+	parent_indicators: Final = [_COMMON_PARENT_INDICATOR]
+
+class _posix_rules(_generic_rules):
+	roots: Final = ["/"]
+	separators: Final = ["/"]
+
+class _posix_portable_rules(_generic_rules):
+	roots: Final = ["/"]
+	separators: Final = ["/"]
+
+class _windows_nt_rules(_generic_rules):
+	roots: Final = ["\\", "/"]
+	separators: Final = ["\\", "/"]
+	drive_postfixes: Final = [":"]
 
 
 _type_rules: Final = {
@@ -18,9 +32,8 @@ _type_rules: Final = {
 	PathType.POSIX: _posix_rules,
 	PathType.POSIX_PORTABLE: _posix_portable_rules,
 	PathType.WINDOWS_NT: _windows_nt_rules,
-	PathType.UNC: _unc_rules,
 }
 
 
-def _from_type(type: PathType) -> _PathValidator:
+def _from_type(type: PathType) -> Type[UnvalidatedRules]:
 	return _type_rules[type]
