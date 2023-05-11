@@ -4,6 +4,10 @@ This project follows [PEP 440](https://peps.python.org/pep-0440/) and [Semantic 
 
 The recommended version specifier is <code>generic-path ~= <var>x</var>.<var>y</var></code> for version 1.0 and later, and <code>generic-path ~= <var>0</var>.<var>y</var>.<var>z</var></code> for versions prior to 1.0.
 
+### 0.4.3
+
+- Fixed support for bytes in older versions of Python
+
 ### 0.4.1, 0.4.2
 
 - Fixed documentation and readme
