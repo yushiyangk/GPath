@@ -27,7 +27,7 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, bytes) or isinstance(obj, os.PathLike)
 
 
-DEFAULT_TYPE: Final = Platform.GENERIC
+DEFAULT_PLATFORM: Final = Platform.GENERIC
 DEFAULT_ENCODING: Final = 'utf_8'
 
 
@@ -897,7 +897,7 @@ class GPath(Hashable, Sized, Iterable):
 			Usage: <code>str(<var>g</var>)</code>
 		"""
 		if self._platform is None:
-			platform = DEFAULT_TYPE
+			platform = DEFAULT_PLATFORM
 		else:
 			platform = self._platform
 
