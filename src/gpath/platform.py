@@ -34,9 +34,6 @@ platform_names: dict[str, Platform] = {
 	'posix': Platform.POSIX,
 	'linux': Platform.POSIX,
 	'macos': Platform.POSIX,
-	'osx': Platform.POSIX,
-	'win': Platform.WINDOWS,
-	'nt': Platform.WINDOWS,
 }
 """Valid platform names and the Platform enum that they map to"""
 

@@ -356,6 +356,46 @@ class GPath(Hashable, Sized, Iterable):
 		return str(self._platform) if self._platform is not None else None
 
 
+	@staticmethod
+	def from_posix(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Initialise a GPath that originates from a POSIX-like operating system, or copy a GPath such that any future non-GPath operands would be interpreted as originating from a POSIX-like operating system.
+
+			See `__init__()` for details.
+
+			Equivalent to `GPath(path, platform='posix')`
+			```
+		"""
+		return GPath(path, platform=Platform.POSIX, encoding=encoding)
+
+	@staticmethod
+	def from_linux(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Alias of `from_posix()`
+		"""
+		return GPath.from_posix(path, encoding=encoding)
+
+	@staticmethod
+	def from_macos(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Alias of `from_posix()`
+		"""
+		return GPath.from_posix(path, encoding=encoding)
+
+
+	@staticmethod
+	def from_windows(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Initialise a GPath that originates from a Windows operating system, or copy a GPath such that any future non-GPath operands would be interpreted as originating from a Windows operating system.
+
+			See `__init__()` for details.
+
+			Equivalent to `GPath(path, platform='windows')`
+			```
+		"""
+		return GPath(path, platform=Platform.WINDOWS, encoding=encoding)
+
+
 	#@overload
 	#@staticmethod
 	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, platform, encoding) -> dict[GPath, list[GPath]]:
