@@ -10,6 +10,7 @@ from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, 
 from typing import Any, overload
 
 from . import _rules
+from .pathtype import PathType
 
 
 from ._compat import Final, Optional, Union
@@ -26,6 +27,7 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, bytes) or isinstance(obj, os.PathLike)
 
 
+DEFAULT_TYPE: Final = PathType.GENERIC
 DEFAULT_ENCODING: Final = 'utf_8'
 
 
@@ -96,11 +98,16 @@ class GPath(Hashable, Sized, Iterable):
 		'_root',
 		'_drive',
 		'_parent_level',
+		'_platform',
 		'_encoding',
 	)
 
 
-	def __init__(self, path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None):
+	def __init__(self,
+		path: Union[str, bytes, os.PathLike, GPath, None]="",
+		platform: Optional[Union[str, PathType]]=None,
+		encoding: Optional[str]=None,
+	):
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -109,8 +116,11 @@ class GPath(Hashable, Sized, Iterable):
 			`path`
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
+			`​platform`
+			: interpret `path` as originating from a specific platform. This is usually not required for normal file paths on Windows, Linux or macOS, and is needed only for edge cases (see [compatibility](https://github.com/yushiyangk/gpath#compatibility) in the readme). If `path` is a GPath, this argument has no effect. The platform name should be one of the keys in `gpath.pathtype.path_types`. If specified, the platform will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the platform specified by the left operand will be propagated.
+
 			`​encoding`
-			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
+			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The encoding name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. If specified, the encoding will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the encoding specified by the left operand will be propagated.
 
 			Raises
 			------
@@ -130,6 +140,7 @@ class GPath(Hashable, Sized, Iterable):
 		self._drive: str = ""
 		self._parent_level: int = 0
 
+		self._platform: Optional[PathType] = PathType.from_str(platform) if isinstance(platform, str) else platform
 		self._encoding: Optional[str] = encoding
 
 		if path is None or path == "":
@@ -142,7 +153,8 @@ class GPath(Hashable, Sized, Iterable):
 			self._drive = path._drive
 			self._parent_level = path._parent_level
 
-			self._encoding = path._encoding if encoding is None else encoding
+			self._platform = path._platform
+			self._encoding = path._encoding
 			return
 
 		path = os.fspath(path)
@@ -155,23 +167,66 @@ class GPath(Hashable, Sized, Iterable):
 
 		# path is a str
 
-		if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
-			self._drive = path[0]
-			driveless_path = path[2:]
+		if self._platform is None:
+			platform = PathType.GENERIC
 		else:
-			driveless_path = path
+			platform = self._platform
 
-		for root in _rules.generic_rules.roots:
-			if driveless_path.startswith(root):
-				self._root = True
-				break
+		if platform == PathType.GENERIC:
+			if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
+				self._drive = path[0]
+				driveless_path = path[2:]
+			else:
+				driveless_path = path
 
-		if self._root:
-			rootless_path = driveless_path[1:]
+			for root in _rules.generic_rules.roots:
+				if driveless_path.startswith(root):
+					self._root = True
+					break
+
+			if self._root:
+				rootless_path = driveless_path[1:]
+			else:
+				rootless_path = driveless_path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.generic_rules.separators)
+
+		elif platform == PathType.POSIX:
+			for root in _rules.posix_rules.roots:
+				if path.startswith(root):
+					self._root = True
+					break
+
+			if self._root:
+				rootless_path = path[1:]
+			else:
+				rootless_path = path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.posix_rules.separators)
+
+		elif platform == PathType.WINDOWS_NT:
+			if len(path) >= 2 and path[1] in _rules.windows_nt_rules.drive_postfixes:
+				self._drive = path[0]
+				driveless_path = path[2:]
+			else:
+				driveless_path = path
+
+			for root in _rules.windows_nt_rules.roots:
+				if driveless_path.startswith(root):
+					self._root = True
+					break
+
+			if self._root:
+				rootless_path = driveless_path[1:]
+			else:
+				rootless_path = driveless_path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.windows_nt_rules.separators)
+
 		else:
-			rootless_path = driveless_path
+			# This should never happen
+			raise ValueError(f"invalid platform PathType: {platform}")
 
-		parts = _split_relative(rootless_path, delimiters=_rules.generic_rules.separators)
 		parts = _normalise_relative(parts)
 		parent_level = 0
 		while parent_level < len(parts) and parts[parent_level] in _rules.generic_rules.parent_indicators:
@@ -299,14 +354,20 @@ class GPath(Hashable, Sized, Iterable):
 
 	#@overload
 	#@staticmethod
-	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, platform, encoding) -> dict[GPath, list[GPath]]:
 	#	...
 	#@overload
 	#@staticmethod
-	#def partition(*paths: GPathLike, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#def partition(*paths: GPathLike, allow_current, allow_parents, platform, encoding) -> dict[GPath, list[GPath]]:
 	#	...
 	@staticmethod
-	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: Optional[str]=None) -> dict[GPath, list[GPath]]:
+	def partition(
+		*paths,
+		allow_current: bool=True,
+		allow_parents: bool=True,
+		platform: Optional[Union[str, PathType]]=None,
+		encoding: Optional[str]=None,
+	) -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
@@ -324,6 +385,9 @@ class GPath(Hashable, Sized, Iterable):
 
 			`allow_parents`
 			: whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `common_with()`). **Warning**: when set to True, the output lists for each partition are invalidated, and explicitly set to empty. This is because it is not possible in general to obtain a relative path from the base path to its members if the base path is a parent directory of a higher level than the member (see `relpath_from()`). This  option should be True if and only if the list of members in each partition are not of interest; in most cases False is more appropriate.
+
+			`​platform`
+			: the originating platform that should be assumed when interpreting non-GPath objects in `paths`, if any (see `__init__()`).
 
 			`​encoding`
 			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
@@ -355,7 +419,7 @@ class GPath(Hashable, Sized, Iterable):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
-		gpaths = [path if isinstance(path, GPath) else GPath(path, encoding=encoding) for path in flattened_paths]
+		gpaths = [path if isinstance(path, GPath) else GPath(path, encoding=encoding, platform=platform) for path in flattened_paths]
 
 		partition_map = {}
 		if len(gpaths) > 0:
@@ -390,14 +454,14 @@ class GPath(Hashable, Sized, Iterable):
 
 	#@overload
 	#@staticmethod
-	#def join(paths: Iterable[GPathLike], /, *, encoding) -> GPath:
+	#def join(paths: Iterable[GPathLike], /, *, platform, encoding) -> GPath:
 	#	...
 	#@overload
 	#@staticmethod
-	#def join(*paths: GPathLike, encoding) -> GPath:
+	#def join(*paths: GPathLike, platform, encoding) -> GPath:
 	#	...
 	@staticmethod
-	def join(*paths, encoding: Optional[str]=None) -> GPath:
+	def join(*paths, platform: Optional[Union[str, PathType]]=None, encoding: Optional[str]=None) -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
@@ -405,6 +469,9 @@ class GPath(Hashable, Sized, Iterable):
 			----------
 			`paths`: `Sequence[GPath | str | bytes | os.PathLike]` or `*paths: GPath | str | bytes | os.PathLike`
 			: the paths to be combined, which can be given as either a list-like object or as variadic arguments
+
+			`​platform`
+			: the originating platform that should be assumed when interpreting non-GPath objects in `paths`, if any (see `__init__()`).
 
 			`​encoding`
 			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
@@ -433,11 +500,11 @@ class GPath(Hashable, Sized, Iterable):
 				flattened_paths.extend(path_or_list)
 
 		if len(flattened_paths) == 0:
-			return GPath(encoding=encoding)
+			return GPath(encoding=encoding, platform=platform)
 
 		combined_path = flattened_paths[0]
 		if not isinstance(combined_path, GPath):
-			combined_path = GPath(combined_path, encoding=encoding)
+			combined_path = GPath(combined_path, encoding=encoding, platform=platform)
 		for path in flattened_paths[1:]:
 			combined_path = combined_path + path
 
@@ -1118,6 +1185,7 @@ class GPath(Hashable, Sized, Iterable):
 			self._drive,
 			self._parent_level,
 			self._parts,
+			self._platform,
 			self._encoding,
 		)
 
