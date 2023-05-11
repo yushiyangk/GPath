@@ -299,12 +299,14 @@ class GPath(Hashable, Sized, Iterable):
 		return self._encoding
 
 
-	@overload
-	def partition(paths: Iterable[GPathLike], **kwargs) -> dict[GPath, list[GPath]]:
-		...
-	@overload
-	def partition(*paths: GPathLike, **kwargs) -> dict[GPath, list[GPath]]:
-		...
+	#@overload
+	#@staticmethod
+	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#	...
+	#@overload
+	#@staticmethod
+	#def partition(*paths: GPathLike, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#	...
 	@staticmethod
 	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: Optional[str]=None) -> dict[GPath, list[GPath]]:
 		"""
@@ -388,12 +390,14 @@ class GPath(Hashable, Sized, Iterable):
 		return partition_map
 
 
-	@overload
-	def join(paths: Iterable[GPathLike], **kwargs) -> GPath:
-		...
-	@overload
-	def join(*paths: GPathLike, **kwargs) -> GPath:
-		...
+	#@overload
+	#@staticmethod
+	#def join(paths: Iterable[GPathLike], /, *, encoding) -> GPath:
+	#	...
+	#@overload
+	#@staticmethod
+	#def join(*paths: GPathLike, encoding) -> GPath:
+	#	...
 	@staticmethod
 	def join(*paths, encoding: Optional[str]=None) -> GPath:
 		"""
