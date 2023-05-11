@@ -23,11 +23,10 @@ if sys.version_info >= (3, 10):
 		return isinstance(obj, GPathLike)
 else:
 	def _is_gpathlike(obj: Any) -> bool:
-		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, os.PathLike)
+		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, bytes) or isinstance(obj, os.PathLike)
 
 
-DEFAULT_ENCODING: Final = 'utf-8'
-
+DEFAULT_ENCODING: Final = 'utf_8'
 
 
 def _split_relative(
@@ -111,7 +110,7 @@ class GPath(Hashable, Sized, Iterable):
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
 			`​encoding`
-			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf-8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
+			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
 
 			Raises
 			------
