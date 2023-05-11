@@ -57,6 +57,22 @@ assert partitions == {
 
 Found a bug? Please [file an issue](https://github.com/yushiyangk/GPath/issues), or, better yet, [submit a pull request](https://github.com/yushiyangk/GPath/pulls).
 
+## Compatibility
+
+The default `GPath()` interface supports the vast majority of valid file paths on Windows, Linux and macOS (and other POSIX-like operating systems), with some limited caveats.
+
+### Linux, MacOS and POSIX
+
+Using `GPath()`,
+- any backslashes `\` in the path will be treated as path separators
+- if the second character of the path is a colon <code><var>x</var>:</code>, the first character <var>`x`</var> will be treated as a drive letter
+
+### Windows and MS-DOS
+
+Using `GPath()`,
+- any trailing dots `.` and spaces ` ` will not be stripped
+- reserved MS-DOS device names (such as AUX, CLOCK$, COM0 through COM9, CON, LPT0 through LPT9, NUL, PRN) will be treated as normal file names
+
 ## Development
 
 Clone the repository with `git clone https://github.com/yushiyangk/GPath.git`.
