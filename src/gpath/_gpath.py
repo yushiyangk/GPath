@@ -85,9 +85,9 @@ class GPath(Hashable, Sized, Iterable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
 
-		The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform. Since GPath objects are immutable, all operations return a new instance.
+		The path can be manipulated on a system that is different from where it originated, notably including systems with a different operating system, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform.
 
-		The path is always stored in a normalised state, and is always treated as case sensitive.
+		Since GPath objects are immutable, all operations return a new instance. The path is always stored in a normalised state, and is always treated as case sensitive.
 
 		The path can be rendered as a string using <code>str(<var>g</var>)</code>, which will use `/` as the path separator if possible to maximise cross-platform compatibility.
 	"""
@@ -216,7 +216,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def parent_parts(self) -> list[str]:
 		"""
-			Read-only path components representing a parent directory that it is relative to, if any, with a copy of `parent_indicator` for each level of parent directory
+			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory
 
 			Examples
 			--------
@@ -230,7 +230,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def relative_parts(self) -> list[str]:
 		"""
-			Read-only relative components of the path, not including the filesystem root or drive name, with a copy of `parent_indicator` for each level of parent directory
+			Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory
 
 			Examples
 			--------
@@ -294,7 +294,7 @@ class GPath(Hashable, Sized, Iterable):
 	@property
 	def encoding(self) -> Union[str, None]:
 		"""
-			Read-only encoding used to decode other paths that are given as bytes-like objects
+			Read-only encoding used to decode other paths that are given as bytes-like objects, or None if the default should be used
 		"""
 		return self._encoding
 

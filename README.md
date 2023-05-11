@@ -66,9 +66,9 @@ The default `GPath()` interface supports the vast majority of valid file paths o
 - any backslashes `\` in the path will be treated as path separators
 - if the second character of the path is a colon <code><var>x</var>:</code>, the first character <var>`x`</var> will be treated as a drive letter
 
-### Windows and MS-DOS
+### Windows
 
-- any trailing dots `.` and spaces ` ` will not be stripped
+- trailing dots `.` and spaces ` ` will not be stripped
 - reserved MS-DOS device names (such as AUX, CLOCK$, COM0 through COM9, CON, LPT0 through LPT9, NUL, PRN) will be treated as normal file names
 
 ## Development

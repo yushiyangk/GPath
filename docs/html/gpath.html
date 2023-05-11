@@ -232,7 +232,7 @@ gpath    </h1>
 
                         <label class="view-source-button" for="mod-gpath-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.4.1&#39;</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.4.2&#39;</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="kn">from</span> <span class="nn">._gpath</span> <span class="kn">import</span> <span class="n">GPath</span><span class="p">,</span> <span class="n">GPathLike</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a>
@@ -257,9 +257,9 @@ gpath    </h1>
 </span><span id="GPath-86"><a href="#GPath-86"><span class="linenos">  86</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-87"><a href="#GPath-87"><span class="linenos">  87</span></a><span class="sd">		An immutable generalised abstract file path that has no dependency on any real filesystem.</span>
 </span><span id="GPath-88"><a href="#GPath-88"><span class="linenos">  88</span></a>
-</span><span id="GPath-89"><a href="#GPath-89"><span class="linenos">  89</span></a><span class="sd">		The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform. Since GPath objects are immutable, all operations return a new instance.</span>
+</span><span id="GPath-89"><a href="#GPath-89"><span class="linenos">  89</span></a><span class="sd">		The path can be manipulated on a system that is different from where it originated, notably including systems with a different operating system, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform.</span>
 </span><span id="GPath-90"><a href="#GPath-90"><span class="linenos">  90</span></a>
-</span><span id="GPath-91"><a href="#GPath-91"><span class="linenos">  91</span></a><span class="sd">		The path is always stored in a normalised state, and is always treated as case sensitive.</span>
+</span><span id="GPath-91"><a href="#GPath-91"><span class="linenos">  91</span></a><span class="sd">		Since GPath objects are immutable, all operations return a new instance. The path is always stored in a normalised state, and is always treated as case sensitive.</span>
 </span><span id="GPath-92"><a href="#GPath-92"><span class="linenos">  92</span></a>
 </span><span id="GPath-93"><a href="#GPath-93"><span class="linenos">  93</span></a><span class="sd">		The path can be rendered as a string using &lt;code&gt;str(&lt;var&gt;g&lt;/var&gt;)&lt;/code&gt;, which will use `/` as the path separator if possible to maximise cross-platform compatibility.</span>
 </span><span id="GPath-94"><a href="#GPath-94"><span class="linenos">  94</span></a><span class="sd">	&quot;&quot;&quot;</span>
@@ -388,7 +388,7 @@ gpath    </h1>
 </span><span id="GPath-217"><a href="#GPath-217"><span class="linenos"> 217</span></a>	<span class="nd">@property</span>
 </span><span id="GPath-218"><a href="#GPath-218"><span class="linenos"> 218</span></a>	<span class="k">def</span> <span class="nf">parent_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="GPath-219"><a href="#GPath-219"><span class="linenos"> 219</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-220"><a href="#GPath-220"><span class="linenos"> 220</span></a><span class="sd">			Read-only path components representing a parent directory that it is relative to, if any, with a copy of `parent_indicator` for each level of parent directory</span>
+</span><span id="GPath-220"><a href="#GPath-220"><span class="linenos"> 220</span></a><span class="sd">			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory</span>
 </span><span id="GPath-221"><a href="#GPath-221"><span class="linenos"> 221</span></a>
 </span><span id="GPath-222"><a href="#GPath-222"><span class="linenos"> 222</span></a><span class="sd">			Examples</span>
 </span><span id="GPath-223"><a href="#GPath-223"><span class="linenos"> 223</span></a><span class="sd">			--------</span>
@@ -402,7 +402,7 @@ gpath    </h1>
 </span><span id="GPath-231"><a href="#GPath-231"><span class="linenos"> 231</span></a>	<span class="nd">@property</span>
 </span><span id="GPath-232"><a href="#GPath-232"><span class="linenos"> 232</span></a>	<span class="k">def</span> <span class="nf">relative_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="GPath-233"><a href="#GPath-233"><span class="linenos"> 233</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-234"><a href="#GPath-234"><span class="linenos"> 234</span></a><span class="sd">			Read-only relative components of the path, not including the filesystem root or drive name, with a copy of `parent_indicator` for each level of parent directory</span>
+</span><span id="GPath-234"><a href="#GPath-234"><span class="linenos"> 234</span></a><span class="sd">			Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory</span>
 </span><span id="GPath-235"><a href="#GPath-235"><span class="linenos"> 235</span></a>
 </span><span id="GPath-236"><a href="#GPath-236"><span class="linenos"> 236</span></a><span class="sd">			Examples</span>
 </span><span id="GPath-237"><a href="#GPath-237"><span class="linenos"> 237</span></a><span class="sd">			--------</span>
@@ -466,7 +466,7 @@ gpath    </h1>
 </span><span id="GPath-295"><a href="#GPath-295"><span class="linenos"> 295</span></a>	<span class="nd">@property</span>
 </span><span id="GPath-296"><a href="#GPath-296"><span class="linenos"> 296</span></a>	<span class="k">def</span> <span class="nf">encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 </span><span id="GPath-297"><a href="#GPath-297"><span class="linenos"> 297</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="GPath-298"><a href="#GPath-298"><span class="linenos"> 298</span></a><span class="sd">			Read-only encoding used to decode other paths that are given as bytes-like objects</span>
+</span><span id="GPath-298"><a href="#GPath-298"><span class="linenos"> 298</span></a><span class="sd">			Read-only encoding used to decode other paths that are given as bytes-like objects, or None if the default should be used</span>
 </span><span id="GPath-299"><a href="#GPath-299"><span class="linenos"> 299</span></a><span class="sd">		&quot;&quot;&quot;</span>
 </span><span id="GPath-300"><a href="#GPath-300"><span class="linenos"> 300</span></a>		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
 </span><span id="GPath-301"><a href="#GPath-301"><span class="linenos"> 301</span></a>
@@ -1306,9 +1306,9 @@ gpath    </h1>
     <div class="docstring">
 <p>An immutable generalised abstract file path that has no dependency on any real filesystem.</p>
 
-<p>The path can be manipulated on a system that is different from where it originated, particularly with a different operating environment, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform. Since GPath objects are immutable, all operations return a new instance.</p>
+<p>The path can be manipulated on a system that is different from where it originated, notably including systems with a different operating system, and it can represent file paths on a system other than local. Examples where this is useful include remote management of servers and when cross-compiling source code for a different platform.</p>
 
-<p>The path is always stored in a normalised state, and is always treated as case sensitive.</p>
+<p>Since GPath objects are immutable, all operations return a new instance. The path is always stored in a normalised state, and is always treated as case sensitive.</p>
 
 <p>The path can be rendered as a string using <code>str(<var>g</var>)</code>, which will use <code>/</code> as the path separator if possible to maximise cross-platform compatibility.</p></div>
 
@@ -1339,11 +1339,11 @@ gpath    </h1>
 	<dt><span class="name"><a href="#GPath.parent_parts">parent_parts</a></span><span class="annotation">: list[str]</span></dt>
 
 <dd>
-<p>Read-only path components representing a parent directory that it is relative to, if any, with a copy of <code>parent_indicator</code> for each level of parent directory</p></dd>
+<p>Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory</p></dd>
 	<dt><span class="name"><a href="#GPath.relative_parts">relative_parts</a></span><span class="annotation">: list[str]</span></dt>
 
 <dd>
-<p>Read-only relative components of the path, not including the filesystem root or drive name, with a copy of <code>parent_indicator</code> for each level of parent directory</p></dd>
+<p>Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory</p></dd>
 	<dt><span class="name"><a href="#GPath.drive">drive</a></span><span class="annotation">: str</span></dt>
 
 <dd>
@@ -1359,7 +1359,7 @@ gpath    </h1>
 	<dt><span class="name"><a href="#GPath.encoding">encoding</a></span><span class="annotation">: Optional[str]</span></dt>
 
 <dd>
-<p>Read-only encoding used to decode other paths that are given as bytes-like objects</p></dd>
+<p>Read-only encoding used to decode other paths that are given as bytes-like objects, or None if the default should be used</p></dd>
 
 		</dl>
 
@@ -1659,7 +1659,7 @@ gpath    </h1>
     <a class="headerlink" href="#GPath.parent_parts"></a>
     
     <div class="docstring">
-<p>Read-only path components representing a parent directory that it is relative to, if any, with a copy of <code>parent_indicator</code> for each level of parent directory</p>
+<p>Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -1682,7 +1682,7 @@ gpath    </h1>
     <a class="headerlink" href="#GPath.relative_parts"></a>
     
     <div class="docstring">
-<p>Read-only relative components of the path, not including the filesystem root or drive name, with a copy of <code>parent_indicator</code> for each level of parent directory</p>
+<p>Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory</p>
 
 <h2 id="examples">Examples</h2>
 
@@ -1782,7 +1782,7 @@ gpath    </h1>
     <a class="headerlink" href="#GPath.encoding"></a>
     
     <div class="docstring">
-<p>Read-only encoding used to decode other paths that are given as bytes-like objects</p></div>
+<p>Read-only encoding used to decode other paths that are given as bytes-like objects, or None if the default should be used</p></div>
 
 
 
