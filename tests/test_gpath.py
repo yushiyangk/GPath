@@ -370,7 +370,7 @@ class TestGPath:
 	@pytest.mark.parametrize(
 		('path', 'expected'),
 		[
-			("/", {'posix': "/", 'nt': "\\", 'java': "/"}),
+			("/", {'posix': "/", 'nt': "/", 'java': "/"}),
 		]
 	)
 	def test_str_repr_platform(self, path: str, expected: dict[str, str]):

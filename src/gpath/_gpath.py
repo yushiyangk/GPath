@@ -7,10 +7,9 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence
-from typing import Any, ClassVar, Generator, overload
+from typing import Any, overload
 
 from . import _rules
-from .pathtype import PathType
 
 
 from ._compat import Final, Optional, Union
@@ -30,16 +29,10 @@ else:
 _DEFAULT_ENCODING: Final = 'utf-8'
 
 
-_LOCAL_SEPARATOR: Final = "/" if os.sep == '/' or os.altsep == '/' else os.sep
-_LOCAL_ROOT_INDICATOR: Final = _LOCAL_SEPARATOR
-_LOCAL_PLAIN_ROOT_INDICATOR: Final = os.sep  # Windows does not accept a single '/' as device root
-_LOCAL_CURRENT_INDICATOR: Final = os.curdir
-_LOCAL_PARENT_INDICATOR: Final = os.pardir
-
 
 def _split_relative(
 	path: str,
-	delimiters: Union[str, Collection[str]]=_LOCAL_SEPARATOR,
+	delimiters: Union[str, Collection[str]],
 	collapse: bool=True
 ) -> list[str]:
 	if path == "":
@@ -113,12 +106,6 @@ class GPath(Hashable):
 		'_encoding',
 	)
 
-	_separator: ClassVar[str] = _LOCAL_SEPARATOR
-	_root_indicator: ClassVar[str] = _LOCAL_ROOT_INDICATOR
-	_plain_root_indicator: ClassVar[str] = _LOCAL_PLAIN_ROOT_INDICATOR
-	_current_indicator: ClassVar[str] = _LOCAL_CURRENT_INDICATOR
-	_parent_indicator: ClassVar[str] = _LOCAL_PARENT_INDICATOR
-
 
 	def __init__(self, path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None):
 		"""
@@ -179,17 +166,16 @@ class GPath(Hashable):
 
 		# path is a str
 
-		if len(path) >= 2 and path[1] in _rules._windows_nt_rules.drive_postfixes:
+		if len(path) >= 2 and path[1] in _rules._generic_rules.drive_postfixes:
 			self._drive = path[0]
 			deviceless_path = path[2:]
 		else:
 			deviceless_path = path
 
-		if deviceless_path.startswith(_rules._windows_nt_rules.roots[0]):
-			self._root = True
-
-		if deviceless_path.startswith(_rules._posix_rules.roots[0]):
-			self._root = True
+		for root in _rules._generic_rules.roots:
+			if deviceless_path.startswith(root):
+				self._root = True
+				break
 
 		if self._root:
 			rootless_path = deviceless_path[1:]
@@ -197,7 +183,7 @@ class GPath(Hashable):
 			rootless_path = deviceless_path
 
 
-		parts = _split_relative(rootless_path, delimiters=(set(_rules._windows_nt_rules.separators) | set(_rules._posix_rules.separators)))
+		parts = _split_relative(rootless_path, delimiters=(set(_rules._generic_rules.separators) | set(_rules._generic_rules.separators)))
 		parts = _normalise_relative(parts)
 		parent_level = 0
 		while parent_level < len(parts) and parts[parent_level] in _rules._generic_rules.parent_indicators:
@@ -249,7 +235,7 @@ class GPath(Hashable):
 			GPath("usr/local/bin").parent_parts    # []
 			```
 		"""
-		return [GPath._parent_indicator for i in range(self._parent_level)]
+		return [_rules._generic_rules.parent_indicators[0] for i in range(self._parent_level)]
 
 	@property
 	def relative_parts(self) -> list[str]:
@@ -719,11 +705,11 @@ class GPath(Hashable):
 		"""
 		if bool(self):
 			if self.root and self._drive == "":
-				return GPath._plain_root_indicator
+				return _rules._generic_rules.roots[0]
 			else:
-				return (self._drive + _rules._windows_nt_rules.drive_postfixes[0] if self._drive != "" else "") + (GPath._root_indicator if self._root else "") + GPath._separator.join(self.relative_parts)
+				return (self._drive + _rules._generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules._generic_rules.roots[0] if self._root else "") + _rules._generic_rules.separators[0].join(self.relative_parts)
 		else:
-			return GPath._current_indicator
+			return _rules._generic_rules.current_indicators[0]
 
 
 	def __repr__(self) -> str:
