@@ -40,13 +40,18 @@
 			// Rearrange function signatures in summary to prepare for elision
 			document.querySelectorAll('.pdoc .summary dt').forEach((heading) => {
 				const returnType = heading.querySelector('.return-annotation');
+				const signature = heading.querySelector('.signature');
 				if (returnType !== null) {
 					heading.appendChild(returnType);
+				} else {
+					// ( <- workaround for bad parenthesis matching in text editor
+					if (signature !== null && signature.childNodes !== null && signature.lastChild?.nodeType === Node.TEXT_NODE && signature.lastChild?.textContent === ")") {
+						heading.appendChild(signature.lastChild);
+					}
 				}
-				const signature = heading.querySelector('.signature');
-				if (signature !== null && signature.childNodes !== null && signature.childNodes[0]?.textContent === '(') {
+				if (signature !== null && signature.childNodes !== null && signature.firstChild?.textContent === '(') {
 					const name = heading.querySelector('.name');
-					heading.insertBefore(signature.childNodes[0], signature);
+					heading.insertBefore(signature.firstChild, signature);
 				}
 				// ) <- workaround for bad parenthesis matching in text editor
 			});
@@ -63,10 +68,13 @@
 						if (entry.contentBoxSize !== null && entry.contentBoxSize[0] !== null) {
 							const containerWidth = entry.contentBoxSize[0].inlineSize;
 							headings.forEach((heading, i) => {
-								if (names[i] !== null && signatures[i] !== null && returnTypes[i] !== null) {
+								if (names[i] !== null && signatures[i] !== null) {
 									const nameWidth = names[i].scrollWidth;
 									const signatureWidth = signatures[i].scrollWidth;
-									const returnTypeWidth = returnTypes[i].scrollWidth;
+									let returnTypeWidth = 0;
+									if (returnTypes[i] !== null) {
+										returnTypeWidth = returnTypes[i].scrollWidth;
+									}
 									// Need to add padding, border, margin widths too in principle, but they are 0
 									if (nameWidth + signatureWidth + returnTypeWidth > containerWidth) {
 										signatures[i].style.width = (containerWidth - nameWidth - returnTypeWidth) + 'px';
