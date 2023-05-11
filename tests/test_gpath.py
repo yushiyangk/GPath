@@ -925,6 +925,115 @@ class TestGPath:
 
 
 	@pytest.mark.parametrize(
+		('gpath1', 'expected_gpath'),
+		[
+			("/", ""),
+			("/a/b", "a/b"),
+			("", ""),
+			("a/b", "a/b"),
+			("..", ".."),
+			("../a/b", "../a/b"),
+			("C:/", "C:"),
+			("C:/a/b", "C:a/b"),
+			("C:", "C:"),
+			("C:a/b", "C:a/b"),
+		],
+		indirect=['gpath1', 'expected_gpath']
+	)
+	def test_as_relative(self, gpath1: GPath, expected_gpath: GPath):
+		"""
+			Test `as_relative()`.
+		"""
+		result = gpath1.as_relative()
+		assert result == expected_gpath
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'expected_gpath'),
+		[
+			("/", "/"),
+			("/a/b", "/a/b"),
+			("", "/"),
+			("a/b", "/a/b"),
+			("..", "/"),
+			("../a/b", "/a/b"),
+			("C:/", "C:/"),
+			("C:/a/b", "C:/a/b"),
+			("C:", "C:/"),
+			("C:a/b", "C:/a/b"),
+		],
+		indirect=['gpath1', 'expected_gpath']
+	)
+	def test_as_absolute(self, gpath1: GPath, expected_gpath: GPath):
+		"""
+			Test `as_absolute()`.
+		"""
+		result = gpath1.as_absolute()
+		assert result == expected_gpath
+
+
+	@pytest.mark.parametrize(
+		('gpath1', 'drive', 'expected_gpath', 'unset_expected'),
+		[
+			("/", "K", "K:/", "/"),
+			("/a/b", "K", "K:/a/b", "/a/b"),
+			("", "K", "K:", ""),
+			("a/b", "K", "K:a/b", "a/b"),
+			("..", "K", "K:..", ".."),
+			("../a/b", "K", "K:../a/b", "../a/b"),
+			("C:/", "K", "K:/", "/"),
+			("C:/a/b", "K", "K:/a/b", "/a/b"),
+			("C:", "K", "K:", ""),
+			("C:a/b", "K", "K:a/b", "a/b"),
+		],
+		indirect=['gpath1', 'expected_gpath']
+	)
+	def test_with_drive(self, gpath1: GPath, drive: str, expected_gpath: GPath, unset_expected: str):
+		"""
+			Test `with_drive()` and `without_drive`.
+		"""
+		result = gpath1.with_drive(drive)
+		assert result == expected_gpath
+
+		unset_expected_gpath = GPath(unset_expected)
+		for unset in ["", None]:
+			result = gpath1.with_drive(unset)
+			assert result == unset_expected_gpath
+		result = gpath1.without_drive()
+		assert result == unset_expected_gpath
+
+
+	@pytest.mark.parametrize(
+		('gpath1'),
+		[
+			("/"),
+			("/a/b"),
+			(""),
+			("a/b"),
+			(".."),
+			("../a/b"),
+			("C:/"),
+			("C:/a/b"),
+			("C:"),
+			("C:a/b"),
+		],
+		indirect=['gpath1']
+	)
+	@pytest.mark.parametrize(('drive'), ["CC", 1, False])
+	def test_with_drive_invalid(self, gpath1: GPath, drive: str):
+		"""
+			Test `with_drive()` when `drive` is longer than one character
+		"""
+		if isinstance(drive, str):
+			with pytest.raises(ValueError):
+				gpath1.with_drive(drive)
+		else:
+			with pytest.raises(TypeError):
+				gpath1.with_drive(drive)
+
+
+
+	@pytest.mark.parametrize(
 		#('path1', 'path2', 'allow_current', 'allow_parents', 'expected_path'),
 		('path1', 'path2', 'allow_current_expected', 'allow_parents_expected', 'allow_current_parent_expected', 'no_common_expected'),
 		[

@@ -448,6 +448,114 @@ class GPath(Hashable):
 		return combined_path
 
 
+	def as_relative(self) -> GPath:
+		"""
+			Convert the path to a relative path and return a new copy.
+
+			If the path is already relative, an identical copy is returned.
+
+			Examples
+			--------
+			```python
+			GPath("/usr/bin").as_relative()      # GPath("usr/bin")
+			GPath("C:/Windows").as_relative()    # GPath("C:Windows")
+			GPath("../Documents").as_relative()  # GPath("../Documents")
+			```
+		"""
+		new_path = GPath(self)
+		new_path._root = False
+		return new_path
+
+
+	def as_absolute(self) -> GPath:
+		"""
+			Convert the path to an absolute path and return a new copy.
+
+			Any parent directory that the path is relative to will be removed. If the path is already absolute, an identical copy is returned.
+
+			Examples
+			--------
+			```python
+			GPath("usr/bin").as_absolute()       # GPath("/usr/bin")
+			GPath("../Documents").as_absolute()  # GPath("/Documents")
+			GPath("C:Windows").as_absolute()     # GPath("C:/Windows")
+			```
+		"""
+		new_path = GPath(self)
+		new_path._root = True
+		new_path._parent_level = 0
+		return new_path
+
+
+	def with_drive(self, drive: Union[str, bytes, None]=None) -> GPath:
+		"""
+			Return a new copy of the path with the drive set to `drive`.
+
+			If `drive` is `""` or None, this would be equivalent to `without_drive()`.
+
+			Parameters
+			----------
+			`drive`
+			: the drive for the returned path, or either `""` or None if the returned path should have no drive
+
+			Returns
+			-------
+			`GPath`
+			: a new path with the given drive
+
+			Raises
+			------
+			- `TypeError` if `drive` is not a valid type
+			- `ValueError` if `drive` has more than one character
+
+			Examples
+			--------
+			```python
+			GPath("C:/Windows").with_drive()      # GPath("/Windows")
+			GPath("C:/Windows").with_drive("D")   # GPath("D:/Windows")
+			GPath("/Windows").with_drive("C")     # GPath("C:/Windows")
+			```
+		"""
+		if drive is None:
+			drive = ""
+		elif isinstance(drive, bytes):
+			if self._encoding is None:
+				drive = drive.decode(DEFAULT_ENCODING)
+			else:
+				drive = drive.decode(self._encoding)
+		elif isinstance(drive, str):
+			pass
+		else:
+			raise TypeError(f"drive must be a str or bytes object: {drive} ({type(drive)})")
+
+		if len(drive) > 1:
+			raise ValueError(f"drive can only be a single character, an empty string or None: {drive}")
+
+		new_path = GPath(self)
+		new_path._drive = drive
+		return new_path
+
+
+	def without_drive(self) -> GPath:
+		"""
+			Return a new copy of the path without a drive.
+
+			Equivalent to `with_drive("")` or `with_drive(None)`.
+
+			Returns
+			-------
+			`GPath`
+			: a new path without a drive
+
+			Examples
+			--------
+			```python
+			GPath("C:/Windows").without_drive()      # GPath("/Windows")
+			```
+		"""
+		return self.with_drive(None)
+
+
 	def common_with(self, other: GPathLike, allow_current: bool=True, allow_parents: bool=False) -> Optional[GPath]:
 		"""
 			Find the longest common base path shared between `self` and `other`, or return None if no such path exists.
