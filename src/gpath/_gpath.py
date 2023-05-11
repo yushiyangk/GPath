@@ -351,6 +351,13 @@ class GPath(Hashable, Sized, Iterable):
 		"""
 		return self._encoding
 
+	@property
+	def platform(self) -> Union[str, None]:
+		"""
+			Read-only platform that other non-GPath operands should be interepreted as, or None if the default should be used
+		"""
+		return str(self._platform) if self._platform is not None else None
+
 
 	#@overload
 	#@staticmethod
