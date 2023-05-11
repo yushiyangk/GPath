@@ -172,26 +172,7 @@ class GPath(Hashable, Sized, Iterable):
 		else:
 			platform = self._platform
 
-		if platform == Platform.GENERIC:
-			if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
-				self._drive = path[0]
-				driveless_path = path[2:]
-			else:
-				driveless_path = path
-
-			for root in _rules.generic_rules.roots:
-				if driveless_path.startswith(root):
-					self._root = True
-					break
-
-			if self._root:
-				rootless_path = driveless_path[1:]
-			else:
-				rootless_path = driveless_path
-
-			parts = _split_relative(rootless_path, delimiters=_rules.generic_rules.separators)
-
-		elif platform == Platform.POSIX:
+		if platform == Platform.POSIX:
 			for root in _rules.posix_rules.roots:
 				if path.startswith(root):
 					self._root = True
@@ -224,8 +205,24 @@ class GPath(Hashable, Sized, Iterable):
 			parts = _split_relative(rootless_path, delimiters=_rules.windows_rules.separators)
 
 		else:
-			# This should never happen
-			raise ValueError(f"invalid platform Platform: {platform}")
+			if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
+				self._drive = path[0]
+				driveless_path = path[2:]
+			else:
+				driveless_path = path
+
+			for root in _rules.generic_rules.roots:
+				if driveless_path.startswith(root):
+					self._root = True
+					break
+
+			if self._root:
+				rootless_path = driveless_path[1:]
+			else:
+				rootless_path = driveless_path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.generic_rules.separators)
+
 
 		parts = _normalise_relative(parts)
 		parent_level = 0
@@ -899,13 +896,26 @@ class GPath(Hashable, Sized, Iterable):
 
 			Usage: <code>str(<var>g</var>)</code>
 		"""
-		if bool(self):
-			if self.root and self._drive == "":
-				return _rules.generic_rules.roots[0]
-			else:
-				return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
+		if self._platform is None:
+			platform = DEFAULT_TYPE
 		else:
-			return _rules.generic_rules.current_indicators[0]
+			platform = self._platform
+
+		if Platform == Platform.POSIX:
+			if bool(self):
+				return (_rules.posix_rules.roots[0] if self._root else "") + _rules.posix_rules.separators[0].join(self.relative_parts)
+			else:
+				return _rules.posix_rules.current_indicators[0]
+		elif platform == Platform.WINDOWS:
+			if bool(self):
+				return (self._drive + _rules.windows_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.windows_rules.roots[0] if self._root else "") + _rules.windows_rules.separators[0].join(self.relative_parts)
+			else:
+				return _rules.windows_rules.current_indicators[0]
+		else:
+			if bool(self):
+				return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
+			else:
+				return _rules.generic_rules.current_indicators[0]
 
 
 	def __repr__(self) -> str:
@@ -914,15 +924,20 @@ class GPath(Hashable, Sized, Iterable):
 
 			Usage: <code>repr(<var>g</var>)</code>
 		"""
+		if self._platform is None:
+			platform_repr = ""
+		else:
+			platform_repr = f", platform={repr(self._platform)}"
+
 		if self._encoding is None:
 			encoding_repr = ""
 		else:
 			encoding_repr = f", encoding={repr(self._encoding)}"
 
 		if bool(self):
-			return f"GPath({repr(str(self))}{encoding_repr})"
+			return f"GPath({repr(str(self))}{platform_repr}{encoding_repr})"
 		else:
-			return f"GPath({repr('')}{encoding_repr})"
+			return f"GPath({repr('')}{platform_repr}{encoding_repr})"
 
 
 	def __len__(self) -> int:
