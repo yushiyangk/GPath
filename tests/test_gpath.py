@@ -7,10 +7,7 @@ import pytest
 
 from gpath import GPath
 
-
-# Type hinting prior to 3.10
-# Using generics in built-in collections, e.g. list[int], is supported from 3.7 by __future__.annotations
-from typing import Optional, Union
+from gpath._compat import Optional, Union
 
 
 class TestGPath:
