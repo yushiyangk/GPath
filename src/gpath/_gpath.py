@@ -1024,9 +1024,5 @@ class GPath(Hashable):
 		return True
 
 
-GenericPath = GPath
-"""Alias of `GPath`."""
-
-
 GPathLike = Union[GPath, str, bytes, os.PathLike]
 """Union type of GPath-like objects that can be used as the argument for most `GPath` methods."""
