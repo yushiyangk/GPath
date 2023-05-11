@@ -1119,17 +1119,6 @@ class GPath(Hashable):
 		)
 
 
-	@property
-	def _order(self) -> tuple:
-		# Get a tuple that represents the ordering of the class
-		return (
-			self._root,  # relative before absolute
-			self._drive,  # no device before devices
-			self._parent_level,  # no parent before low parent before high parent
-			self._parts  # empty before few components before many components
-		)
-
-
 	def _validate(self) -> bool:
 		# Check if self is in a valid state
 		if self._parent_level < 0:
