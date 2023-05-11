@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Type
 
 from ._common import COMMON_DRIVE_POSTFIX, COMMON_CURRENT_INDICATOR, COMMON_PARENT_INDICATOR
