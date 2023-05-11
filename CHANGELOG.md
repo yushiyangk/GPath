@@ -41,14 +41,9 @@ The recommended version specifier is <code>generic-path ~= <var>x</var>.<var>y</
 
 ### 0.3
 
-#### Breaking
-
 - Renamed `GPath.current` to `GPath.current_dir` and `GPath.parent` to `GPath.parent_dir`
 - Renamed <code><var>g</var>.is_root()</code> to <code><var>g</var>.is_absolute()</code>
 - Renamed the optional arguments in <code><var>g</var>.find_common()</code> and <code><var>g</var>.partition()</code>, from `common_current` and `common_parent` to `allow_current` and `allow_parent`
-
-### Others
-
 - Added a new <code><var>g</var>.is_root()</code> that checks whether the path is exactly root
 - Added <code><var>g</var>.\_\_div\_\_()</code> as an alias of <code><var>g</var>.\_\_add\_\_()</code>
 - Added web documentation at https://gpath.gnayihs.uy/

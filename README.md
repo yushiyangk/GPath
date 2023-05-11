@@ -61,15 +61,13 @@ Found a bug? Please [file an issue](https://github.com/yushiyangk/GPath/issues),
 
 The default `GPath()` interface supports the vast majority of valid file paths on Windows, Linux and macOS (and other POSIX-like operating systems), with some limited caveats.
 
-### Linux, MacOS and POSIX
+### Linux, macOS and POSIX
 
-Using `GPath()`,
 - any backslashes `\` in the path will be treated as path separators
 - if the second character of the path is a colon <code><var>x</var>:</code>, the first character <var>`x`</var> will be treated as a drive letter
 
 ### Windows and MS-DOS
 
-Using `GPath()`,
 - any trailing dots `.` and spaces ` ` will not be stripped
 - reserved MS-DOS device names (such as AUX, CLOCK$, COM0 through COM9, CON, LPT0 through LPT9, NUL, PRN) will be treated as normal file names
 
