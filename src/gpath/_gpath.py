@@ -9,7 +9,7 @@ import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, Sized
 from typing import Any
 
-from . import _rules
+from . import render, _rules
 from .platform import Platform
 
 
@@ -82,7 +82,7 @@ def _normalise_relative(
 	return output
 
 
-class GPath(Hashable, Sized, Iterable):
+class GPath(Hashable, Sized, Iterable, render.Renderable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
 
@@ -117,7 +117,7 @@ class GPath(Hashable, Sized, Iterable):
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
 			`​platform`
-			: interpret `path` as originating from a specific platform. This is usually not required for normal file paths on Windows, Linux or macOS, and is needed only for edge cases (see [compatibility](https://github.com/yushiyangk/gpath#compatibility) in the readme). If `path` is a GPath, this argument has no effect. The platform name should be one of the keys in `gpath.platform.platform_names`. If specified, the platform will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the platform specified by the left operand will be propagated.
+			: interpret `path` as originating from a specific platform. This is usually not required for normal file paths on Windows, Linux or macOS, and is needed only for edge cases (see [compatibility](https://github.com/yushiyangk/gpath#compatibility) in the readme). If `path` is a GPath, this argument has no effect. The platform name should be one of the keys in `gpath.platform.platform_names`. If specified, the platform will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the platform specified by the left operand will be propagated. See also the `from_*()` static methods.
 
 			`​encoding`
 			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The encoding name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. If specified, the encoding will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the encoding specified by the left operand will be propagated.
@@ -880,6 +880,52 @@ class GPath(Hashable, Sized, Iterable):
 				new_path._parts = self._parts[len(common):]
 
 			return new_path
+
+
+	def render(self, platform: Union[str, Platform, None]) -> render.RenderedPath:
+		"""
+			Convert the path to a RenderedPath for printing in a specific target operating system.
+
+			This will convert, and coerce if necessary, the generalised abstract GPath into a platform-specific path which can then be converted to a printable string using <code>str(<var>renderred_path</var>)</code>. The resulting string will be in the format preferred by the target platform.
+
+			If the GPath contains features that the target platform does not support (such as drive name when the target platform is POSIX), and if there are no analogous features in the target platform, they will be dropped in the rendered path.
+
+			The rendered path also implements total ordering with binary comparisons, e.g. <code><var>r1</var> < <var>r2</var></code>, making it useful for sorting and collation. This ordering is done with platform-specific semantics, unlike GPath which does not have meaningful order.
+
+			Parameters
+			----------
+			`platform`
+			: the target platform where the path is to be used
+
+			Returns
+			-------
+			`RenderedPath`
+			: platform-specific path ready for sorting or output
+
+			Examples
+			--------
+			```python
+			# Print examples
+			print(GPath("/usr/bin").render('linux'))      # /usr/bin
+			print(GPath("/usr/bin").render('windows'))    # \\usr\\bin
+			print(GPath("C:/Windows").render('linux'))    # /Windows
+			print(GPath("C:/Windows").render('windows'))  # C:\\Windows
+
+			# Ordering examples
+			GPath("").render('linux') < GPath("abc").render('linux')       # True
+			GPath("abc").render('linux') < GPath("..").render('linux')     # True
+			GPath("..").render('linux') < GPath("../..").render('linux')   # True
+			GPath("../..").render('linux') < GPath("/").render('linux')    # True
+			GPath("/").render('linux') < GPath("C:/").render('linux')      # False
+			GPath("/").render('linux') <= GPath("C:/").render('linux')     # True
+			GPath("/").render('windows') < GPath("C:/").render('windows')  # True
+			```
+		"""
+		if platform is None:
+			platform = DEFAULT_PLATFORM
+		elif isinstance(platform, str):
+			platform = Platform.from_str(platform)
+		return render.get_type(platform)(self)
 
 
 	def __hash__(self) -> int:

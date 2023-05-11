@@ -1,6 +1,6 @@
 __version__ = '0.4.3'
 
-from . import platform
+from . import platform, render
 from ._gpath import GPath, GPathLike
 
-__all__ = ('GPath', 'GPathLike', 'platform')
+__all__ = ('GPath', 'GPathLike', 'platform', 'render')
