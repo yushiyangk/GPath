@@ -112,7 +112,7 @@ class GPath(Hashable):
 			`path`
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
-			`encoding`
+			`​encoding`
 			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf-8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
 
 			Raises
@@ -331,7 +331,7 @@ class GPath(Hashable):
 			`allow_parents`
 			: whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `common_with()`). **Warning**: when set to True, the output lists for each partition are invalidated, and explicitly set to empty. This is because it is not possible in general to obtain a relative path from the base path to its members if the base path is a parent directory of a higher level than the member (see `relpath_from()`). This  option should be True if and only if the list of members in each partition are not of interest; in most cases False is more appropriate.
 
-			`encoding`
+			`​encoding`
 			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
 
 			Returns
@@ -410,7 +410,7 @@ class GPath(Hashable):
 			`paths`: `Sequence[GPath | str | bytes | os.PathLike]` or `*paths: GPath | str | bytes | os.PathLike`
 			: the paths to be combined, which can be given as either a list-like object or as variadic arguments
 
-			`encoding`
+			`​encoding`
 			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
 
 			Returns
@@ -454,12 +454,12 @@ class GPath(Hashable):
 
 			Parameters
 			----------
-			`parent_level`
+			`​parent_level`
 			: the number of levels of parent directories that the returned path should be relative to, which may be 0. If set to None, the returned path will have the same parent level as the current path if it is currently a relative path, or have no parent level (i.e. 0) otherwise.
 
 			Raises
 			------
-			`TypeError` if `parent_level` is not a valid type
+			`TypeError` if `​parent_level` is not a valid type
 
 			Examples
 			--------
@@ -504,13 +504,13 @@ class GPath(Hashable):
 
 	def with_drive(self, drive: Union[str, bytes, None]=None) -> GPath:
 		"""
-			Return a new copy of the path with the drive set to `drive`.
+			Return a new copy of the path with the drive set to `​drive`.
 
-			If `drive` is `""` or None, this would be equivalent to `without_drive()`.
+			If `​drive` is `""` or None, this would be equivalent to `without_drive()`.
 
 			Parameters
 			----------
-			`drive`
+			`​drive`
 			: the drive for the returned path, or either `""` or None if the returned path should have no drive
 
 			Returns
@@ -520,8 +520,8 @@ class GPath(Hashable):
 
 			Raises
 			------
-			- `TypeError` if `drive` is not a valid type
-			- `ValueError` if `drive` has more than one character
+			- `TypeError` if `​drive` is not a valid type
+			- `ValueError` if `​drive` has more than one character
 
 			Examples
 			--------
