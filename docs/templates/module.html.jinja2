@@ -58,6 +58,8 @@
 			// Elision of function signatures except return type
 			document.querySelectorAll('.pdoc .summary').forEach((summary) => {
 				// Instead of observing resize of every single dt, just observe the parent .summary instead since they have the same width
+				const summaryMarginLeft = parseInt(window.getComputedStyle(summary).marginLeft);
+				console.log(summaryMarginLeft);
 				const headings = summary.querySelectorAll('dt');
 				const headingsArray = [...headings];
       			const names = headingsArray.map((h) => h.querySelector('.name'));
@@ -76,8 +78,8 @@
 										returnTypeWidth = returnTypes[i].scrollWidth;
 									}
 									// Need to add padding, border, margin widths too in principle, but they are 0
-									if (nameWidth + signatureWidth + returnTypeWidth > containerWidth) {
-										signatures[i].style.width = (containerWidth - nameWidth - returnTypeWidth) + 'px';
+									if (nameWidth + signatureWidth + returnTypeWidth + summaryMarginLeft > containerWidth) {
+										signatures[i].style.width = (containerWidth - nameWidth - returnTypeWidth - summaryMarginLeft) + 'px';
 									} else if (signatures[i].style.width !== '') {
 										signatures[i].style.removeProperty('width');
 									}
