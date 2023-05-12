@@ -982,10 +982,7 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 
 			Usage: <code>str(<var>g</var>)</code>
 		"""
-		if bool(self):
-			return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
-		else:
-			return _rules.generic_rules.current_indicators[0]
+		return str(self.render(Platform.GENERIC))
 
 
 	def __repr__(self) -> str:

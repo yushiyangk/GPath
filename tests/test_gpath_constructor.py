@@ -46,7 +46,7 @@ class TestGPathConstructor(TestGPath):
 		expected_parent_level: int,
 	):
 		"""
-			Test constructor `__init__()` as well as property getters for `absolute`, `drive`, `named_parts` and `parent_level`, for paths requiring special treatment.
+			Test constructor `__init__()` with different encodings, as well as property getters for `absolute`, `drive`, `named_parts`, `parent_level` and `encoding`, for paths requiring special treatment.
 		"""
 		if path is None:
 			gpath = GPath()
@@ -166,7 +166,7 @@ class TestGPathConstructor(TestGPath):
 		expected_parent_level: int,
 	):
 		"""
-			Test constructor `__init__()` as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`.
+			Test constructor `__init__()` with different encodings, as well as property getters for `absolute`, `device`, `named_parts` and `parent_level`.
 		"""
 		gpath = GPath(path_prefix + path + path_suffix)
 		if expected_root and expected_parent_level > 0:
