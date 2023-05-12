@@ -222,7 +222,7 @@
 
 
 {#
-	Changes to linking in docstring, and additional summary sections
+	Changes to linking in docstring
 #}
 {% macro docstring(doc) %}
 	{% if doc.docstring %}
@@ -235,6 +235,7 @@
 		<div class="docstring">{{ preserve_tabs(docstring_html, 4) | linkify(namespace=doc.qualname) }}</div>
 
 	{% endif %}
+	{#
 	{% if doc.kind == "class" %}
 		<div class="summary">
 
@@ -281,4 +282,5 @@
 			{{ class_summary("Instance methods summary", list) }}
 		</div>
 	{% endif %}
+	#}
 {% endmacro %}

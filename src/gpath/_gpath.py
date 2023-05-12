@@ -7,9 +7,10 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, Sized
-from typing import Any, overload
+from typing import Any
 
-from . import _rules
+from . import render, _rules
+from .platform import Platform
 
 
 from ._compat import Final, Optional, Union
@@ -26,7 +27,8 @@ else:
 		return isinstance(obj, GPath) or isinstance(obj, str) or isinstance(obj, bytes) or isinstance(obj, os.PathLike)
 
 
-DEFAULT_ENCODING: Final = 'utf_8'
+DEFAULT_PLATFORM: Final = Platform.GENERIC
+DEFAULT_ENCODING: Final = 'utf-8'
 
 
 def _split_relative(
@@ -80,7 +82,7 @@ def _normalise_relative(
 	return output
 
 
-class GPath(Hashable, Sized, Iterable):
+class GPath(Hashable, Sized, Iterable, render.Renderable):
 	"""
 		An immutable generalised abstract file path that has no dependency on any real filesystem.
 
@@ -96,11 +98,16 @@ class GPath(Hashable, Sized, Iterable):
 		'_root',
 		'_drive',
 		'_parent_level',
+		'_platform',
 		'_encoding',
 	)
 
 
-	def __init__(self, path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None):
+	def __init__(self,
+		path: Union[str, bytes, os.PathLike, GPath, None]="",
+		platform: Optional[Union[str, Platform]]=None,
+		encoding: Optional[str]=None,
+	):
 		"""
 			Initialise a normalised and generalised abstract file path, possibly by copying an existing GPath object.
 
@@ -109,8 +116,11 @@ class GPath(Hashable, Sized, Iterable):
 			`path`
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
+			`​platform`
+			: interpret `path` as originating from a specific platform. This is usually not required for normal file paths on Windows, Linux or macOS, and is needed only for edge cases (see [compatibility](https://github.com/yushiyangk/gpath#compatibility) in the readme). If `path` is a GPath, this argument has no effect. The platform name should be one of the keys in `gpath.platform.platform_names`. If specified, the platform will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the platform specified by the left operand will be propagated. See also the `from_*()` static methods.
+
 			`​encoding`
-			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. The specified encoding will propagate to new GPaths that result from operations on this GPath. If a binary operation involves two GPaths, the encoding specified by the left operand will be propagated to the result.
+			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The encoding name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. If specified, the encoding will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the encoding specified by the left operand will be propagated.
 
 			Raises
 			------
@@ -130,10 +140,8 @@ class GPath(Hashable, Sized, Iterable):
 		self._drive: str = ""
 		self._parent_level: int = 0
 
+		self._platform: Optional[Platform] = Platform.from_str(platform) if isinstance(platform, str) else platform
 		self._encoding: Optional[str] = encoding
-
-		if path is None or path == "":
-			return
 
 		if isinstance(path, GPath):
 			path._validate()
@@ -142,7 +150,11 @@ class GPath(Hashable, Sized, Iterable):
 			self._drive = path._drive
 			self._parent_level = path._parent_level
 
-			self._encoding = path._encoding if encoding is None else encoding
+			self._platform = path._platform if self._platform is None else self._platform
+			self._encoding = path._encoding if self._encoding is None else self._encoding
+			return
+
+		if path is None or path == "":
 			return
 
 		path = os.fspath(path)
@@ -155,24 +167,63 @@ class GPath(Hashable, Sized, Iterable):
 
 		# path is a str
 
-		if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
-			self._drive = path[0]
-			driveless_path = path[2:]
+		if self._platform is None:
+			platform = Platform.GENERIC
 		else:
-			driveless_path = path
+			platform = self._platform
 
-		for root in _rules.generic_rules.roots:
-			if driveless_path.startswith(root):
-				self._root = True
-				break
+		if platform == Platform.POSIX:
+			for root in _rules.posix_rules.roots:
+				if path.startswith(root):
+					self._root = True
+					break
 
-		if self._root:
-			rootless_path = driveless_path[1:]
+			if self._root:
+				rootless_path = path[1:]
+			else:
+				rootless_path = path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.posix_rules.separators)
+
+		elif platform == Platform.WINDOWS:
+			if len(path) >= 2 and path[1] in _rules.windows_rules.drive_postfixes:
+				self._drive = path[0]
+				driveless_path = path[2:]
+			else:
+				driveless_path = path
+
+			for root in _rules.windows_rules.roots:
+				if driveless_path.startswith(root):
+					self._root = True
+					break
+
+			if self._root:
+				rootless_path = driveless_path[1:]
+			else:
+				rootless_path = driveless_path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.windows_rules.separators)
+
 		else:
-			rootless_path = driveless_path
+			if len(path) >= 2 and path[1] in _rules.generic_rules.drive_postfixes:
+				self._drive = path[0]
+				driveless_path = path[2:]
+			else:
+				driveless_path = path
+
+			for root in _rules.generic_rules.roots:
+				if driveless_path.startswith(root):
+					self._root = True
+					break
+
+			if self._root:
+				rootless_path = driveless_path[1:]
+			else:
+				rootless_path = driveless_path
+
+			parts = _split_relative(rootless_path, delimiters=_rules.generic_rules.separators)
 
 
-		parts = _split_relative(rootless_path, delimiters=(set(_rules.generic_rules.separators) | set(_rules.generic_rules.separators)))
 		parts = _normalise_relative(parts)
 		parent_level = 0
 		while parent_level < len(parts) and parts[parent_level] in _rules.generic_rules.parent_indicators:
@@ -199,34 +250,6 @@ class GPath(Hashable, Sized, Iterable):
 		return list(self._parts)
 
 	@property
-	def parent_level(self) -> int:
-		"""
-			Read-only number of levels of parent directories that the path is relative to, which may be 0
-
-			Examples
-			--------
-			```python
-			GPath("../../Documents").parent_level  # 2
-			GPath("usr/local/bin").parent_level    # 0
-			```
-		"""
-		return self._parent_level
-
-	@property
-	def parent_parts(self) -> list[str]:
-		"""
-			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory
-
-			Examples
-			--------
-			```python
-			GPath("../../Documents").parent_parts  # ["..", ".."]
-			GPath("usr/local/bin").parent_parts    # []
-			```
-		"""
-		return [_rules.generic_rules.parent_indicators[0] for i in range(self._parent_level)]
-
-	@property
 	def relative_parts(self) -> list[str]:
 		"""
 			Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory
@@ -241,21 +264,6 @@ class GPath(Hashable, Sized, Iterable):
 			```
 		"""
 		return self.parent_parts + list(self._parts)
-
-	@property
-	def drive(self) -> str:
-		"""
-			Read-only drive name
-
-			Examples
-			--------
-			```python
-			GPath("C:/Windows").drive       # "C:"
-			GPath("/usr/bin").drive         # ""
-			GPath("../../Documents").drive  # ""
-			```
-		"""
-		return self._drive
 
 	@property
 	def absolute(self) -> bool:
@@ -291,23 +299,119 @@ class GPath(Hashable, Sized, Iterable):
 		return self._root and len(self._parts) == 0
 
 	@property
+	def drive(self) -> str:
+		"""
+			Read-only drive name
+
+			Examples
+			--------
+			```python
+			GPath("C:/Windows").drive       # "C:"
+			GPath("/usr/bin").drive         # ""
+			GPath("../../Documents").drive  # ""
+			```
+		"""
+		return self._drive
+
+	@property
+	def parent_level(self) -> int:
+		"""
+			Read-only number of levels of parent directories that the path is relative to, which may be 0
+
+			Examples
+			--------
+			```python
+			GPath("../../Documents").parent_level  # 2
+			GPath("usr/local/bin").parent_level    # 0
+			```
+		"""
+		return self._parent_level
+
+	@property
+	def parent_parts(self) -> list[str]:
+		"""
+			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory
+
+			Examples
+			--------
+			```python
+			GPath("../../Documents").parent_parts  # ["..", ".."]
+			GPath("usr/local/bin").parent_parts    # []
+			```
+		"""
+		return [_rules.generic_rules.parent_indicators[0] for i in range(self._parent_level)]
+
+	@property
 	def encoding(self) -> Union[str, None]:
 		"""
 			Read-only encoding used to decode other paths that are given as bytes-like objects, or None if the default should be used
 		"""
 		return self._encoding
 
+	@property
+	def platform(self) -> Union[str, None]:
+		"""
+			Read-only platform that other non-GPath operands should be interepreted as, or None if the default should be used
+		"""
+		return str(self._platform) if self._platform is not None else None
+
+
+	@staticmethod
+	def from_posix(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Initialise a GPath that originates from a POSIX-like operating system, or copy a GPath such that any future non-GPath operands would be interpreted as originating from a POSIX-like operating system.
+
+			See `__init__()` for details.
+
+			Equivalent to `GPath(path, platform='posix')`
+			```
+		"""
+		return GPath(path, platform=Platform.POSIX, encoding=encoding)
+
+	@staticmethod
+	def from_linux(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Alias of `from_posix()`
+		"""
+		return GPath.from_posix(path, encoding=encoding)
+
+	@staticmethod
+	def from_macos(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Alias of `from_posix()`
+		"""
+		return GPath.from_posix(path, encoding=encoding)
+
+
+	@staticmethod
+	def from_windows(path: Union[str, bytes, os.PathLike, GPath, None]="", encoding: Optional[str]=None) -> GPath:
+		"""
+			Initialise a GPath that originates from a Windows operating system, or copy a GPath such that any future non-GPath operands would be interpreted as originating from a Windows operating system.
+
+			See `__init__()` for details.
+
+			Equivalent to `GPath(path, platform='windows')`
+			```
+		"""
+		return GPath(path, platform=Platform.WINDOWS, encoding=encoding)
+
 
 	#@overload
 	#@staticmethod
-	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#def partition(paths: Iterable[GPathLike], /, *, allow_current, allow_parents, platform, encoding) -> dict[GPath, list[GPath]]:
 	#	...
 	#@overload
 	#@staticmethod
-	#def partition(*paths: GPathLike, allow_current, allow_parents, encoding) -> dict[GPath, list[GPath]]:
+	#def partition(*paths: GPathLike, allow_current, allow_parents, platform, encoding) -> dict[GPath, list[GPath]]:
 	#	...
 	@staticmethod
-	def partition(*paths, allow_current: bool=True, allow_parents: bool=True, encoding: Optional[str]=None) -> dict[GPath, list[GPath]]:
+	def partition(
+		*paths,
+		allow_current: bool=True,
+		allow_parents: bool=True,
+		platform: Optional[Union[str, Platform]]=None,
+		encoding: Optional[str]=None,
+	) -> dict[GPath, list[GPath]]:
 		"""
 			Partition a collection of paths based on shared common base paths such that each path belongs to one partition.
 
@@ -325,6 +429,9 @@ class GPath(Hashable, Sized, Iterable):
 
 			`allow_parents`
 			: whether paths that are relative to different levels of parent directories should be considered to have a common base path (see `common_with()`). **Warning**: when set to True, the output lists for each partition are invalidated, and explicitly set to empty. This is because it is not possible in general to obtain a relative path from the base path to its members if the base path is a parent directory of a higher level than the member (see `relpath_from()`). This  option should be True if and only if the list of members in each partition are not of interest; in most cases False is more appropriate.
+
+			`​platform`
+			: the originating platform that should be assumed when interpreting non-GPath objects in `paths`, if any (see `__init__()`).
 
 			`​encoding`
 			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
@@ -356,7 +463,7 @@ class GPath(Hashable, Sized, Iterable):
 				flattened_paths.append(path_or_list)
 			else:
 				flattened_paths.extend(path_or_list)
-		gpaths = [path if isinstance(path, GPath) else GPath(path, encoding=encoding) for path in flattened_paths]
+		gpaths = [path if isinstance(path, GPath) else GPath(path, encoding=encoding, platform=platform) for path in flattened_paths]
 
 		partition_map = {}
 		if len(gpaths) > 0:
@@ -391,14 +498,14 @@ class GPath(Hashable, Sized, Iterable):
 
 	#@overload
 	#@staticmethod
-	#def join(paths: Iterable[GPathLike], /, *, encoding) -> GPath:
+	#def join(paths: Iterable[GPathLike], /, *, platform, encoding) -> GPath:
 	#	...
 	#@overload
 	#@staticmethod
-	#def join(*paths: GPathLike, encoding) -> GPath:
+	#def join(*paths: GPathLike, platform, encoding) -> GPath:
 	#	...
 	@staticmethod
-	def join(*paths, encoding: Optional[str]=None) -> GPath:
+	def join(*paths, platform: Optional[Union[str, Platform]]=None, encoding: Optional[str]=None) -> GPath:
 		"""
 			Join a sequence of paths into a single path. Apart from the first item in the sequence, all subsequent paths should be relative paths and any absolute paths will be ignored.
 
@@ -406,6 +513,9 @@ class GPath(Hashable, Sized, Iterable):
 			----------
 			`paths`: `Sequence[GPath | str | bytes | os.PathLike]` or `*paths: GPath | str | bytes | os.PathLike`
 			: the paths to be combined, which can be given as either a list-like object or as variadic arguments
+
+			`​platform`
+			: the originating platform that should be assumed when interpreting non-GPath objects in `paths`, if any (see `__init__()`).
 
 			`​encoding`
 			: the text encoding that should be used to decode bytes-like objects in `paths`, if any (see `__init__()`).
@@ -434,11 +544,11 @@ class GPath(Hashable, Sized, Iterable):
 				flattened_paths.extend(path_or_list)
 
 		if len(flattened_paths) == 0:
-			return GPath(encoding=encoding)
+			return GPath(encoding=encoding, platform=platform)
 
 		combined_path = flattened_paths[0]
 		if not isinstance(combined_path, GPath):
-			combined_path = GPath(combined_path, encoding=encoding)
+			combined_path = GPath(combined_path, encoding=encoding, platform=platform)
 		for path in flattened_paths[1:]:
 			combined_path = combined_path + path
 
@@ -772,6 +882,52 @@ class GPath(Hashable, Sized, Iterable):
 			return new_path
 
 
+	def render(self, platform: Union[str, Platform, None]) -> render.RenderedPath:
+		"""
+			Convert the path to a RenderedPath for printing in a specific target operating system.
+
+			This will convert, and coerce if necessary, the generalised abstract GPath into a platform-specific path which can then be converted to a printable string using <code>str(<var>renderred_path</var>)</code>. The resulting string will be in the format preferred by the target platform.
+
+			If the GPath contains features that the target platform does not support (such as drive name when the target platform is POSIX), and if there are no analogous features in the target platform, they will be dropped in the rendered path.
+
+			The rendered path also implements total ordering with binary comparisons, e.g. <code><var>r1</var> < <var>r2</var></code>, making it useful for sorting and collation. This ordering is done with platform-specific semantics, unlike GPath which does not have meaningful order.
+
+			Parameters
+			----------
+			`platform`
+			: the target platform where the path is to be used
+
+			Returns
+			-------
+			`RenderedPath`
+			: platform-specific path ready for sorting or output
+
+			Examples
+			--------
+			```python
+			# Print examples
+			print(GPath("/usr/bin").render('linux'))      # /usr/bin
+			print(GPath("/usr/bin").render('windows'))    # \\usr\\bin
+			print(GPath("C:/Windows").render('linux'))    # /Windows
+			print(GPath("C:/Windows").render('windows'))  # C:\\Windows
+
+			# Ordering examples
+			GPath("").render('linux') < GPath("abc").render('linux')       # True
+			GPath("abc").render('linux') < GPath("..").render('linux')     # True
+			GPath("..").render('linux') < GPath("../..").render('linux')   # True
+			GPath("../..").render('linux') < GPath("/").render('linux')    # True
+			GPath("/").render('linux') < GPath("C:/").render('linux')      # False
+			GPath("/").render('linux') <= GPath("C:/").render('linux')     # True
+			GPath("/").render('windows') < GPath("C:/").render('windows')  # True
+			```
+		"""
+		if platform is None:
+			platform = DEFAULT_PLATFORM
+		elif isinstance(platform, str):
+			platform = Platform.from_str(platform)
+		return render.get_type(platform)(self)
+
+
 	def __hash__(self) -> int:
 		"""
 			Calculate hash of the GPath object.
@@ -804,7 +960,7 @@ class GPath(Hashable, Sized, Iterable):
 
 	def __bool__(self) -> bool:
 		"""
-			Truthy if `self` is an absolute path, if `self` is relative to a parent directory, or if `self` has at least one named component.
+			False if `self` is a relative path without any relative components and without a drive, and True otherwise.
 
 			Usage: <code>bool(<var>g</var>)</code>, <code>not <var>g</var></code>, or <code>if <var>g</var>:</code>
 
@@ -822,17 +978,11 @@ class GPath(Hashable, Sized, Iterable):
 
 	def __str__(self) -> str:
 		"""
-			Return a string representation of the path.
+			Return a platform-independent string representation of the path.
 
 			Usage: <code>str(<var>g</var>)</code>
 		"""
-		if bool(self):
-			if self.root and self._drive == "":
-				return _rules.generic_rules.roots[0]
-			else:
-				return (self._drive + _rules.generic_rules.drive_postfixes[0] if self._drive != "" else "") + (_rules.generic_rules.roots[0] if self._root else "") + _rules.generic_rules.separators[0].join(self.relative_parts)
-		else:
-			return _rules.generic_rules.current_indicators[0]
+		return str(self.render(Platform.GENERIC))
 
 
 	def __repr__(self) -> str:
@@ -841,15 +991,20 @@ class GPath(Hashable, Sized, Iterable):
 
 			Usage: <code>repr(<var>g</var>)</code>
 		"""
+		if self._platform is None:
+			platform_repr = ""
+		else:
+			platform_repr = f", platform={repr(self._platform)}"
+
 		if self._encoding is None:
 			encoding_repr = ""
 		else:
 			encoding_repr = f", encoding={repr(self._encoding)}"
 
 		if bool(self):
-			return f"GPath({repr(str(self))}{encoding_repr})"
+			return f"GPath({repr(str(self))}{platform_repr}{encoding_repr})"
 		else:
-			return f"GPath({repr('')}{encoding_repr})"
+			return f"GPath({repr('')}{platform_repr}{encoding_repr})"
 
 
 	def __len__(self) -> int:
@@ -1119,6 +1274,7 @@ class GPath(Hashable, Sized, Iterable):
 			self._drive,
 			self._parent_level,
 			self._parts,
+			self._platform,
 			self._encoding,
 		)
 

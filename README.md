@@ -63,8 +63,11 @@ The default `GPath()` interface supports the vast majority of valid file paths o
 
 ### Linux, macOS and POSIX
 
+If using `GPath()`,
 - any backslashes `\` in the path will be treated as path separators
 - if the second character of the path is a colon <code><var>x</var>:</code>, the first character <var>`x`</var> will be treated as a drive letter
+
+These issues can be avoided by using `GPath.from_posix()` instead. This will cause all `\` and `:` to be treated as normal characters in file names.
 
 ### Windows
 

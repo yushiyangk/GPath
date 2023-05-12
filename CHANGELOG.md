@@ -4,6 +4,19 @@ This project follows [PEP 440](https://peps.python.org/pep-0440/) and [Semantic 
 
 The recommended version specifier is <code>generic-path ~= <var>x</var>.<var>y</var></code> for version 1.0 and later, and <code>generic-path ~= <var>0</var>.<var>y</var>.<var>z</var></code> for versions prior to 1.0.
 
+### 0.4.4
+
+- Added the ability to force GPath to interpret a path string as originating from a specific operating system, which prevents problems in edge cases, using the new `platform` argument in `GPath.__init__()`; this also propagates to new GPaths returned by operations
+	- Added the read-only property <code><var>g</var>.platform</code> for this propagating platform parameter
+	- Added static methods `from_posix()`, `from_windows()` (and aliases `from_linux()` and `from_macos()`) as alternative interfaces to call the constructor for a specific platform
+	- Added submodule `gpath.platform` with a `Platform` enum for specifying platforms (either as a string given in `gpath.platform.platform_names` or as a `gpath.Platform` object)
+- Added <code><var>g</var>.render()</code>, which returns a `RenderedPath` object for printing and sorting in a platform-specific manner
+	- Added submodule `gpath.render` containing subclasses of `RenderedPath` that define the render behaviour for each platform
+	- GenericRenderedPath resembles the previous behaviour of GPath, and prints with forward slashes `/`
+	- PosixRenderedPath ignores drive names when sorting and printing, and always prints with forward slashes `/`
+	- WindowsRenderedPath always prints with backslashes `\`
+- Fixed bug with encoding propagation in the copy constructor
+
 ### 0.4.3
 
 - Fixed support for bytes in older versions of Python
