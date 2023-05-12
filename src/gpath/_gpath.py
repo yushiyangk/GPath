@@ -28,7 +28,7 @@ else:
 
 
 DEFAULT_PLATFORM: Final = Platform.GENERIC
-DEFAULT_ENCODING: Final = 'utf_8'
+DEFAULT_ENCODING: Final = 'utf-8'
 
 
 def _split_relative(
@@ -143,9 +143,6 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 		self._platform: Optional[Platform] = Platform.from_str(platform) if isinstance(platform, str) else platform
 		self._encoding: Optional[str] = encoding
 
-		if path is None or path == "":
-			return
-
 		if isinstance(path, GPath):
 			path._validate()
 			self._parts = path._parts
@@ -155,6 +152,9 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 
 			self._platform = path._platform if self._platform is None else self._platform
 			self._encoding = path._encoding if self._encoding is None else self._encoding
+			return
+
+		if path is None or path == "":
 			return
 
 		path = os.fspath(path)
