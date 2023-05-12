@@ -406,32 +406,35 @@
 </span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>		<span class="p">)</span>
 </span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>
 </span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a><span class="n">LinuxRenderedPath</span> <span class="o">=</span> <span class="n">PosixRenderedPath</span>
-</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a><span class="n">MacOsRenderedPath</span> <span class="o">=</span> <span class="n">PosixRenderedPath</span>
+</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a><span class="sd">&quot;&quot;&quot;Alias of `PosixRenderedPath`&quot;&quot;&quot;</span>
 </span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>
-</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>
-</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a><span class="k">class</span> <span class="nc">WindowsRenderedPath</span><span class="p">(</span><span class="n">RenderedPath</span><span class="p">):</span>
-</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a><span class="sd">		A rendered path meant for Windows operating systems.</span>
-</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>
-</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a><span class="sd">		The path may or may not contain a drive, which affects both its printed output and its collation order. Backslashes are used always, although forward slashes are supported on Windows NT also.</span>
-</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a><span class="sd">	&quot;&quot;&quot;</span>
-</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>	<span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>		<span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>			<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">absolute</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">relative_parts</span><span class="p">)</span>
-</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>			<span class="k">return</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">current_indicators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>
-</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>
-</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a><span class="n">_render_of_platforms</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Platform</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">RenderedPath</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>	<span class="n">Platform</span><span class="o">.</span><span class="n">GENERIC</span><span class="p">:</span> <span class="n">GenericRenderedPath</span><span class="p">,</span>
-</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>	<span class="n">Platform</span><span class="o">.</span><span class="n">POSIX</span><span class="p">:</span> <span class="n">PosixRenderedPath</span><span class="p">,</span>
-</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>	<span class="n">Platform</span><span class="o">.</span><span class="n">WINDOWS</span><span class="p">:</span> <span class="n">WindowsRenderedPath</span><span class="p">,</span>
-</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a><span class="p">}</span>
-</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>
-</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>
-</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a><span class="k">def</span> <span class="nf">get_type</span><span class="p">(</span><span class="n">platform</span><span class="p">:</span> <span class="n">Platform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">RenderedPath</span><span class="p">]:</span>
-</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;Get the type of RenderedPath that corresponds to the given Platform&quot;&quot;&quot;</span>
-</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>	<span class="k">return</span> <span class="n">_render_of_platforms</span><span class="p">[</span><span class="n">platform</span><span class="p">]</span>
+</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a><span class="n">MacOsRenderedPath</span> <span class="o">=</span> <span class="n">PosixRenderedPath</span>
+</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a><span class="sd">&quot;&quot;&quot;Alias of `PosixRenderedPath`&quot;&quot;&quot;</span>
+</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>
+</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a><span class="k">class</span> <span class="nc">WindowsRenderedPath</span><span class="p">(</span><span class="n">RenderedPath</span><span class="p">):</span>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a><span class="sd">		A rendered path meant for Windows operating systems.</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a><span class="sd">		The path may or may not contain a drive, which affects both its printed output and its collation order. Backslashes are used always, although forward slashes are supported on Windows NT also.</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a><span class="sd">	&quot;&quot;&quot;</span>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>	<span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>		<span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>			<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">absolute</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">relative_parts</span><span class="p">)</span>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>		<span class="k">else</span><span class="p">:</span>
+</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>			<span class="k">return</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">current_indicators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>
+</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a><span class="n">_render_of_platforms</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Platform</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">RenderedPath</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>	<span class="n">Platform</span><span class="o">.</span><span class="n">GENERIC</span><span class="p">:</span> <span class="n">GenericRenderedPath</span><span class="p">,</span>
+</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>	<span class="n">Platform</span><span class="o">.</span><span class="n">POSIX</span><span class="p">:</span> <span class="n">PosixRenderedPath</span><span class="p">,</span>
+</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>	<span class="n">Platform</span><span class="o">.</span><span class="n">WINDOWS</span><span class="p">:</span> <span class="n">WindowsRenderedPath</span><span class="p">,</span>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a><span class="p">}</span>
+</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>
+</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>
+</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a><span class="k">def</span> <span class="nf">get_type</span><span class="p">(</span><span class="n">platform</span><span class="p">:</span> <span class="n">Platform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">RenderedPath</span><span class="p">]:</span>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;Get the type of RenderedPath that corresponds to the given Platform&quot;&quot;&quot;</span>
+</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>	<span class="k">return</span> <span class="n">_render_of_platforms</span><span class="p">[</span><span class="n">platform</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -518,28 +521,6 @@
 <p><code>parent_level: int</code>
 : read-only number of levels of parent directories that the path is relative to, which may be 0</p></div>
 
-		<div class="summary">
-
-			
-
-			
-
-			
-
-			
-
-			
-
-					<h2>Instance methods summary</h2>
-		<dl>
-				<dt>					<span class="name"><a href="#Renderable.__repr__">__repr__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
-
-<dd>
-<p>Return a string representation of the object instance for debugging</p></dd>
-
-		</dl>
-
-		</div>
 
 
                             <div id="Renderable.__repr__" class="classattr">
@@ -705,68 +686,6 @@
 <li>meaningfully compared and sorted</li>
 </ul></div>
 
-		<div class="summary">
-
-					<h2>Constructor summary</h2>
-		<dl>
-				<dt>					<span class="name"><a href="#RenderedPath.__init__">RenderedPath</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">path</span><span class="p">:</span> <span class="n"><a href="#Renderable">render.Renderable</a></span></span>)</span></dt>
-
-<dd>
-<p>Initialise a rendered path from any object that is Renderable.</p></dd>
-
-		</dl>
-
-
-			
-
-			
-
-			
-
-			
-
-					<h2>Instance methods summary</h2>
-		<dl>
-				<dt>					<span class="name"><a href="#RenderedPath.__hash__">__hash__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span></dt>
-
-<dd>
-<p>Calculate hash of the RenderedPath.</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__eq__">__eq__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
-
-<dd>
-<p>Check if two RenderedPaths have the same target platform, and check if they have equivalent values on that platform</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__lt__">__lt__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
-
-<dd>
-<p>Check if <code>self</code> should be collated before <code>other</code></p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__bool__">__bool__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
-
-<dd>
-<p>False if <code>self</code> is equivalent to an empty path on the target platform, and True otherwise</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__str__">__str__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
-
-<dd>
-<p>Return a string representation of the path in the preferred format for the target platform</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__repr__">__repr__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
-
-<dd>
-<p>Return a string that, when printed, gives the Python code associated with instantiating a copy of <code>self</code>.</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__gt__">__gt__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span></dt>
-
-<dd>
-<p>Return a &gt; b.  Computed by @total_ordering from (not a &lt; b) and (a != b).</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__le__">__le__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span></dt>
-
-<dd>
-<p>Return a &lt;= b.  Computed by @total_ordering from (a &lt; b) or (a == b).</p></dd>
-	<dt>					<span class="name"><a href="#RenderedPath.__ge__">__ge__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">other</span></span><span class="return-annotation">):</span></span></dt>
-
-<dd>
-<p>Return a &gt;= b.  Computed by @total_ordering from (not a &lt; b).</p></dd>
-
-		</dl>
-
-		</div>
 
 
                             <div id="RenderedPath.__init__" class="classattr">
@@ -1116,28 +1035,6 @@
 
 <p>Note that if the path contains a drive, it should be removed if the path is to be used on Linux or macOS. On Windows, forward slashes / will be used in favour of backslashes.</p></div>
 
-		<div class="summary">
-
-			
-
-			
-
-			
-
-			
-
-			
-
-					<h2>Instance methods summary</h2>
-		<dl>
-				<dt>					<span class="name"><a href="#GenericRenderedPath.__str__">__str__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
-
-<dd>
-<p>Return a string representation of the path in the preferred format for the target platform</p></dd>
-
-		</dl>
-
-		</div>
 
 
                             <div id="GenericRenderedPath.__str__" class="classattr">
@@ -1249,32 +1146,6 @@
 
 <p>If the original path contains a drive, it will be ignored for both printing and collation. Forward slashes are used always.</p></div>
 
-		<div class="summary">
-
-			
-
-			
-
-			
-
-			
-
-			
-
-					<h2>Instance methods summary</h2>
-		<dl>
-				<dt>					<span class="name"><a href="#PosixRenderedPath.__str__">__str__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
-
-<dd>
-<p>Return a string representation of the path in the preferred format for the target platform</p></dd>
-	<dt>					<span class="name"><a href="#PosixRenderedPath.__bool__">__bool__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span></dt>
-
-<dd>
-<p>False if <code>self</code> is a relative path without any relative components, and True otherwise.</p></dd>
-
-		</dl>
-
-		</div>
 
 
                             <div id="PosixRenderedPath.__str__" class="classattr">
@@ -1378,7 +1249,10 @@
     </div>
     <a class="headerlink" href="#LinuxRenderedPath"></a>
     
-    
+    <div class="docstring">
+<p>Alias of <code><a href="#PosixRenderedPath">PosixRenderedPath</a></code></p></div>
+
+
 
                 </section>
                 <section id="MacOsRenderedPath">
@@ -1391,7 +1265,10 @@
     </div>
     <a class="headerlink" href="#MacOsRenderedPath"></a>
     
-    
+    <div class="docstring">
+<p>Alias of <code><a href="#PosixRenderedPath">PosixRenderedPath</a></code></p></div>
+
+
 
                 </section>
                 <section id="WindowsRenderedPath">
@@ -1406,17 +1283,17 @@
 
     </div>
     <a class="headerlink" href="#WindowsRenderedPath"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="WindowsRenderedPath-202"><a href="#WindowsRenderedPath-202"><span class="linenos">202</span></a><span class="k">class</span> <span class="nc">WindowsRenderedPath</span><span class="p">(</span><span class="n">RenderedPath</span><span class="p">):</span>
-</span><span id="WindowsRenderedPath-203"><a href="#WindowsRenderedPath-203"><span class="linenos">203</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="WindowsRenderedPath-204"><a href="#WindowsRenderedPath-204"><span class="linenos">204</span></a><span class="sd">		A rendered path meant for Windows operating systems.</span>
-</span><span id="WindowsRenderedPath-205"><a href="#WindowsRenderedPath-205"><span class="linenos">205</span></a>
-</span><span id="WindowsRenderedPath-206"><a href="#WindowsRenderedPath-206"><span class="linenos">206</span></a><span class="sd">		The path may or may not contain a drive, which affects both its printed output and its collation order. Backslashes are used always, although forward slashes are supported on Windows NT also.</span>
-</span><span id="WindowsRenderedPath-207"><a href="#WindowsRenderedPath-207"><span class="linenos">207</span></a><span class="sd">	&quot;&quot;&quot;</span>
-</span><span id="WindowsRenderedPath-208"><a href="#WindowsRenderedPath-208"><span class="linenos">208</span></a>	<span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="WindowsRenderedPath-209"><a href="#WindowsRenderedPath-209"><span class="linenos">209</span></a>		<span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="WindowsRenderedPath-210"><a href="#WindowsRenderedPath-210"><span class="linenos">210</span></a>			<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">absolute</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">relative_parts</span><span class="p">)</span>
-</span><span id="WindowsRenderedPath-211"><a href="#WindowsRenderedPath-211"><span class="linenos">211</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="WindowsRenderedPath-212"><a href="#WindowsRenderedPath-212"><span class="linenos">212</span></a>			<span class="k">return</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">current_indicators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="WindowsRenderedPath-205"><a href="#WindowsRenderedPath-205"><span class="linenos">205</span></a><span class="k">class</span> <span class="nc">WindowsRenderedPath</span><span class="p">(</span><span class="n">RenderedPath</span><span class="p">):</span>
+</span><span id="WindowsRenderedPath-206"><a href="#WindowsRenderedPath-206"><span class="linenos">206</span></a><span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="WindowsRenderedPath-207"><a href="#WindowsRenderedPath-207"><span class="linenos">207</span></a><span class="sd">		A rendered path meant for Windows operating systems.</span>
+</span><span id="WindowsRenderedPath-208"><a href="#WindowsRenderedPath-208"><span class="linenos">208</span></a>
+</span><span id="WindowsRenderedPath-209"><a href="#WindowsRenderedPath-209"><span class="linenos">209</span></a><span class="sd">		The path may or may not contain a drive, which affects both its printed output and its collation order. Backslashes are used always, although forward slashes are supported on Windows NT also.</span>
+</span><span id="WindowsRenderedPath-210"><a href="#WindowsRenderedPath-210"><span class="linenos">210</span></a><span class="sd">	&quot;&quot;&quot;</span>
+</span><span id="WindowsRenderedPath-211"><a href="#WindowsRenderedPath-211"><span class="linenos">211</span></a>	<span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="WindowsRenderedPath-212"><a href="#WindowsRenderedPath-212"><span class="linenos">212</span></a>		<span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="WindowsRenderedPath-213"><a href="#WindowsRenderedPath-213"><span class="linenos">213</span></a>			<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">absolute</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">relative_parts</span><span class="p">)</span>
+</span><span id="WindowsRenderedPath-214"><a href="#WindowsRenderedPath-214"><span class="linenos">214</span></a>		<span class="k">else</span><span class="p">:</span>
+</span><span id="WindowsRenderedPath-215"><a href="#WindowsRenderedPath-215"><span class="linenos">215</span></a>			<span class="k">return</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">current_indicators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -1425,28 +1302,6 @@
 
 <p>The path may or may not contain a drive, which affects both its printed output and its collation order. Backslashes are used always, although forward slashes are supported on Windows NT also.</p></div>
 
-		<div class="summary">
-
-			
-
-			
-
-			
-
-			
-
-			
-
-					<h2>Instance methods summary</h2>
-		<dl>
-				<dt>					<span class="name"><a href="#WindowsRenderedPath.__str__">__str__</a></span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span></dt>
-
-<dd>
-<p>Return a string representation of the path in the preferred format for the target platform</p></dd>
-
-		</dl>
-
-		</div>
 
 
                             <div id="WindowsRenderedPath.__str__" class="classattr">
@@ -1461,11 +1316,11 @@
 
     </div>
     <a class="headerlink" href="#WindowsRenderedPath.__str__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="WindowsRenderedPath.__str__-208"><a href="#WindowsRenderedPath.__str__-208"><span class="linenos">208</span></a>	<span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="WindowsRenderedPath.__str__-209"><a href="#WindowsRenderedPath.__str__-209"><span class="linenos">209</span></a>		<span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="WindowsRenderedPath.__str__-210"><a href="#WindowsRenderedPath.__str__-210"><span class="linenos">210</span></a>			<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">absolute</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">relative_parts</span><span class="p">)</span>
-</span><span id="WindowsRenderedPath.__str__-211"><a href="#WindowsRenderedPath.__str__-211"><span class="linenos">211</span></a>		<span class="k">else</span><span class="p">:</span>
-</span><span id="WindowsRenderedPath.__str__-212"><a href="#WindowsRenderedPath.__str__-212"><span class="linenos">212</span></a>			<span class="k">return</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">current_indicators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="WindowsRenderedPath.__str__-211"><a href="#WindowsRenderedPath.__str__-211"><span class="linenos">211</span></a>	<span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="WindowsRenderedPath.__str__-212"><a href="#WindowsRenderedPath.__str__-212"><span class="linenos">212</span></a>		<span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="WindowsRenderedPath.__str__-213"><a href="#WindowsRenderedPath.__str__-213"><span class="linenos">213</span></a>			<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">drive_postfixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">drive</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">absolute</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">separators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">relative_parts</span><span class="p">)</span>
+</span><span id="WindowsRenderedPath.__str__-214"><a href="#WindowsRenderedPath.__str__-214"><span class="linenos">214</span></a>		<span class="k">else</span><span class="p">:</span>
+</span><span id="WindowsRenderedPath.__str__-215"><a href="#WindowsRenderedPath.__str__-215"><span class="linenos">215</span></a>			<span class="k">return</span> <span class="n">_rules</span><span class="o">.</span><span class="n">windows_rules</span><span class="o">.</span><span class="n">current_indicators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span></pre></div>
 
 

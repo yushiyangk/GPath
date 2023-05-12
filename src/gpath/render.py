@@ -195,7 +195,10 @@ class PosixRenderedPath(RenderedPath):
 		)
 
 LinuxRenderedPath = PosixRenderedPath
+"""Alias of `PosixRenderedPath`"""
+
 MacOsRenderedPath = PosixRenderedPath
+"""Alias of `PosixRenderedPath`"""
 
 
 class WindowsRenderedPath(RenderedPath):
