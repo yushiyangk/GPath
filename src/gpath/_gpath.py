@@ -250,34 +250,6 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 		return list(self._parts)
 
 	@property
-	def parent_level(self) -> int:
-		"""
-			Read-only number of levels of parent directories that the path is relative to, which may be 0
-
-			Examples
-			--------
-			```python
-			GPath("../../Documents").parent_level  # 2
-			GPath("usr/local/bin").parent_level    # 0
-			```
-		"""
-		return self._parent_level
-
-	@property
-	def parent_parts(self) -> list[str]:
-		"""
-			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory
-
-			Examples
-			--------
-			```python
-			GPath("../../Documents").parent_parts  # ["..", ".."]
-			GPath("usr/local/bin").parent_parts    # []
-			```
-		"""
-		return [_rules.generic_rules.parent_indicators[0] for i in range(self._parent_level)]
-
-	@property
 	def relative_parts(self) -> list[str]:
 		"""
 			Read-only relative components of the path, not including the filesystem root or drive name, including one item for each level of parent directory
@@ -292,21 +264,6 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 			```
 		"""
 		return self.parent_parts + list(self._parts)
-
-	@property
-	def drive(self) -> str:
-		"""
-			Read-only drive name
-
-			Examples
-			--------
-			```python
-			GPath("C:/Windows").drive       # "C:"
-			GPath("/usr/bin").drive         # ""
-			GPath("../../Documents").drive  # ""
-			```
-		"""
-		return self._drive
 
 	@property
 	def absolute(self) -> bool:
@@ -340,6 +297,49 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 			```
 		"""
 		return self._root and len(self._parts) == 0
+
+	@property
+	def drive(self) -> str:
+		"""
+			Read-only drive name
+
+			Examples
+			--------
+			```python
+			GPath("C:/Windows").drive       # "C:"
+			GPath("/usr/bin").drive         # ""
+			GPath("../../Documents").drive  # ""
+			```
+		"""
+		return self._drive
+
+	@property
+	def parent_level(self) -> int:
+		"""
+			Read-only number of levels of parent directories that the path is relative to, which may be 0
+
+			Examples
+			--------
+			```python
+			GPath("../../Documents").parent_level  # 2
+			GPath("usr/local/bin").parent_level    # 0
+			```
+		"""
+		return self._parent_level
+
+	@property
+	def parent_parts(self) -> list[str]:
+		"""
+			Read-only path components representing a parent directory that it is relative to, if any, with one item for each level of parent directory
+
+			Examples
+			--------
+			```python
+			GPath("../../Documents").parent_parts  # ["..", ".."]
+			GPath("usr/local/bin").parent_parts    # []
+			```
+		"""
+		return [_rules.generic_rules.parent_indicators[0] for i in range(self._parent_level)]
 
 	@property
 	def encoding(self) -> Union[str, None]:
@@ -960,7 +960,7 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 
 	def __bool__(self) -> bool:
 		"""
-			Truthy if `self` is an absolute path, if `self` is relative to a parent directory, or if `self` has at least one named component.
+			False if `self` is a relative path without any relative components and without a drive, and True otherwise.
 
 			Usage: <code>bool(<var>g</var>)</code>, <code>not <var>g</var></code>, or <code>if <var>g</var>:</code>
 
