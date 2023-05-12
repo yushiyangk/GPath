@@ -21,35 +21,31 @@ __all__ = (
 class Renderable(ABC):
 	@property
 	@abstractmethod
-	def named_parts(self):
+	def named_parts(self) -> list[str]:
 		pass
 
 	@property
 	@abstractmethod
-	def relative_parts(self):
+	def relative_parts(self) -> list[str]:
 		pass
 
 	@property
 	@abstractmethod
-	def absolute(self):
+	def absolute(self) -> bool:
 		pass
 
 	@property
 	@abstractmethod
-	def drive(self):
+	def drive(self) -> str:
 		pass
 
 	@property
 	@abstractmethod
-	def parent_level(self):
+	def parent_level(self) -> int:
 		pass
 
 	@abstractmethod
-	def __str__(self):
-		pass
-
-	@abstractmethod
-	def __repr__(self):
+	def __repr__(self) -> str:
 		pass
 
 
@@ -60,17 +56,20 @@ class RenderedPath:
 	def __init__(self, path: Renderable):
 		self._path: Renderable = path
 
-	def __str__(self) -> str:
-		return str(self._path)
-
-	def __repr__(self) -> str:
-		return f"{type(self).__name__}({repr(self._path)})"
-
 	def __eq__(self, other) -> bool:
 		return self._tuple == other._tuple
 
 	def __lt__(self, other) -> bool:
 		return self._tuple < other._tuple
+
+	def __bool__(self) -> bool:
+		return self._path.absolute or self._path.drive != "" or self._path.parent_level != 0 or len(self._path.named_parts) > 0
+
+	def __str__(self) -> str:
+		return repr(self)
+
+	def __repr__(self) -> str:
+		return f"{type(self).__name__}({repr(self._path)})"
 
 	@property
 	def _tuple(self) -> tuple:
@@ -97,6 +96,9 @@ class PosixRenderedPath(RenderedPath):
 		else:
 			return _rules.posix_rules.current_indicators[0]
 
+	def __bool__(self) -> bool:
+		return self._path.absolute or self._path.parent_level != 0 or len(self._path.named_parts) > 0
+
 	@property
 	def _tuple(self) -> tuple:
 		return (
@@ -117,7 +119,7 @@ class WindowsRenderedPath(RenderedPath):
 			return _rules.windows_rules.current_indicators[0]
 
 
-_platform_render: dict[Platform, Type[RenderedPath]] = {
+_render_of_platforms: dict[Platform, Type[RenderedPath]] = {
 	Platform.GENERIC: GenericRenderedPath,
 	Platform.POSIX: PosixRenderedPath,
 	Platform.WINDOWS: WindowsRenderedPath,
@@ -126,4 +128,4 @@ _platform_render: dict[Platform, Type[RenderedPath]] = {
 
 def get_type(platform: Platform) -> Type[RenderedPath]:
 	"""Get the type of RenderedPath that corresponds to the given Platform"""
-	return _platform_render[platform]
+	return _render_of_platforms[platform]

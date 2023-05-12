@@ -18,7 +18,7 @@ class Platform(IntEnum):
 
 	def __str__(self) -> str:
 		"""Return the name of the platform as a string"""
-		return _name_from_platform[self]
+		return _name_of_platforms[self]
 
 
 canonical_platform_names: dict[str, Platform] = {
@@ -38,4 +38,4 @@ platform_names: dict[str, Platform] = {
 """Valid platform names and the Platform enum that they map to"""
 
 
-_name_from_platform: dict[Platform, str] = {v: k for k, v in canonical_platform_names.items()}
+_name_of_platforms: dict[Platform, str] = {v: k for k, v in canonical_platform_names.items()}

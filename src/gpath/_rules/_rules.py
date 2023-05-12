@@ -32,7 +32,7 @@ class windows_rules(UnvalidatedRules):
 	separators: Final = ["\\", "/"]
 
 
-_platform_rules: dict[Platform, Type[UnvalidatedRules]] = {
+_rules_of_platforms: dict[Platform, Type[UnvalidatedRules]] = {
 	Platform.GENERIC: generic_rules,
 	Platform.POSIX: posix_rules,
 	Platform.WINDOWS: windows_rules,
@@ -40,4 +40,4 @@ _platform_rules: dict[Platform, Type[UnvalidatedRules]] = {
 
 
 def get_type(platform: Platform) -> Type[UnvalidatedRules]:
-	return _platform_rules[platform]
+	return _rules_of_platforms[platform]

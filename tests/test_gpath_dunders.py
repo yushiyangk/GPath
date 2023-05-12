@@ -143,7 +143,7 @@ class TestGPathDunders(TestGPath):
 	)
 	def test_str_repr_platform(path: str, expected: dict[str, str]):
 		"""
-			Test `__str__()` and `__repr__()` which may dependent on local operating system
+			Test `__str__()` and `__repr__()` for outputs that may (or may not) dependent on local operating system
 		"""
 		gpath = GPath(path)
 		result = str(gpath)
@@ -449,7 +449,7 @@ class TestGPathDunders(TestGPath):
 			Test `__sub__()` with negative inputs which should give errors.
 		"""
 		with pytest.raises(ValueError):
-			gpath1 - sub_value
+			result = gpath1 - sub_value
 
 
 	@staticmethod
@@ -520,7 +520,7 @@ class TestGPathDunders(TestGPath):
 			Test `__mul__()` with negative inputs which should give errors.
 		"""
 		with pytest.raises(ValueError):
-			gpath1 * mul_value
+			result = gpath1 * mul_value
 
 
 	@staticmethod
