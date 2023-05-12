@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+import dataclasses
 from typing import Generator
 from unittest.mock import patch
 
@@ -6,19 +6,7 @@ import pytest
 
 from gpath import render
 from gpath.platform import Platform
-
-
-
-@dataclass
-class RenderableData:
-	named_parts: list[str]
-	absolute: bool
-	drive: str
-	parent_level: int
-
-	@property
-	def relative_parts(self) -> list[str]:
-		return [".." for i in range(self.parent_level)] + self.named_parts
+from util import RenderableData
 
 
 
@@ -27,13 +15,13 @@ class TestGenericRenderedPath:
 	@pytest.fixture
 	def rendered_path1(request: pytest.FixtureRequest) -> Generator[render.GenericRenderedPath, None, None]:
 		with patch.object(render, 'Renderable', new=RenderableData):
-			yield render.GenericRenderedPath(render.Renderable(**asdict(request.param)))  # type: ignore
+			yield render.GenericRenderedPath(render.Renderable(**dataclasses.asdict(request.param)))  # type: ignore
 
 	@staticmethod
 	@pytest.fixture
 	def rendered_path2(request: pytest.FixtureRequest) -> Generator[render.GenericRenderedPath, None, None]:
 		with patch.object(render, 'Renderable', new=RenderableData):
-			yield render.GenericRenderedPath(render.Renderable(**asdict(request.param)))  # type: ignore
+			yield render.GenericRenderedPath(render.Renderable(**dataclasses.asdict(request.param)))  # type: ignore
 
 
 	@staticmethod
@@ -160,13 +148,13 @@ class TestPosixRenderedPath:
 	@pytest.fixture
 	def rendered_path1(request: pytest.FixtureRequest) -> Generator[render.PosixRenderedPath, None, None]:
 		with patch.object(render, 'Renderable', new=RenderableData):
-			yield render.PosixRenderedPath(render.Renderable(**asdict(request.param)))  # type: ignore
+			yield render.PosixRenderedPath(render.Renderable(**dataclasses.asdict(request.param)))  # type: ignore
 
 	@staticmethod
 	@pytest.fixture
 	def rendered_path2(request: pytest.FixtureRequest) -> Generator[render.PosixRenderedPath, None, None]:
 		with patch.object(render, 'Renderable', new=RenderableData):
-			yield render.PosixRenderedPath(render.Renderable(**asdict(request.param)))  # type: ignore
+			yield render.PosixRenderedPath(render.Renderable(**dataclasses.asdict(request.param)))  # type: ignore
 
 
 	@staticmethod
@@ -287,13 +275,13 @@ class TestWindowsRenderedPath:
 	@pytest.fixture
 	def rendered_path1(request: pytest.FixtureRequest) -> Generator[render.WindowsRenderedPath, None, None]:
 		with patch.object(render, 'Renderable', new=RenderableData):
-			yield render.WindowsRenderedPath(render.Renderable(**asdict(request.param)))  # type: ignore
+			yield render.WindowsRenderedPath(render.Renderable(**dataclasses.asdict(request.param)))  # type: ignore
 
 	@staticmethod
 	@pytest.fixture
 	def rendered_path2(request: pytest.FixtureRequest) -> Generator[render.WindowsRenderedPath, None, None]:
 		with patch.object(render, 'Renderable', new=RenderableData):
-			yield render.WindowsRenderedPath(render.Renderable(**asdict(request.param)))  # type: ignore
+			yield render.WindowsRenderedPath(render.Renderable(**dataclasses.asdict(request.param)))  # type: ignore
 
 
 	@staticmethod

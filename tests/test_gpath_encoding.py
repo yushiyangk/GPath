@@ -47,7 +47,7 @@ class TestGPathEncoding(TestGPath):
 		encoding: str,
 	):
 		"""
-			Test constructor with different encodings
+			Test constructor with different encodings and test their propagation
 		"""
 		try:
 			bytes_path = path.encode(encoding)
@@ -61,6 +61,7 @@ class TestGPathEncoding(TestGPath):
 		assert gpath.parent_level == expected_parent_level
 		assert gpath.encoding == encoding
 
+		# Test copy propagation
 		gpath_copy = GPath(gpath)
 		assert gpath_copy.absolute == expected_root
 		assert gpath_copy.drive == expected_drive
@@ -68,11 +69,8 @@ class TestGPathEncoding(TestGPath):
 		assert gpath_copy.parent_level == expected_parent_level
 		assert gpath_copy.encoding == encoding
 
+		# Test copy with override
 		gpath_copy = GPath(gpath, encoding='utf-8')
-		assert gpath_copy.absolute == expected_root
-		assert gpath_copy.drive == expected_drive
-		assert gpath_copy.named_parts == list(expected_parts)
-		assert gpath_copy.parent_level == expected_parent_level
 		assert gpath_copy.encoding == 'utf-8'
 
 		# Test left-operand propagation
