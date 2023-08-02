@@ -1,19 +1,14 @@
-"""
-	GPath is a robust, generalised abstract file path that provides path manipulations independent from the local environment, maximising cross-platform compatibility.
-"""
-
 from __future__ import annotations
 
 import os
 import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, Sized
-from typing import Any
+from typing import Any, Optional
 
 from . import render, _rules
 from .platform import Platform
 
-
-from ._compat import Final, Optional, Union
+from ._compat import Final, Union
 
 
 __all__ = ('GPath', 'GPathLike')
@@ -448,7 +443,7 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 			Examples
 			--------
 			```python
-			GPath.partition("/usr/bin", "/usr/local/bin", "../../doc", "C:/Windows", "C:/Program Files")
+			partitions = GPath.partition("/usr/bin", "/usr/local/bin", "../../doc", "C:/Windows", "C:/Program Files")
 
 			assert partitions == {
 				GPath("/usr")      : [GPath("bin"), GPath("local")],

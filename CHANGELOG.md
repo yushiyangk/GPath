@@ -4,6 +4,10 @@ This project follows [PEP 440](https://peps.python.org/pep-0440/) and [Semantic 
 
 The recommended version specifier is <code>generic-path ~= <var>x</var>.<var>y</var></code> for version 1.0 and later, and <code>generic-path ~= <var>0</var>.<var>y</var>.<var>z</var></code> for versions prior to 1.0.
 
+### 0.4.5
+
+- Improved documentation
+
 ### 0.4.4
 
 - Added the ability to force GPath to interpret a path string as originating from a specific operating system, which prevents problems in edge cases, using the new `platform` argument in `GPath.__init__()`; this also propagates to new GPaths returned by operations

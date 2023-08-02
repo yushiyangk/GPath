@@ -4,4 +4,4 @@ pdoc~=13.1.1
 pyroma ~= 4.2
 build~=0.10.0
 tox~=4.5.1
-tox-extras>=0.0.1
+tox-extras~=0.0.1
