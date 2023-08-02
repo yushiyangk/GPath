@@ -78,7 +78,7 @@ These issues can be avoided by using `GPath.from_posix()` instead. This will cau
 
 Clone the repository with `git clone https://github.com/yushiyangk/GPath.git`.
 
-The source for the package is entirely contained in `gpath.py`, with tests in `tests/`.
+The source for the package is `src/`, with tests in `tests/`.
 
 ### Virtual environment
 
@@ -114,7 +114,7 @@ For coverage report, first run `coverage run -m pytest`, then either `coverage r
 
 Run `tox r -m docs`.
 
-The documentation is generated in `docs/html/`, using template files in `docs/template/`. However, note that the favicon file must be placed at `docs/html/favicon.png` manually as pdoc is unable to do so.
+The documentation is generated in `docs/html/`, using template files in `docs/template/`.
 
 #### Packaging
 

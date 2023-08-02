@@ -3,7 +3,6 @@ import typing
 
 
 # Required for versions < 3.10
-Optional = typing.Optional
 Union = typing.Union
 
 
