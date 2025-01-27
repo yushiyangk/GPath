@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Type
+from typing import Final, Type
 
 from ._common import COMMON_DRIVE_POSTFIX, COMMON_CURRENT_INDICATOR, COMMON_PARENT_INDICATOR
 from ..platform import Platform
-
-from .._compat import Final
 
 
 class UnvalidatedRules:

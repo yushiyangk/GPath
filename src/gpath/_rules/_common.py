@@ -1,4 +1,4 @@
-from .._compat import Final
+from typing import Final
 
 
 COMMON_DRIVE_POSTFIX: Final = ":"

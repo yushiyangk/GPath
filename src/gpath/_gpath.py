@@ -3,12 +3,12 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, Sized
-from typing import Any, Optional
+from typing import Any, Final, Optional
 
 from . import render, _rules
 from .platform import Platform
 
-from ._compat import Final, Union
+from ._compat import Union
 
 
 __all__ = ('GPath', 'GPathLike')
