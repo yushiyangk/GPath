@@ -2,11 +2,14 @@
 
 
 {#
-	Treat dunder methods as public
 	https://pdoc.dev/docs/pdoc.html#control-what-is-documented
 #}
 {% macro is_public(doc) %}
-	{% if doc.kind == "function" and doc.name.startswith("__") and doc.name.endswith("__") %}
+	{% if doc.qualname == "Platform.__new__" or doc.qualname == "Platform.__format__" %}
+		{# Ignore these methods #}
+		{# Empty indicates false #}
+	{% elif doc.kind == "function" and doc.name.startswith("__") and doc.name.endswith("__") %}
+		{# Treat dunder methods as public #}
 		true
 	{% else %}
 		{{ default_is_public(doc) }}
