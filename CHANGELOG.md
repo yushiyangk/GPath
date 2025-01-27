@@ -4,10 +4,11 @@ This project follows [PEP 440](https://peps.python.org/pep-0440/) and [Semantic 
 
 The recommended version specifier is <code>generic-path ~= <var>x</var>.<var>y</var></code> for version 1.0 and later, and <code>generic-path ~= <var>0</var>.<var>y</var>.<var>z</var></code> for versions prior to 1.0.
 
-### 0.4.6
+### 0.5
 
 - Added support for Python 3.12 and 3.13
 - Dropped support for end-of-life Python versions 3.7 and 3.8
+- Removed methods `Platform.__new__` and `Platform.__format__` that were unintentionally documented as public
 
 ### 0.4.5
 
