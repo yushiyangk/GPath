@@ -46,7 +46,6 @@ canonical_platform_names: dict[str, Platform] = {
 platform_names: dict[str, Platform] = {
 	**canonical_platform_names,
 	'': Platform.GENERIC,
-	'posix': Platform.POSIX,
 	'linux': Platform.POSIX,
 	'macos': Platform.POSIX,
 }
