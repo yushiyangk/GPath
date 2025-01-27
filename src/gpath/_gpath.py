@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Collection, Hashable, Iterator, Iterable, Sequence, Sized
-from typing import Any, Final, Optional
+from typing import cast, Any, Final, Optional
 
 from . import render, _rules
 from .platform import Platform
@@ -160,7 +160,7 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 			else:
 				path = path.decode(self._encoding)
 
-		# path is a str
+		path = cast(str, path)
 
 		if self._platform is None:
 			platform = Platform.GENERIC
@@ -932,7 +932,7 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 		return hash(self._tuple)
 
 
-	def __eq__(self, other: GPathLike) -> bool:
+	def __eq__(self, other: GPathLike) -> bool:  # type: ignore
 		"""
 			Check if two GPaths are completely identical.
 
