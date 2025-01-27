@@ -265,7 +265,7 @@ gpath    </h1>
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a>
 </span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.4.6&#39;</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.5.post1&#39;</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">platform</span><span class="p">,</span> <span class="n">render</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">._gpath</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPath</span><span class="p">,</span> <span class="n">GPathLike</span>
@@ -370,7 +370,7 @@ gpath    </h1>
 </span><span id="GPath-161"><a href="#GPath-161"><span class="linenos"> 161</span></a>			<span class="k">else</span><span class="p">:</span>
 </span><span id="GPath-162"><a href="#GPath-162"><span class="linenos"> 162</span></a>				<span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
 </span><span id="GPath-163"><a href="#GPath-163"><span class="linenos"> 163</span></a>
-</span><span id="GPath-164"><a href="#GPath-164"><span class="linenos"> 164</span></a>		<span class="c1"># path is a str</span>
+</span><span id="GPath-164"><a href="#GPath-164"><span class="linenos"> 164</span></a>		<span class="n">path</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
 </span><span id="GPath-165"><a href="#GPath-165"><span class="linenos"> 165</span></a>
 </span><span id="GPath-166"><a href="#GPath-166"><span class="linenos"> 166</span></a>		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_platform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="GPath-167"><a href="#GPath-167"><span class="linenos"> 167</span></a>			<span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">GENERIC</span>
@@ -1142,7 +1142,7 @@ gpath    </h1>
 </span><span id="GPath-933"><a href="#GPath-933"><span class="linenos"> 933</span></a>		<span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tuple</span><span class="p">)</span>
 </span><span id="GPath-934"><a href="#GPath-934"><span class="linenos"> 934</span></a>
 </span><span id="GPath-935"><a href="#GPath-935"><span class="linenos"> 935</span></a>
-</span><span id="GPath-936"><a href="#GPath-936"><span class="linenos"> 936</span></a>	<span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">GPathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="GPath-936"><a href="#GPath-936"><span class="linenos"> 936</span></a>	<span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">GPathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
 </span><span id="GPath-937"><a href="#GPath-937"><span class="linenos"> 937</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath-938"><a href="#GPath-938"><span class="linenos"> 938</span></a><span class="sd">			Check if two GPaths are completely identical.</span>
 </span><span id="GPath-939"><a href="#GPath-939"><span class="linenos"> 939</span></a>
@@ -1579,7 +1579,7 @@ gpath    </h1>
 </span><span id="GPath.__init__-161"><a href="#GPath.__init__-161"><span class="linenos">161</span></a>			<span class="k">else</span><span class="p">:</span>
 </span><span id="GPath.__init__-162"><a href="#GPath.__init__-162"><span class="linenos">162</span></a>				<span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">)</span>
 </span><span id="GPath.__init__-163"><a href="#GPath.__init__-163"><span class="linenos">163</span></a>
-</span><span id="GPath.__init__-164"><a href="#GPath.__init__-164"><span class="linenos">164</span></a>		<span class="c1"># path is a str</span>
+</span><span id="GPath.__init__-164"><a href="#GPath.__init__-164"><span class="linenos">164</span></a>		<span class="n">path</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
 </span><span id="GPath.__init__-165"><a href="#GPath.__init__-165"><span class="linenos">165</span></a>
 </span><span id="GPath.__init__-166"><a href="#GPath.__init__-166"><span class="linenos">166</span></a>		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_platform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="GPath.__init__-167"><a href="#GPath.__init__-167"><span class="linenos">167</span></a>			<span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">GENERIC</span>
@@ -3035,7 +3035,7 @@ if any of the GPaths are invalid</p>
 
     </div>
     <a class="headerlink" href="#GPath.__eq__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__eq__-936"><a href="#GPath.__eq__-936"><span class="linenos">936</span></a>	<span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">GPathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GPath.__eq__-936"><a href="#GPath.__eq__-936"><span class="linenos">936</span></a>	<span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">GPathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
 </span><span id="GPath.__eq__-937"><a href="#GPath.__eq__-937"><span class="linenos">937</span></a><span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="GPath.__eq__-938"><a href="#GPath.__eq__-938"><span class="linenos">938</span></a><span class="sd">			Check if two GPaths are completely identical.</span>
 </span><span id="GPath.__eq__-939"><a href="#GPath.__eq__-939"><span class="linenos">939</span></a>
