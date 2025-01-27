@@ -2,6 +2,11 @@
 __pycache__/
 
 # venv
+/.venv/
+/bin/
+/include/
+/lib/
+/lib64
 /Include/
 /Lib/
 /Scripts/
