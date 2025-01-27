@@ -111,15 +111,15 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 			`path`
 			: path-like object representing a (possibly unnormalised) file path, or a GPath object to be copied
 
-			`​platform`
-			: interpret `path` as originating from a specific platform. This is usually not required for normal file paths on Windows, Linux or macOS, and is needed only for edge cases (see [compatibility](https://github.com/yushiyangk/gpath#compatibility) in the readme). If `path` is a GPath, this argument has no effect. The platform name should be one of the keys in `gpath.platform.platform_names`. If specified, the platform will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the platform specified by the left operand will be propagated. See also the `from_*()` static methods.
+			`platform`
+			: interpret `path` as originating from a specific platform. This is usually not required for normal file paths on Windows, Linux or macOS, and is needed only for edge cases (see [compatibility](https://github.com/yushiyangk/gpath#compatibility) in the readme). If `path` is a GPath, this argument has no effect. The platform name should be one of the keys in `gpath.platform.platform_names`. If specified, the platform will propagate to new GPaths returned by operations on this GPath; for binary operations on two GPaths, the platform specified by the left operand will be propagated. See also the static methods `from_*()`.
 
-			`​encoding`
-			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The encoding name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. If specified, the encoding will propagate to new GPaths returned by operations on this GPath; for binary operations of two GPaths, the encoding specified by the left operand will be propagated.
+			`encoding`
+			: the text encoding that should be used to decode paths given as bytes-like objects; if not specified, `'utf_8'` will be used by default. The encoding name should be one of the standard Python text encodings, as listed in the `codecs` module of the standard library. If specified, the encoding will propagate to new GPaths returned by operations on this GPath; for binary operations on two GPaths, the encoding specified by the left operand will be propagated.
 
 			Raises
 			------
-			`ValueError` if `other` is an invalid GPath
+			`ValueError` if `path` is an invalid GPath
 
 			Examples
 			--------
@@ -135,8 +135,8 @@ class GPath(Hashable, Sized, Iterable, render.Renderable):
 		self._drive: str = ""
 		self._parent_level: int = 0
 
-		self._platform: Optional[Platform] = Platform.from_str(platform) if isinstance(platform, str) else platform
-		self._encoding: Optional[str] = encoding
+		self._platform: Union[Platform, None] = Platform.from_str(platform) if isinstance(platform, str) else platform
+		self._encoding: Union[str, None] = encoding
 
 		if isinstance(path, GPath):
 			path._validate()
